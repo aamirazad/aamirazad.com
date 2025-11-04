@@ -50,11 +50,18 @@ export const useful = [
 
 export const projects = [
 	{
+		href: "https://sim.aamirazad.com",
+		text: "WW2 Simulation",
+		description:
+			"Learn history by playing it. Coordinate and strategize as nations in the Second World War. Wage war, forge alliances, and have fun.",
+		wip: true,
+		badge: "Featured",
+	},
+	{
 		href: "https://track.aamirazad.com",
 		text: "TrackShelf",
 		description:
 			"Track shelf is an app to manage all the books, movies, and tv shows you watch so that you never forget what about these experiences was special to you.",
-		wip: true,
 		github: "aamirazad/track",
 	},
 	{
