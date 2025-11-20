@@ -9,8 +9,9 @@ import {
 	Kanban,
 	Mails,
 	NotebookText,
-	Rss,
+	MessagesSquare,
 	Video,
+	FilePen,
 } from "lucide-react";
 
 export const useful = [
@@ -145,7 +146,7 @@ export const homelab = [
 	},
 	{
 		text: "Immich",
-		href: "https://azadphotos.com/",
+		href: "https://photos.aamirazad.com/",
 		icon: () => <Camera />,
 	},
 	{
@@ -169,9 +170,14 @@ export const homelab = [
 		icon: () => <File />,
 	},
 	{
-		text: "FreshRSS",
-		href: "https://news.aamirazad.com/",
-		icon: () => <Rss />,
+		text: "Discourse",
+		href: "https://community.aamirazad.com/",
+		icon: () => <MessagesSquare />,
+	},
+	{
+		text: "Writefreely",
+		href: "https://docs.aamirazad.com/",
+		icon: () => <FilePen />,
 	},
 	{
 		text: "Actual",
