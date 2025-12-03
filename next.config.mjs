@@ -180,12 +180,6 @@ const nextConfig = {
 			},
 		];
 	},
-	typescript: {
-		ignoreBuildErrors: true,
-	},
-	eslint: {
-		ignoreDuringBuilds: true,
-	},
 	pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 };
 
