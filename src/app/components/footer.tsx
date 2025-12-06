@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function Footer() {
 	return (
 		<footer className="mt-16 mb-16 border-neutral-200 border-t pt-8 dark:border-neutral-800">
@@ -9,12 +7,6 @@ export default function Footer() {
 						© {new Date().getFullYear()} Aamir Azad
 					</p>
 					<div className="flex space-x-4 text-sm">
-						<Link
-							href="/blog"
-							className="text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-						>
-							Blog
-						</Link>
 						<a
 							href="https://github.com/aamirazad"
 							className="text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"

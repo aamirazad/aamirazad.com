@@ -1,15 +1,9 @@
 import { SiGithub } from "@icons-pack/react-simple-icons";
-import { ArrowUpRight, Code2, Server, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowUpRight, Code2, Server } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getAllBlogPosts } from "@/lib/blog";
 import { homelab, projects, useful } from "./links";
 
 export default async function Page() {
-	const allPosts = await getAllBlogPosts();
-	const recentPosts = allPosts.slice(0, 3);
-
 	return (
 		<div className="space-y-16">
 			{/* Hero Section */}
@@ -40,53 +34,6 @@ export default async function Page() {
 					</div>
 				</div>
 			</section>
-
-			{/* Recent Blog Posts */}
-			{recentPosts.length > 0 && (
-				<section className="flex justify-center">
-					<div className="w-full max-w-4xl">
-						<div className="mb-8 flex items-center space-x-2">
-							<Sparkles className="h-6 w-6 text-orange-500" />
-							<h2 className="font-semibold text-3xl tracking-tight">
-								Recent Posts
-							</h2>
-						</div>
-						<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-							{recentPosts.map((post) => (
-								<Link
-									key={post.slug}
-									href={`/blog/${post.slug}`}
-									className="group block rounded-lg border border-neutral-200 p-6 transition-all duration-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700"
-								>
-									<h3 className="mb-2 font-semibold transition-colors group-hover:text-orange-500">
-										{post.title}
-									</h3>
-									<p className="mb-3 line-clamp-2 text-neutral-600 text-sm dark:text-neutral-400">
-										{post.description}
-									</p>
-									<div className="flex items-center justify-between">
-										<time className="text-neutral-500 text-xs">
-											{new Date(
-												post.date,
-											).toLocaleDateString()}
-										</time>
-										<ArrowUpRight className="group-hover:-translate-y-1 h-4 w-4 opacity-50 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
-									</div>
-								</Link>
-							))}
-						</div>
-						<div className="mt-8 text-center">
-							<Link
-								href="/blog"
-								className="inline-flex items-center space-x-2 text-orange-500 transition-colors hover:text-orange-600"
-							>
-								<span>View all posts</span>
-								<ArrowUpRight className="h-4 w-4" />
-							</Link>
-						</div>
-					</div>
-				</section>
-			)}
 
 			{/* Useful Links */}
 			<section className="flex justify-center">
