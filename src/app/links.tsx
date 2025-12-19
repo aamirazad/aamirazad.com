@@ -1,17 +1,18 @@
 import {
 	BadgeCent,
 	Bookmark,
+	Calendar,
 	Camera,
 	ChartArea,
+	ChefHat,
 	Code,
 	File,
-	GitPullRequestArrow,
-	Kanban,
-	Mails,
-	NotebookText,
-	MessagesSquare,
-	Video,
 	FilePen,
+	GitPullRequestArrow,
+	LockKeyhole,
+	NotebookText,
+	SpellCheck,
+	Video,
 } from "lucide-react";
 
 export const useful = [
@@ -52,7 +53,7 @@ export const useful = [
 export const projects = [
 	{
 		href: "https://sim.aamirazad.com",
-		text: "WW2 Simulation",
+		text: "WWII Simulation",
 		description:
 			"Learn history by playing it. Coordinate and strategize as nations in the Second World War. Wage war, forge alliances, and have fun.",
 		wip: true,
@@ -160,6 +161,26 @@ export const homelab = [
 		icon: () => <Video />,
 	},
 	{
+		text: "Rallly",
+		href: "https://meetup.aamirazad.com/",
+		icon: () => <Calendar />,
+	},
+	{
+		text: "Pocket ID",
+		href: "https://auth.aamirazad.com/",
+		icon: () => <LockKeyhole />,
+	},
+	{
+		text: "Mealie",
+		href: "https://recipies.aamirazad.com/",
+		icon: () => <ChefHat />,
+	},
+	{
+		text: "LanguageTool",
+		href: "https://languagetool.aamirazad.com",
+		icon: () => <SpellCheck />,
+	},
+	{
 		text: "Linkding",
 		href: "https://bookmarks.aamirazad.com/",
 		icon: () => <Bookmark />,
@@ -168,11 +189,6 @@ export const homelab = [
 		text: "Copyparty",
 		href: "https://files.aamirazad.com/",
 		icon: () => <File />,
-	},
-	{
-		text: "Discourse",
-		href: "https://community.aamirazad.com/",
-		icon: () => <MessagesSquare />,
 	},
 	{
 		text: "Writefreely",
@@ -185,18 +201,8 @@ export const homelab = [
 		icon: () => <BadgeCent />,
 	},
 	{
-		text: "Listmonk",
-		href: "https://list.aamirazad.com/",
-		icon: () => <Mails />,
-	},
-	{
 		text: "Code Server",
 		href: "https://dev.aamirazad.com/",
 		icon: () => <Code />,
-	},
-	{
-		text: "Wakapi",
-		href: "https://waka.aamirazad.com/",
-		icon: () => <Kanban />,
 	},
 ];
