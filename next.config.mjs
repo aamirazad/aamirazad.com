@@ -164,6 +164,11 @@ const nextConfig = {
 					"https://www.change.org/p/end-the-backpack-ban-at-hasd-high-school?recruited_by_id=cee357a0-8114-11f0-9397-51d3dd62874f&utm_source=share_petition&utm_campaign=psf_combo_share_initial&utm_medium=copylink",
 				permanent: false,
 			},
+			{
+				source: "/.well-known/matrix/server",
+				destination: "/api/.well-known/matrix/server",
+				permanent: false,
+			},
 		];
 	},
 	async rewrites() {
