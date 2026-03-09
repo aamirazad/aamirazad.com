@@ -169,6 +169,11 @@ const nextConfig = {
 				destination: "/api/.well-known/matrix/server",
 				permanent: false,
 			},
+			{
+				source: "/ssh",
+				destination: "/api/ssh",
+				permanent: false,
+			},
 		];
 	},
 	async rewrites() {
