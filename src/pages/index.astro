@@ -1,75 +1,94 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
 import { contactLinks, homelab, projects } from "../data/links";
+import BaseLayout from "../layouts/BaseLayout.astro";
 
 const title = "Aamir Azad";
 const description =
-  "Rochester Institute of Technology Freshman who loves learning and building things.";
+	"Rochester Institute of Technology Freshman who loves learning and building things.";
 ---
+
 <BaseLayout title={title} description={description}>
-  <header class="hero">
-    <h1>{title}</h1>
-    <p class="subtitle">Student and developer</p>
-    <p class="blurb">{description}</p>
-  </header>
+	<header class="hero">
+		<h1>{title}</h1>
+		<p class="subtitle">Student and developer</p>
+		<p class="blurb">{description}</p>
+	</header>
 
-  <section>
-    <h2>Contact</h2>
-    <div class="link-row">
-      {contactLinks.map((link) => (
-        <a href={link.href} target="_blank" rel="noopener noreferrer">
-          {link.label}
-        </a>
-      ))}
-    </div>
-  </section>
+	<section>
+		<h2>Contact</h2>
+		<div class="link-row">
+			{
+				contactLinks.map((link) => (
+					<a href={link.href} target="_blank" rel="noopener noreferrer">
+						{link.label}
+					</a>
+				))
+			}
+		</div>
+	</section>
 
-  <section>
-    <h2>Projects</h2>
-    <p class="section-blurb">
-      I spend most of my free time learning and building. Each project pushes me
-      a little further and helps me prepare for what comes next.
-    </p>
-    <ul class="list">
-      {projects.map((project) => (
-        <li>
-          <div class="item-header">
-            <a href={project.href} target="_blank" rel="noopener noreferrer">
-              {project.name}
-            </a>
-            {project.wip && <span class="tag">Work in progress</span>}
-            {project.badge && <span class="tag">{project.badge}</span>}
-            {project.github && (
-              <a
-                class="meta-link"
-                href={`https://github.com/${project.github}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                GitHub
-              </a>
-            )}
-          </div>
-          <p class="item-description">{project.description}</p>
-        </li>
-      ))}
-    </ul>
-  </section>
+	<section>
+		<h2>Projects</h2>
+		<p class="section-blurb">
+			I spend most of my free time learning and building. Each project pushes me
+			a little further and helps me prepare for what comes next.
+		</p>
+		<ul class="list">
+			{
+				projects.map((project) => (
+					<li>
+						<div class="item-header">
+							{project.href ? (
+								<a
+									href={project.href}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{project.name}
+								</a>
+							) : (
+								project.name
+							)}
+							{project.wip && <span class="tag">Work in progress</span>}
+							{project.badge && <span class="tag">{project.badge}</span>}
+							{project.github && (
+								<a
+									class="meta-link"
+									href={`https://github.com/${project.github}`}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									GitHub
+								</a>
+							)}
+						</div>
+						<p class="item-description">{project.description}</p>
+					</li>
+				))
+			}
+		</ul>
+	</section>
 
-  <section>
-    <h2>Homelab</h2>
-    <p class="section-blurb">
-      I built a homelab to learn networking and run services I use every day. It
-      spans a few machines and hosts storage and apps with reliable uptime.
-    </p>
-    <ul class="link-list">
-      {homelab.map((item) => (
-        <li>
-          <a href={item.href} target="_blank" rel="noopener noreferrer">
-            {item.name}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </section>
+	<section>
+		<h2>Homelab</h2>
+		<p class="section-blurb">
+			I built a homelab to learn networking and run services I use every day. It
+			spans a few machines and hosts storage and apps with reliable uptime.
+		</p>
+		<ul class="link-list">
+			{
+				homelab.map((item) => (
+					<li>
+						{item.href ? (
+							<a href={item.href} target="_blank" rel="noopener noreferrer">
+								{item.name}
+							</a>
+						) : (
+							item.name
+						)}
+					</li>
+				))
+			}
+		</ul>
+	</section>
 </BaseLayout>
