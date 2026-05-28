@@ -13,9 +13,6 @@ export default defineConfig({
 		"/telegram": "https://t.me/aamirazad01",
 		"/pgp": "/.well-known/openpgpkey",
 		"/bycda": "https://hasd.dino.icu/category/5/bycda",
-		"/.well-known/openpgpkey": "/api/.well-known/openpgpkey",
-		"/.well-known/openid-configuration":
-			"/api/.well-known/openid-configuration",
 		"/outstanding-academic":
 			"https://papers.aamirazad.com/share/wyABSOjNExeQi4nBVfS10rMH4LBkvc8ppvxZdoroEfNY7V9ECF",
 		"/principals-award":
@@ -45,8 +42,6 @@ export default defineConfig({
 		"/turkey-2025": "/watch/AY4aAI7zzcaOE6Kd3202XudT7k4jIuglQSIBj3UoGu02U",
 		"/backpack":
 			"https://www.change.org/p/end-the-backpack-ban-at-hasd-high-school?recruited_by_id=cee357a0-8114-11f0-9397-51d3dd62874f&utm_source=share_petition&utm_campaign=psf_combo_share_initial&utm_medium=copylink",
-		"/.well-known/matrix/server": "/api/.well-known/matrix/server",
-		"/ssh": "/api/ssh",
 		"/api/script.js": "https://analytics.aamirazad.com/api/script.js",
 		"/api/track": "https://analytics.aamirazad.com/api/track",
 		"/codeberg": "https://codeberg.org/aamir",
