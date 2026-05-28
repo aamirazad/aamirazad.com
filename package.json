@@ -1,18 +1,19 @@
 {
-  "name": "aamirazad-com",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "astro": "^5.13.2"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3"
-  }
+	"name": "aamirazad-com",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"astro": "astro"
+	},
+	"dependencies": {
+		"astro": "^5.13.2"
+	},
+	"devDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"packageManager": "pnpm@11.1.2"
 }
