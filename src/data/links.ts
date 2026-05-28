@@ -46,7 +46,7 @@ export const projects = [
     href: "https://track.aamirazad.com",
     name: "TrackShelf",
     description:
-      "Track shelf is an app to manage all the books, movies, and tv shows you watch so that you never forget what about these experiences was special to you.",
+      "TrackShelf is an app to manage all the books, movies, and tv shows you watch so that you never forget what about these experiences was special to you.",
     github: "aamirazad/track"
   },
   {
@@ -59,7 +59,7 @@ export const projects = [
     href: "https://historyclub.aamirazad.com/",
     name: "History Club Site",
     description:
-      "A content heavy application build with astro to host information about the HASD History Club's WW2 Simulation simulation. This game, with very complex rules, will be available for others to reference on this pretty website.",
+      "A content heavy application built with Astro to host information about the HASD History Club's WW2 Simulation. This game, with very complex rules, will be available for others to reference on this pretty website.",
     github: "aamirazad/history-club"
   },
   {
@@ -81,7 +81,7 @@ export const projects = [
     href: "https://homelab-connector.aamirazad.com",
     name: "Homelab Connector",
     description:
-      "A lighting fast full stack nextjs app connecting many self hosted services including paperless-ngx, immich, and whishper with authentication and support for many different use cases.",
+      "A lightning fast full stack nextjs app connecting many self hosted services including paperless-ngx, immich, and whisper with authentication and support for many different use cases.",
     github: "aamirazad/homelab-connector"
   },
   {
@@ -105,7 +105,7 @@ export const projects = [
   },
   {
     href: "https://school.aamirazad.com/enlightenment-french-revolution-timeline",
-    name: "Enlightenentment/French Revolution Timeline",
+    name: "Enlightenment/French Revolution Timeline",
     description: "An interactive timeline made with Timeline JS",
     github: "aamirazad/school/tree/main/src/app/enlightenment-french-revolution-timeline"
   },
