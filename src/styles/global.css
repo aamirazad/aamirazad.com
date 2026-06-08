@@ -146,7 +146,7 @@ section {
 	gap: 8px;
 }
 
-.link-list {
+.link-list a {
 	color: var(--muted);
 }
 

@@ -27,11 +27,13 @@ export default defineConfig({
 			"https://azadphotos.com/api/assets/83900471-95e1-4f33-a032-e41531e7455f/thumbnail?size=preview&key=6Cy6QJLTizf6dILKFfjfm9SJcfZjmR-Dzbk1yIHZFOQwSkAOYrk4QY7LKa0wxOSazU8&c=Y2WyiAHtxlI37LaS42gHmgXhpnI%3D",
 		"/fbla-game":
 			"https://connect.fbla.org/headquarters/files/High%20School%20Competitive%20Events%20Resources/Individual%20Guidelines/Presentation%20Events/Computer-Game-Simulation-Programming.pdf",
-		"/aseprite": "https://files.aamirazad.com/inbox/aseprite-v1.3.14-beta1.zip",
+		"/aseprite":
+			"https://files.aamirazad.com/inbox/aseprite-v1.3.14-beta1.zip",
 		"/pronounce-godot":
 			"https://upload.wikimedia.org/wikipedia/commons/transcoded/e/ef/En-us-Godot.oga/En-us-Godot.oga.mp3",
 		"/zulip": "https://hasd.zulipchat.com/join/6rwf4ado2v2erh3rowedivlr/",
-		"/fbla-zulip": "https://hasd.zulipchat.com/join/ki2oh6q5q3mnr3td6r3fxplg/",
+		"/fbla-zulip":
+			"https://hasd.zulipchat.com/join/ki2oh6q5q3mnr3td6r3fxplg/",
 		"/history-zulip":
 			"https://hasd.zulipchat.com/join/gk442fdoiubirhzpdytxvq5w/",
 		"/history-officer-zulip":
@@ -47,5 +49,6 @@ export default defineConfig({
 		"/codeberg": "https://codeberg.org/aamir",
 		"/bluesky": "https://bsky.app/profile/aamirazad.com",
 		"/mastodon": "https://mastodon.social/@aamira",
+		"/code": "https://code.aamirazad.com/aamir",
 	},
 });

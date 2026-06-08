@@ -4,8 +4,8 @@ export const contactLinks = [
 		label: "github",
 	},
 	{
-		href: "/codeberg",
-		label: "codeberg",
+		href: "/code",
+		label: "code",
 	},
 	{
 		href: "/resume",
@@ -127,8 +127,7 @@ export const projects = [
 		href: "https://school.aamirazad.com/enlightenment-french-revolution-timeline",
 		name: "Enlightenment/French Revolution Timeline",
 		description: "An interactive timeline made with Timeline JS",
-		github: 
-			"aamirazad/school/tree/main/src/app/enlightenment-french-revolution-timeline",
+		github: "aamirazad/school/tree/main/src/app/enlightenment-french-revolution-timeline",
 	},
 	{
 		href: "https://school.aamirazad.com/open-source",
@@ -149,6 +148,7 @@ export const homelab = [
 	},
 	{
 		name: "Forgejo",
+		href: "https://code.aamirazad.com/",
 	},
 	{
 		name: "Jellyfin",
@@ -167,6 +167,12 @@ export const homelab = [
 	},
 	{
 		name: "Mealie",
+	},
+	{
+		name: "Rallly",
+	},
+	{
+		name: "Listmonk",
 	},
 	{
 		name: "LanguageTool",
