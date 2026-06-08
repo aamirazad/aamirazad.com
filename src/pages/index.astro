@@ -61,6 +61,16 @@ const description =
 									GitHub
 								</a>
 							)}
+							{project.code && (
+								<a
+									class="meta-link"
+									href={project.code}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									Code
+								</a>
+							)}
 						</div>
 						<p class="item-description">{project.description}</p>
 					</li>

@@ -48,6 +48,13 @@ export const projects = [
 		wip: true,
 	},
 	{
+		href: "https://nonstop.aamirazad.com",
+		name: "Nonstop",
+		description:
+			"A simple time tracking website designed to help me keep track of how much time I spend on different activities.",
+		code: "https://code.aamirazad.com/aamir/nonstop/",
+	},
+	{
 		href: "https://sim.aamirazad.com",
 		name: "WWII Simulation",
 		description:
@@ -120,7 +127,7 @@ export const projects = [
 		href: "https://school.aamirazad.com/enlightenment-french-revolution-timeline",
 		name: "Enlightenment/French Revolution Timeline",
 		description: "An interactive timeline made with Timeline JS",
-		github:
+		github: 
 			"aamirazad/school/tree/main/src/app/enlightenment-french-revolution-timeline",
 	},
 	{
