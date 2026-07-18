@@ -1,54 +1,65 @@
 <script lang="ts">
-  let { data } = $props();
+  let { data, form } = $props();
 </script>
 
 <svelte:head>
-  <title>Editor · Aamir Azad</title>
+  <title>Publishing · Aamir Azad</title>
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
-<main class="shell">
+<main class="shell admin-shell">
   <nav class="site-nav" aria-label="Editor navigation">
     <a href="/admin">Publishing</a>
-    <form method="POST" action="/auth/logout"><button type="submit">Log out</button></form>
+    <form method="POST" action="/auth/logout">
+      <button class="button-link" type="submit">Log out</button>
+    </form>
   </nav>
 
-  <section class="admin-empty">
-    <p class="eyebrow">Owner editor</p>
-    <h1>Publishing</h1>
-    <p>The editor is ready. Draft creation arrives in the next phase.</p>
-    <p class="session-note">
-      Authenticated as Pocket ID subject <code>{data.owner?.subject}</code>.
-    </p>
+  <header class="admin-header">
+    <div>
+      <p class="eyebrow">Owner editor</p>
+      <h1>Publishing</h1>
+    </div>
+    <p class="session-note">Signed in through Pocket ID</p>
+  </header>
+
+  <section class="panel">
+    <h2>New draft</h2>
+    <form method="POST" action="?/create" class="new-draft-form">
+      <label
+        >Series<select name="series"
+          >{#each data.series as series}<option value={series}>{series}</option>{/each}</select
+        ></label
+      >
+      <label
+        >Format<select name="format"
+          >{#each data.formats as format}<option value={format}>{format}</option>{/each}</select
+        ></label
+      >
+      <button class="primary-button" type="submit">Create draft</button>
+    </form>
+    {#if form?.message}<p class="form-error" role="alert">{form.message}</p>{/if}
+  </section>
+
+  <section class="drafts">
+    <h2>Entries</h2>
+    {#if data.posts.length === 0}
+      <p>No drafts yet.</p>
+    {:else}
+      <ol class="draft-list">
+        {#each data.posts as post}
+          <li>
+            <a href={`/admin/posts/${post.id}`}>
+              <span>{post.title.trim() || "Untitled"}</span>
+              <small
+                >{post.series} · {post.format} · {post.status} · {new Date(
+                  post.updatedAt,
+                ).toLocaleString()}</small
+              >
+            </a>
+          </li>
+        {/each}
+      </ol>
+    {/if}
   </section>
 </main>
-
-<style>
-  form {
-    margin: 0;
-  }
-
-  button {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--soft);
-    cursor: pointer;
-  }
-
-  .eyebrow {
-    margin-bottom: 0.35rem;
-    color: var(--soft);
-    font-size: 0.75rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-  }
-
-  .session-note {
-    font-size: 0.85rem;
-  }
-
-  code {
-    overflow-wrap: anywhere;
-  }
-</style>
