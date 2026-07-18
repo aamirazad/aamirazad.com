@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "aamirazad-com",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "compatibility_date": "2026-07-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare",
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 },
+  },
+  "vars": {
+    "APP_ORIGIN": "http://localhost:3000",
+    "ENVIRONMENT": "local",
+  },
+  "env": {
+    "preview": {
+      "name": "aamirazad-com-preview",
+      "vars": {
+        "APP_ORIGIN": "https://preview.aamirazad.com",
+        "ENVIRONMENT": "preview",
+      },
+    },
+    "production": {
+      "name": "aamirazad-com",
+      "vars": {
+        "APP_ORIGIN": "https://aamirazad.com",
+        "ENVIRONMENT": "production",
+      },
+    },
+  },
+}

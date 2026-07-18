@@ -25,4 +25,6 @@ assert.equal(publicSurface.canonicalOrigin, "https://aamirazad.com");
 assert.deepEqual(publicSurface.homepageHeadings, ["Aamir Azad", "Contact", "Projects", "Homelab"]);
 assert.ok(publicSurface.staticRoutes.includes("/.well-known/openpgpkey"));
 
-console.log(`Baseline verified: ${paths.length} redirects and ${publicSurface.staticRoutes.length} static routes.`);
+console.log(
+  `Baseline verified: ${paths.length} redirects and ${publicSurface.staticRoutes.length} static routes.`,
+);
