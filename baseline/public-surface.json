@@ -1,0 +1,14 @@
+{
+  "canonicalOrigin": "https://aamirazad.com",
+  "description": "Rochester Institute of Technology Freshman who loves learning and building things.",
+  "homepageHeadings": ["Aamir Azad", "Contact", "Projects", "Homelab"],
+  "machineRoutes": ["/robots.txt", "/sitemap.xml"],
+  "staticRoutes": [
+    "/.well-known/matrix/server",
+    "/.well-known/openid-configuration",
+    "/.well-known/openpgpkey",
+    "/favicon.svg",
+    "/ssh"
+  ],
+  "title": "Aamir Azad"
+}
