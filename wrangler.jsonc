@@ -17,20 +17,61 @@
     "APP_ORIGIN": "http://localhost:3000",
     "ENVIRONMENT": "local",
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "personal-site-preview",
+      "database_id": "dacb0074-f416-4cc0-81fd-bb2d761a2d1b",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
+    { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
+    { "binding": "BACKUPS", "bucket_name": "personal-site-preview" },
+  ],
   "env": {
     "preview": {
       "name": "aamirazad-com-preview",
+      "routes": [{ "pattern": "preview.aamirazad.com", "custom_domain": true }],
       "vars": {
         "APP_ORIGIN": "https://preview.aamirazad.com",
         "ENVIRONMENT": "preview",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "personal-site-preview",
+          "database_id": "dacb0074-f416-4cc0-81fd-bb2d761a2d1b",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
+        { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
+        { "binding": "BACKUPS", "bucket_name": "personal-site-preview" },
+      ],
     },
     "production": {
       "name": "aamirazad-com",
+      "workers_dev": false,
       "vars": {
         "APP_ORIGIN": "https://aamirazad.com",
         "ENVIRONMENT": "production",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "personal-site",
+          "database_id": "82166898-9f90-46e1-b6ed-dfa33b7f4474",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        { "binding": "CONTENT", "bucket_name": "personal-site" },
+        { "binding": "MEDIA", "bucket_name": "personal-site" },
+        { "binding": "BACKUPS", "bucket_name": "personal-site" },
+      ],
     },
   },
 }

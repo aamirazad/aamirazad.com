@@ -5,5 +5,6 @@ export default defineConfig({
   plugins: [sveltekit()],
   test: {
     include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
+    exclude: ["tests/**/*.worker.test.ts"],
   },
 });
