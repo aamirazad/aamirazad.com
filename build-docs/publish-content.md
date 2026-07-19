@@ -19,7 +19,7 @@ This is a technical plan. It does not define the final visual design in detail, 
 
 Last updated: 2026-07-18.
 
-Implementation is continuing on branch `codex/publish-content`. Phases 0 through 5 are complete and tested at their stopping points:
+Implementation is continuing on branch `codex/publish-content`. Phases 0 through 6 are complete and tested at their stopping points:
 
 | Phase                                 | Status   | Commit          |
 | ------------------------------------- | -------- | --------------- |
@@ -28,8 +28,8 @@ Implementation is continuing on branch `codex/publish-content`. Phases 0 through
 | 2 — Storage and authentication        | Complete | `c336a13`       |
 | 3 — Draft editor                      | Complete | `1a5a296`       |
 | 4 — Publishing projection             | Complete | `45b02b9`       |
-| 5 — Caching and performance hardening | Complete | Pending handoff |
-| 6 — Portable export and recovery      | Pending  | Not started     |
+| 5 — Caching and performance hardening | Complete | `12c0622`       |
+| 6 — Portable export and recovery      | Complete | Pending handoff |
 | 7 — Publishing experience refinement  | Pending  | Not started     |
 | 8 — Production cutover                | Pending  | Not started     |
 | 9 — Convenience improvements          | Deferred | Not started     |
@@ -37,6 +37,8 @@ Implementation is continuing on branch `codex/publish-content`. Phases 0 through
 The Phase 4 Worker is deployed at `https://preview.aamirazad.com` as version `17d3a79c-4382-44a8-af66-e21ac74877bb`. Production has not been cut over. Preview D1 has no pending migrations. The final verification completed with 11 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, and a successful deployed publish/archive lifecycle. The runtime test confirmed that a cached post, feed, and sitemap were projected from R2 and that archiving caused the very next article request to miss cache and return `404`. The temporary verification post was archived and soft-deleted; its immutable preview job and audit history intentionally remain.
 
 The Phase 5 Worker is deployed to preview as version `b7e78d11-abfd-43f3-96f0-f2bcb47942aa`. Public HTML was observed moving from `MISS` to `HIT`, the same public response remained cacheable when a session cookie was supplied, and `/admin` remained `private, no-store` with Cloudflare cache bypass. The stopping-point checks pass with 13 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, 2,525 compressed CSS bytes, and no required public JavaScript. Live Lighthouse and multi-region measurements are intentionally deferred until the main publishing functionality is complete.
+
+The Phase 6 Worker is deployed to preview as version `09cc7779-2d85-489c-afa2-b8b993fe858e`. The portable TAR contains Markdown working copies and revisions, versioned metadata, aliases, asset relationships, original media, generated variants, and the current public projection while excluding authentication and operational records. The recovery integration test deletes every exported content and media object and restores the readable public post using only fresh `CONTENT` and `MEDIA` bindings, without D1. Preview migration `0003_remove_backup_scaffolding.sql` is applied, preview has no pending migrations, and the unused `BACKUPS` bindings and `backup_jobs` table are gone. The stopping point passes 15 application tests, 8 Worker integration tests, zero Svelte diagnostics, formatting, and the production build.
 
 Phase 5 added the following safeguards:
 
@@ -52,7 +54,7 @@ Important handoff details:
 - Public rendering reads published snapshots from `CONTENT` R2 and must remain independent of D1 and Pocket ID.
 - `worker.ts` owns canonical HTTPS request normalization, public cache headers, cache tags, and default-entrypoint purging. Do not replace it with the adapter-generated Worker; `wrangler.svelte.jsonc` keeps those entrypoints separate.
 - Preview authentication is configured and has been confirmed by the owner. Do not assume the local `.env` contains the deployed `SESSION_SECRET`; never print or attempt to retrieve deployed secret values.
-- `BACKUPS` bindings and the `backup_jobs` table are unused scaffolding from the original plan. Do not build a scheduled D1, R2, or off-provider backup system. Phase 6 is limited to a portable, owner-triggered Markdown export and proving that export can rebuild the site. Remove obsolete scaffolding only in a checked migration/configuration change when it is safe to do so.
+- Phase 6 removed the obsolete `BACKUPS` bindings and `backup_jobs` table. Do not reintroduce a scheduled D1, R2, or off-provider backup system; the approved recovery mechanism is the owner-triggered portable export documented in `build-docs/operations.md`.
 - The `old-site` directory remains reference-only for content and visual style. Continue building the SvelteKit application with the new stack.
 
 ## 2. Original Baseline State
@@ -839,7 +841,7 @@ Exit condition: a new entry can be published through the site, appears publicly 
 
 Exit condition: automated public asset budgets and caching correctness checks pass, and the functional changes are deployed to preview. Live Lighthouse and multi-region measurements are explicitly deferred.
 
-### Phase 6: Portable export and recovery — Pending
+### Phase 6: Portable export and recovery — Complete
 
 - Add an authenticated, owner-triggered portable Markdown export.
 - Include versioned metadata, canonical paths, aliases, source fields, and media references.

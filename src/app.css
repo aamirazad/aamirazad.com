@@ -239,6 +239,21 @@ small {
   background: var(--surface);
 }
 
+.compact-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.compact-panel :is(h2, p) {
+  margin-block: 0;
+}
+
+.compact-panel p {
+  margin-top: 0.35rem;
+}
+
 .new-draft-form,
 .stacked-form,
 .asset-card {
@@ -686,6 +701,7 @@ figcaption {
   }
 
   .admin-header,
+  .compact-panel,
   .editor-nav {
     align-items: flex-start;
     flex-direction: column;

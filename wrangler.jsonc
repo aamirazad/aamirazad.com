@@ -33,7 +33,6 @@
   "r2_buckets": [
     { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
     { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
-    { "binding": "BACKUPS", "bucket_name": "personal-site-preview" },
   ],
   "workflows": [
     {
@@ -62,7 +61,6 @@
       "r2_buckets": [
         { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
         { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
-        { "binding": "BACKUPS", "bucket_name": "personal-site-preview" },
       ],
       "workflows": [
         {
@@ -91,7 +89,6 @@
       "r2_buckets": [
         { "binding": "CONTENT", "bucket_name": "personal-site" },
         { "binding": "MEDIA", "bucket_name": "personal-site" },
-        { "binding": "BACKUPS", "bucket_name": "personal-site" },
       ],
       "workflows": [
         {

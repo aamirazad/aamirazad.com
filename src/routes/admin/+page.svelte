@@ -23,6 +23,16 @@
     <p class="session-note">Signed in through Pocket ID</p>
   </header>
 
+  <section class="panel compact-panel">
+    <div>
+      <h2>Portable recovery</h2>
+      <p>Download Markdown, metadata, media, and the current public projection.</p>
+    </div>
+    <form method="POST" action="/admin/export">
+      <button type="submit">Export content</button>
+    </form>
+  </section>
+
   <section class="panel">
     <h2>New draft</h2>
     <form method="POST" action="?/create" class="new-draft-form">
