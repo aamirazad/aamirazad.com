@@ -15,9 +15,46 @@ The primary goals are:
 
 This is a technical plan. It does not define the final visual design in detail, although it establishes the rendering, performance, accessibility, and content requirements the design must satisfy.
 
-## 2. Current State
+## Implementation Status and Agent Handoff
 
-The existing repository contains a minimal static Astro site:
+Last updated: 2026-07-18.
+
+Work is paused after Phase 4 on branch `codex/publish-content`. Phases 0 through 4 are complete, tested at their stopping points, and committed:
+
+| Phase | Status | Commit |
+| --- | --- | --- |
+| 0 — Decisions and baseline | Complete | `1684dc0` |
+| 1 — SvelteKit foundation | Complete | `e8866bf` |
+| 2 — Storage and authentication | Complete | `c336a13` |
+| 3 — Draft editor | Complete | `1a5a296` |
+| 4 — Publishing projection | Complete | `45b02b9` |
+| 5 — Caching and performance hardening | Next | Not started |
+| 6 — Portable export and recovery | Pending | Not started |
+| 7 — Production cutover | Pending | Not started |
+| 8 — Convenience improvements | Deferred | Not started |
+
+The Phase 4 Worker is deployed at `https://preview.aamirazad.com` as version `17d3a79c-4382-44a8-af66-e21ac74877bb`. Production has not been cut over. Preview D1 has no pending migrations. The final verification completed with 11 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, and a successful deployed publish/archive lifecycle. The runtime test confirmed that a cached post, feed, and sitemap were projected from R2 and that archiving caused the very next article request to miss cache and return `404`. The temporary verification post was archived and soft-deleted; its immutable preview job and audit history intentionally remain.
+
+The next agent must start with Phase 5 and must not begin Phase 6 until the Phase 5 exit condition passes and its changes have been committed. In particular:
+
+1. Audit the existing Workers Cache configuration, public response headers, cache tags, Static Assets routing, and private-route bypass behavior. Preserve the public-entrypoint purge RPC in `worker.ts`; Workers Cache purges are entrypoint-scoped.
+2. Add responsive image variants while retaining immutable R2 originals, then verify variant dimensions, formats, cache policy, and fallbacks.
+3. Add automated public asset-size and Lighthouse CI budgets.
+4. Test anonymous pages and authenticated routes for session leakage or accidental caching.
+5. Measure deployed preview cache hit behavior, representative public latency, and multi-region behavior against the Phase 5 budgets.
+6. Run the complete checks, deploy to preview, repeat live smoke tests, and create a conventional Phase 5 commit at the stopping point.
+
+Important handoff details:
+
+- Public rendering reads published snapshots from `CONTENT` R2 and must remain independent of D1 and Pocket ID.
+- `worker.ts` owns canonical HTTPS request normalization, public cache headers, cache tags, and default-entrypoint purging. Do not replace it with the adapter-generated Worker; `wrangler.svelte.jsonc` keeps those entrypoints separate.
+- Preview authentication is configured and has been confirmed by the owner. Do not assume the local `.env` contains the deployed `SESSION_SECRET`; never print or attempt to retrieve deployed secret values.
+- `BACKUPS` bindings and the `backup_jobs` table are unused scaffolding from the original plan. Do not build a scheduled D1, R2, or off-provider backup system. Phase 6 is limited to a portable, owner-triggered Markdown export and proving that export can rebuild the site. Remove obsolete scaffolding only in a checked migration/configuration change when it is safe to do so.
+- The `old-site` directory remains reference-only for content and visual style. Continue building the SvelteKit application with the new stack.
+
+## 2. Original Baseline State
+
+At the time this plan was written, the repository contained a minimal static Astro site:
 
 - One homepage at `src/pages/index.astro`.
 - Contact, project, and homelab data in `src/data/links.ts`.
@@ -50,7 +87,7 @@ Use Cloudflare Workers as the production runtime. The application, static assets
 
 Use the Cloudflare Workers Free plan for production. Its current request, CPU, D1, R2, and Workflows allowances are sufficient for a personal publishing site, particularly because public content is projected to R2, cached aggressively, and does not query D1 on ordinary page views.
 
-The implementation must be designed and monitored against the Free plan's limits rather than assuming an automatic upgrade. At the time of this plan, the most relevant limits include 100,000 Worker requests per day, 10 milliseconds of CPU per invocation, 5 million D1 rows read per day, 100,000 D1 rows written per day, a 500 MB maximum per D1 database, and seven days of D1 Time Travel. These values must be rechecked against current Cloudflare documentation before provisioning and production cutover. Static assets should bypass Worker code where possible, and publication, backups, image processing, and feed generation must avoid unnecessary work per request.
+The implementation must be designed and monitored against the Free plan's limits rather than assuming an automatic upgrade. At the time of this plan, the most relevant limits include 100,000 Worker requests per day, 10 milliseconds of CPU per invocation, 5 million D1 rows read per day, 100,000 D1 rows written per day, a 500 MB maximum per D1 database, and seven days of D1 Time Travel. These values must be rechecked against current Cloudflare documentation before provisioning and production cutover. Static assets should bypass Worker code where possible, and publication, portable export, image processing, and feed generation must avoid unnecessary work per request.
 
 If usage approaches a Free plan limit, first investigate caching, query efficiency, asset routing, and abusive traffic. Moving to a paid plan is not part of the approved baseline and would require a separate decision.
 
@@ -75,7 +112,7 @@ Use Cloudflare D1 as the editorial system of record for:
 - Slug aliases.
 - Asset metadata.
 - Authenticated sessions.
-- Publishing and backup job state.
+- Publishing and portable-export job state.
 
 Use Cloudflare R2 for:
 
@@ -83,7 +120,7 @@ Use Cloudflare R2 for:
 - Derived image variants.
 - Immutable published content snapshots.
 - Generated public indexes and feeds.
-- Same-provider D1 backup exports.
+- Portable Markdown export artifacts when temporary server-side assembly is required.
 
 Do not store image blobs in D1. Do not store published content only as rendered HTML. The original Markdown and structured metadata must remain available for editing and export.
 
@@ -93,11 +130,13 @@ Self-hosted SQLite may be used for local recovery copies and restore tests, but 
 
 ### 3.4 Environment files and Worker bindings
 
-The repository contains a `.env.example` file that defines the structure of the real, uncommitted `.env` file. The example file should be tracked in version control and currently contains these Pocket ID variables:
+The repository contains a `.env.example` file that defines the structure of the real, uncommitted `.env` file. The example file should be tracked in version control and currently contains these Pocket ID and session variables:
 
 - `OIDC_CLIENT_ID`
 - `OIDC_CLIENT_SECRET`
 - `OIDC_DISCOVERY_URL`
+- `OIDC_OWNER_SUB`
+- `SESSION_SECRET`
 
 Developers create `.env` from `.env.example` and populate it with the real Pocket ID client details for the selected local environment. The existing `.gitignore` excludes `.env`; it must never be committed, logged, placed in generated client code, or included in content exports. When a new required Pocket ID setting is introduced, update `.env.example` with a safe placeholder in the same change.
 
@@ -327,8 +366,6 @@ published/indexes/series/{series}/{page}.json
 published/feeds/feed.xml
 published/feeds/feed.json
 published/sitemap.xml
-backups/d1/{yyyy}/{mm}/{timestamp}.sql
-backups/exports/{yyyy}/{mm}/{timestamp}.tar.zst
 ```
 
 The immutable revision snapshot is the durable record of what was published. The `by-path` object and index objects are replaceable projections that point to or include an immutable revision.
@@ -378,7 +415,7 @@ The existing public version remains visible until the new projection succeeds. A
 - The existing public snapshot may be retained privately for restoration.
 - The public route returns `404` or `410` based on an explicit editorial choice.
 - A purge job removes cached public responses after the new state has been projected.
-- Permanent deletion is an administrative maintenance operation outside the normal editor and requires a verified backup.
+- Permanent deletion is an administrative maintenance operation outside the normal editor and requires a verified portable export.
 
 ### 7.5 Scheduled publication
 
@@ -583,38 +620,28 @@ The publishing projection should generate:
 
 Feeds should contain stable IDs and either full sanitized content or a consistent summary policy. Updating a post must not generate a new feed identity.
 
-## 12. Reliability, Backups, and Portability
+## 12. Reliability, Recovery, and Portability
 
 ### 12.1 Recovery layers
 
-Use several independent recovery layers:
+Use several recovery layers appropriate to a personal site:
 
 1. Immutable D1 revisions protect against ordinary editing mistakes.
 2. The Free plan's seven-day D1 Time Travel window protects against recent database damage.
 3. R2 published snapshots protect the public representation from editorial database outages.
-4. Scheduled D1 SQL exports to R2 provide restorable database dumps.
-5. Off-provider exports protect against Cloudflare account or provider loss.
-6. A repository mirror of Markdown provides human-readable content history.
-7. A separate copy of original media protects the irreplaceable binary assets.
+4. An owner-triggered portable Markdown export provides human-readable, provider-independent content recovery.
 
-R2 backups are useful but do not count as provider-independent backups because D1 and R2 share the same provider.
+The initial platform deliberately does not include scheduled D1 exports, a backup R2 bucket, off-provider synchronization, retention automation, or a recurring backup Workflow. Those systems are outside the approved scope for this personal site.
 
-### 12.2 Backup schedule
+### 12.2 Portable export lifecycle
 
-- Daily: export the complete D1 database to a private R2 backup bucket through a scheduled Workflow.
-- On every successful publication: create or update a portable Markdown and metadata export asynchronously.
-- Weekly: copy the latest full export and any new original media to an off-provider destination.
-- Before every production schema migration: create a named export and record the restore point.
-- Quarterly: restore the database and a sample of media into an isolated environment and verify rendered output.
+- The owner can request and download an export from the authenticated site.
+- The export is assembled from immutable revisions and structured metadata, not scraped from rendered HTML.
+- Export generation is observable and retryable without blocking publication.
+- Repeated exports of the same content use stable identifiers and deterministic paths.
+- Before production cutover, import the export into an isolated environment and verify the rebuilt public output.
 
-Backup retention should include at least:
-
-- Seven daily backups.
-- Eight weekly backups.
-- Twelve monthly backups.
-- Permanent published Markdown history unless explicitly pruned.
-
-Secrets, session tokens, and unnecessary audit data must be excluded or encrypted in portable content exports.
+Secrets, session tokens, job internals, and unnecessary audit data must be excluded from portable content exports.
 
 ### 12.3 Export format
 
@@ -646,7 +673,7 @@ Emit structured logs for:
 - Upload validation and storage failures.
 - Publication state transitions.
 - R2 projection and cache purge results.
-- Scheduled backup results.
+- Portable export results.
 - Public snapshot misses and malformed snapshots.
 
 Every publish request should carry a correlation ID from the editor action through the Workflow and purge call.
@@ -661,13 +688,13 @@ Track at minimum:
 - D1 query failures on administrative routes.
 - Publishing duration and failure rate.
 - Oldest queued or failed publishing job.
-- Last successful D1 backup and off-provider backup.
+- Last successful portable export and its validation result.
 - Worker CPU time and bundle size.
 
 Alert when:
 
 - A production publishing job remains incomplete beyond a defined threshold.
-- The latest daily backup is older than 30 hours.
+- Portable export generation or validation fails.
 - Public 5xx responses exceed a small threshold.
 - Authentication failures suddenly spike.
 - Storage or Worker usage approaches an account limit.
@@ -679,10 +706,9 @@ Document concise procedures for:
 - Restoring an accidentally edited or archived post.
 - Retrying a failed publication.
 - Rolling back a schema migration.
-- Restoring D1 from an export.
 - Rebuilding R2 public projections from D1 revisions.
 - Rebuilding the site solely from a portable export.
-- Rotating Pocket ID, session, cache-purge, and backup credentials.
+- Rotating Pocket ID and session credentials.
 - Operating public pages during a Pocket ID outage.
 
 ## 14. Testing Strategy
@@ -710,7 +736,7 @@ Run against local or isolated preview D1 and R2 bindings:
 - Verify slug aliases and existing redirects.
 - Complete an OIDC login using the preview Pocket ID client.
 - Verify administrative actions reject unauthorized subjects and bad origins.
-- Restore a database export and regenerate public snapshots.
+- Import a portable content export and regenerate public snapshots.
 
 ### 14.3 End-to-end tests
 
@@ -731,17 +757,17 @@ Run against local or isolated preview D1 and R2 bindings:
 
 ## 15. Migration and Delivery Phases
 
-### Phase 0: Decisions and baseline
+### Phase 0: Decisions and baseline — Complete
 
 - Record the approved Cloudflare Workers Free plan as the production cost baseline and recheck its current limits.
 - Confirm `I Built` versus `I Build` wording.
-- Choose preview hostname and off-provider backup destination.
+- Choose the preview hostname and record the approved recovery scope.
 - Record current production pages, redirects, metadata, and performance results.
 - Add automated checks for all existing redirect paths.
 
 Exit condition: the existing site has a repeatable parity and performance baseline.
 
-### Phase 1: SvelteKit foundation
+### Phase 1: SvelteKit foundation — Complete
 
 - Scaffold SvelteKit without deleting the working Astro implementation prematurely.
 - Preserve `pnpm` as the only package manager, retain the `packageManager` declaration and `pnpm-lock.yaml`, and express every development and CI command as a `pnpm` command.
@@ -755,7 +781,7 @@ Exit condition: the existing site has a repeatable parity and performance baseli
 
 Exit condition: the preview matches or intentionally improves every current public behavior and does not regress baseline performance.
 
-### Phase 2: Storage and authentication
+### Phase 2: Storage and authentication — Complete
 
 - Authenticate the Cloudflare CLI and create preview D1 and R2 resources through Wrangler.
 - Record the resulting non-secret resource identifiers as preview bindings in `wrangler.jsonc` and generate binding types.
@@ -769,7 +795,7 @@ Exit condition: the preview matches or intentionally improves every current publ
 
 Exit condition: only the configured owner can access an otherwise empty editor, and anonymous pages remain cacheable.
 
-### Phase 3: Draft editor
+### Phase 3: Draft editor — Complete
 
 - Implement series and format selection.
 - Add Markdown editing, validation, autosave, local recovery, and preview.
@@ -779,7 +805,7 @@ Exit condition: only the configured owner can access an otherwise empty editor, 
 
 Exit condition: all five formats can be drafted and previewed reliably from desktop and mobile.
 
-### Phase 4: Publishing projection
+### Phase 4: Publishing projection — Complete
 
 - Implement durable publishing jobs and Workflow orchestration.
 - Implement Markdown rendering and sanitization.
@@ -790,7 +816,7 @@ Exit condition: all five formats can be drafted and previewed reliably from desk
 
 Exit condition: a new entry can be published through the site, appears publicly within the target time, remains available during a simulated D1 outage, and can be updated without partial public state.
 
-### Phase 5: Caching and performance hardening
+### Phase 5: Caching and performance hardening — Next
 
 - Configure Cloudflare Cache Rules and response headers.
 - Verify no session leakage or accidental administrative caching.
@@ -800,17 +826,17 @@ Exit condition: a new entry can be published through the site, appears publicly 
 
 Exit condition: public route budgets and caching correctness tests pass in the deployed preview environment.
 
-### Phase 6: Backup and recovery
+### Phase 6: Portable export and recovery — Pending
 
-- Add scheduled D1-to-R2 exports.
-- Add portable Markdown exports.
-- Configure the off-provider backup job.
-- Add retention rules that never delete original published content by accident.
-- Execute and document a complete restore drill.
+- Add an authenticated, owner-triggered portable Markdown export.
+- Include versioned metadata, canonical paths, aliases, source fields, and media references.
+- Add an import or rebuild path for the portable format.
+- Exclude secrets, sessions, and operational audit data.
+- Execute and document a complete rebuild from the portable export.
 
-Exit condition: the site can be rebuilt from both a D1 backup and the provider-independent portable export.
+Exit condition: the site can be rebuilt from the provider-independent portable export without the original D1 database.
 
-### Phase 7: Production cutover
+### Phase 7: Production cutover — Pending
 
 - Freeze unrelated changes briefly.
 - Take a final backup of the existing site and configuration.
@@ -821,7 +847,7 @@ Exit condition: the site can be rebuilt from both a D1 backup and the provider-i
 
 Exit condition: production is stable, a test post has completed the full lifecycle, and rollback is no longer the primary recovery strategy.
 
-### Phase 8: Convenience improvements
+### Phase 8: Convenience improvements — Deferred
 
 After the core system is reliable:
 
@@ -852,7 +878,6 @@ The initial publishing platform is complete when:
 - Feeds, sitemap, canonical metadata, and social metadata are generated.
 - Original photos are retained and responsive variants are served efficiently.
 - Performance budgets pass for representative public pages.
-- Daily and off-provider backups are operating.
 - A full restore from a portable export has been demonstrated.
 - Production secrets, migrations, resource bindings, and recovery procedures are documented.
 
@@ -866,6 +891,8 @@ The repository's `.env.example` is the authoritative, version-controlled structu
 OIDC_CLIENT_ID=
 OIDC_CLIENT_SECRET=
 OIDC_DISCOVERY_URL=
+OIDC_OWNER_SUB=
+SESSION_SECRET=
 ```
 
 Create the ignored `.env` file from this template and place the real Pocket ID values there. Do not commit `.env`. If preview and production require different Pocket ID clients, use the appropriate values in each local environment and configure each deployed Wrangler environment with its corresponding values.
@@ -894,25 +921,18 @@ Do not place production secrets in this document, `wrangler.jsonc`, or source co
 - Production and preview Pocket ID client secrets.
 - Allowed owner OIDC subject and optional group if treated as private configuration.
 - Random session secrets.
-- Narrowly scoped Cloudflare cache-purge API token.
-- Narrowly scoped D1 export token for the backup Workflow.
-- Off-provider backup destination credentials.
 
 Cloudflare account and zone selection should come from Wrangler configuration and its authenticated execution context. Every machine credential should have the minimum resource scope needed for its task and a documented rotation procedure.
 
 The local `.env` is a developer convenience and structure for Pocket ID configuration; it is not the production secret-delivery mechanism. D1 and R2 remain binding-based in every environment.
 
-## 18. Open Decisions
+## 18. Remaining Decisions
 
-The following choices should be finalized before Phase 1 or the phase that depends on them:
+The following choices should be finalized before the phase that depends on them:
 
-- Confirm the canonical project phrase: `I Built ...` or `I Build ...`.
-- Confirm Cloudflare currently manages or can proxy the `aamirazad.com` DNS zone.
-- Select the preview hostname.
-- Select the off-provider content and media backup destinations.
+- Confirm the portable export archive format and whether it includes media binaries or only a media manifest.
 - Decide whether photo originals may retain location and camera metadata; the privacy-first default is to strip sensitive EXIF data from public variants while preserving the private original.
 - Decide whether publication dates may be backdated and whether modified dates should be visible publicly.
-- Decide whether archived URLs return `404` or `410`.
 
 None of these decisions require changing the core write-dynamic, read-static architecture.
 
@@ -929,6 +949,6 @@ Append /index.md to any Cloudflare docs URL for a clean markdown version.
 - [Cloudflare R2 durability](https://developers.cloudflare.com/r2/reference/durability/)
 - [Cloudflare R2 pricing](https://developers.cloudflare.com/r2/pricing/)
 - [Cloudflare cache-control behavior](https://developers.cloudflare.com/cache/concepts/cache-control/)
-- [Cloudflare cache purging](https://developers.cloudflare.com/cache/how-to/purge-cache/)
-- [Cloudflare D1-to-R2 backup Workflow](https://developers.cloudflare.com/workflows/examples/backup-d1/)
+- [Cloudflare Workers Cache configuration](https://developers.cloudflare.com/workers/cache/configuration/)
+- [Cloudflare Workers Cache purging](https://developers.cloudflare.com/workers/cache/purge/)
 - [Pocket ID OIDC client examples](https://pocket-id.org/docs/client-examples/)
