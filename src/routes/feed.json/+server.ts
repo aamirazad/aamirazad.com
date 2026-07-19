@@ -1,15 +1,16 @@
-import { error } from "@sveltejs/kit";
+import { jsonFeed } from "$lib/server/content/projection";
 import { readGeneratedObject } from "$lib/server/public-content";
 import { requireRuntimeEnv } from "$lib/server/env";
 import type { RequestHandler } from "./$types";
 export const GET: RequestHandler = async ({ platform }) => {
-  const object = await readGeneratedObject(requireRuntimeEnv(platform), "feeds/feed.json");
-  if (!object) error(404, "Feed not generated");
-  return new Response(object.body, {
+  const env = requireRuntimeEnv(platform);
+  const object = await readGeneratedObject(env, "feeds/feed.json");
+  return new Response(object?.body ?? jsonFeed(env.APP_ORIGIN, []), {
     headers: {
       "content-type": "application/feed+json; charset=utf-8",
-      etag: object.httpEtag,
-      "last-modified": object.uploaded.toUTCString(),
+      ...(object
+        ? { etag: object.httpEtag, "last-modified": object.uploaded.toUTCString() }
+        : { "last-modified": new Date(0).toUTCString() }),
     },
   });
 };

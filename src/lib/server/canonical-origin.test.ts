@@ -18,6 +18,9 @@ describe("production canonical origin", () => {
       canonicalRedirect("https://aamirazad.com/", "https://aamirazad.com", "production"),
     ).toBeNull();
     expect(
+      canonicalRedirect("http://aamirazad.com/", "https://aamirazad.com", "production"),
+    ).toBeNull();
+    expect(
       canonicalRedirect(
         "https://preview.aamirazad.com/",
         "https://preview.aamirazad.com",

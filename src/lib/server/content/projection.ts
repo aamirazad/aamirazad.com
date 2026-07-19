@@ -392,12 +392,12 @@ function toCard(post: PublishedPost): PublishedCard {
   };
 }
 
-function atomFeed(origin: string, posts: PublishedPost[]): string {
+export function atomFeed(origin: string, posts: PublishedPost[]): string {
   const updated = posts[0]?.modifiedAt ?? new Date(0).toISOString();
   return `<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><id>${xml(origin)}/</id><title>Aamir Azad</title><updated>${updated}</updated><link href="${xml(origin)}/feed.xml" rel="self"/>${posts.map((post) => `<entry><id>${xml(origin + post.canonicalPath)}</id><title>${xml(post.title)}</title><link href="${xml(origin + post.canonicalPath)}"/><published>${post.publishedAt}</published><updated>${post.modifiedAt}</updated><summary>${xml(post.summary)}</summary><content type="html">${xml(post.html)}</content></entry>`).join("")}</feed>`;
 }
 
-function jsonFeed(origin: string, posts: PublishedPost[]): string {
+export function jsonFeed(origin: string, posts: PublishedPost[]): string {
   return JSON.stringify({
     version: "https://jsonfeed.org/version/1.1",
     title: "Aamir Azad",
@@ -415,7 +415,7 @@ function jsonFeed(origin: string, posts: PublishedPost[]): string {
   });
 }
 
-function sitemap(origin: string, posts: PublishedPost[]): string {
+export function sitemap(origin: string, posts: PublishedPost[]): string {
   const paths = [
     "/",
     "/on",
