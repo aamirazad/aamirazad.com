@@ -113,3 +113,9 @@ export function cacheTagsForPath(path: string): string[] {
   if (first && ["on", "today", "built", "found"].includes(first)) tags.push(`series-${first}`);
   return tags;
 }
+
+export function publishedPostWasEdited(
+  post: Pick<PublishedPost, "publishedAt" | "modifiedAt">,
+): boolean {
+  return Date.parse(post.modifiedAt) > Date.parse(post.publishedAt);
+}

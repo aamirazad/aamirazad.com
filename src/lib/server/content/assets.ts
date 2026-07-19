@@ -3,6 +3,7 @@ import { imageSize } from "image-size";
 import type { PostAsset } from "$lib/content";
 import { sha256Hex, uuidV7 } from "$lib/server/crypto";
 import type { RuntimeEnv } from "$lib/server/env";
+import { ensureImageVariants } from "$lib/server/content/image-variants";
 
 const MAX_UPLOAD_BYTES = 12 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Map([
@@ -107,6 +108,34 @@ export async function uploadPostAsset(
   };
 }
 
+export async function uploadPostAssetForMarkdown(
+  env: RuntimeEnv,
+  postId: string,
+  file: File,
+  actor: string,
+): Promise<{ asset: PostAsset; markdown: string }> {
+  const asset = await uploadPostAsset(env, postId, file, "", "", actor);
+  const postAsset = await env.DB.prepare(
+    `SELECT id, original_key AS originalKey, mime_type AS mimeType,
+    width, height FROM assets WHERE id = ? LIMIT 1`,
+  )
+    .bind(asset.id)
+    .first<{
+      id: string;
+      originalKey: string;
+      mimeType: string;
+      width: number | null;
+      height: number | null;
+    }>();
+  if (!postAsset) throw new Error("Uploaded image metadata is unavailable.");
+  const variants = await ensureImageVariants(env, postAsset);
+  const webp = variants.filter((variant) => variant.mimeType === "image/webp").at(-1);
+  if (!webp) throw new Error("The image could not be compressed to WebP.");
+  const alt = markdownText(asset.originalFilename.replace(/\.[^.]+$/u, ""));
+  const url = `/media/${encodeURIComponent(asset.id)}/${encodeURIComponent(webp.contentHash)}/${encodeURIComponent(webp.name)}`;
+  return { asset, markdown: `![${alt}](${url})` };
+}
+
 export async function updateAssetMetadata(
   env: RuntimeEnv,
   postId: string,
@@ -160,4 +189,8 @@ function safeFilename(input: string, extension: string): string {
       .replace(/^-+|-+$/gu, "")
       .slice(0, 80) || "image";
   return `${base}.${extension}`;
+}
+
+function markdownText(value: string): string {
+  return value.replace(/([\\\[\]])/gu, "\\$1");
 }

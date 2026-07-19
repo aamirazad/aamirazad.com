@@ -10,7 +10,6 @@ const config = {
       config: "wrangler.svelte.jsonc",
       platformProxy: {
         configPath: "wrangler.jsonc",
-        environment: "preview",
         persist: ".wrangler/state/v3",
       },
     }),

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PublishedDate from "$lib/components/PublishedDate.svelte";
   import { SITE_ORIGIN } from "$lib/site";
   let { data } = $props();
 </script>
@@ -20,9 +21,10 @@
           <a href={post.canonicalPath}>{post.title}</a>
           <p>{post.summary}</p>
           <small
-            >{post.series} · {post.format} · {new Date(
-              post.publishedAt,
-            ).toLocaleDateString()}</small
+            >{post.series} · {post.format} · <PublishedDate
+              publishedAt={post.publishedAt}
+              modifiedAt={post.modifiedAt}
+            /></small
           >
         </li>{/each}
     </ol>{:else}<p>Nothing published yet.</p>{/if}

@@ -17,7 +17,7 @@ This is a technical plan. It does not define the final visual design in detail, 
 
 ## Implementation Status and Agent Handoff
 
-Last updated: 2026-07-18.
+Last updated: 2026-07-19.
 
 Implementation is continuing on branch `codex/publish-content`. Phases 0 through 7 are complete and tested at their stopping points:
 
@@ -31,8 +31,8 @@ Implementation is continuing on branch `codex/publish-content`. Phases 0 through
 | 5 — Caching and performance hardening | Complete | `12c0622`       |
 | 6 — Portable export and recovery      | Complete | `5c629ef`       |
 | 7 — Publishing experience refinement  | Complete | Pending handoff |
-| 8 — Production cutover                | Pending  | Not started     |
-| 9 — Convenience improvements          | Deferred | Not started     |
+| 8 — Production cutover                | Complete | Pending handoff |
+| 9 — Publishing convenience and focus  | Complete | Pending handoff |
 
 The Phase 4 Worker is deployed at `https://preview.aamirazad.com` as version `17d3a79c-4382-44a8-af66-e21ac74877bb`. Production has not been cut over. Preview D1 has no pending migrations. The final verification completed with 11 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, and a successful deployed publish/archive lifecycle. The runtime test confirmed that a cached post, feed, and sitemap were projected from R2 and that archiving caused the very next article request to miss cache and return `404`. The temporary verification post was archived and soft-deleted; its immutable preview job and audit history intentionally remain.
 
@@ -41,6 +41,30 @@ The Phase 5 Worker is deployed to preview as version `b7e78d11-abfd-43f3-96f0-f2
 The Phase 6 Worker is deployed to preview as version `09cc7779-2d85-489c-afa2-b8b993fe858e`. The portable TAR contains Markdown working copies and revisions, versioned metadata, aliases, asset relationships, original media, generated variants, and the current public projection while excluding authentication and operational records. The recovery integration test deletes every exported content and media object and restores the readable public post using only fresh `CONTENT` and `MEDIA` bindings, without D1. Preview migration `0003_remove_backup_scaffolding.sql` is applied, preview has no pending migrations, and the unused `BACKUPS` bindings and `backup_jobs` table are gone. The stopping point passes 15 application tests, 8 Worker integration tests, zero Svelte diagnostics, formatting, and the production build.
 
 The Phase 7 Worker is deployed to preview as version `9b80a81a-034f-46e8-ac6a-82e51b883bee`. Every public page now includes a quiet 44-pixel editor entrance in its server-rendered HTML. After Pocket ID returns to `/admin`, focus moves directly to the empty title continuation with `On` and `article` selected; series choices are visible radio buttons, formats and metadata are progressive details, and existing drafts, recovery export, revisions, previews, slug controls, and archive actions are outside the primary writing path. No durable row is created for the empty/default state. The first meaningful edit is retained in browser recovery storage, autosaved with optimistic concurrency, and can publish through the existing durable workflow from the composer. The path includes offline retry, conflict and publication status announcements, keyboard-native controls, touch-sized series choices, and no motion dependency. The stopping point passes 15 application tests, 9 Worker integration tests, zero Svelte diagnostics, formatting, a production build, 3,107 compressed CSS bytes, and no required public JavaScript. The owner-authenticated browser gesture path was not impersonated; authentication return behavior and the underlying storage/publication lifecycle are covered independently.
+
+Phases 8 and 9 completed on 2026-07-19. The application Worker is deployed to production as
+version `491bcece-d811-4bbb-8b12-69a83b0c5fd5`. The apex and `www` return the same public content,
+with apex canonical metadata; no hostname redirect is emitted because the zone's
+hostname-independent cache key could reuse a cached `www` redirect on the apex. Preview is version
+`553e653d-c379-4ddd-9f66-88d1d57c6ea4`. The composer accepts dropped and selected images,
+preserves originals, immediately generates WebP in R2, and inserts Markdown at the cursor. The
+homepage prioritizes recent writing and makes projects and homelab links expandable. The stopping
+point passes 16 application tests, 10 Worker integration tests, zero Svelte diagnostics, the
+production build, and the asset budget with 3,269 compressed CSS bytes and no required public
+JavaScript.
+
+The final refinement pass keeps local Pocket ID callbacks on the local request origin, presents the
+latest post body as the homepage's primary content, gives the four series and archive routes a more
+visible navigation treatment, and replaces the combined secondary-content disclosure with separate
+Projects, Links, and Homelab previews that expand independently. Public post cards and pages expose
+the original publication date and mark later revisions with an asterisk whose tooltip contains the
+modified date. Deployment configuration now targets one `aamirazad-com` Worker: non-production
+branches upload preview versions with temporary `workers.dev` URLs, while `main` deploys to the apex
+and `www` Custom Domains. The former `aamirazad-com-preview` Worker and permanent
+`preview.aamirazad.com` Custom Domain can be retired after the first successful branch preview.
+The final local stopping point passes 18 application tests, 12 Worker integration tests, zero Svelte
+diagnostics, formatting, both Wrangler environment dry runs, a production build, and the public
+asset budget with 4,614 compressed CSS bytes and no required public JavaScript.
 
 Phase 5 added the following safeguards:
 
@@ -100,13 +124,14 @@ If usage approaches a Free plan limit, first investigate caching, query efficien
 
 D1 databases and R2 buckets will be created and managed through Wrangler once implementation begins. Bindings and non-secret resource identifiers belong in `wrangler.jsonc`; application code accesses D1 and R2 only through the Worker's typed bindings. Representative commands include `pnpm exec wrangler d1 create`, `pnpm exec wrangler r2 bucket create`, D1 migration commands, `pnpm exec wrangler dev`, and `pnpm exec wrangler deploy`.
 
-Preview and production must use separate resources:
+Preview and production versions must use separate resources where writes or identity are involved,
+while remaining versions of one application Worker:
 
 - Separate D1 databases.
 - Separate R2 buckets or clearly isolated bucket prefixes.
 - Separate Pocket ID OIDC clients and callback URLs.
 - Separate session secrets and Cloudflare API tokens.
-- Separate hostnames, such as `preview.aamirazad.com` and `aamirazad.com`.
+- Temporary versioned `workers.dev` URLs for previews and Custom Domains for production.
 
 ### 3.3 Data and storage
 
@@ -867,7 +892,7 @@ Exit condition: the site can be rebuilt from the provider-independent portable e
 
 Exit condition: from any public page, the owner can reach a ready-to-write composer, create and publish a default `On` article with no setup choices or dropdowns, and complete the same flow accessibly on desktop and mobile.
 
-### Phase 8: Production cutover — Pending
+### Phase 8: Production cutover — Complete
 
 - Freeze unrelated changes briefly.
 - Take a final backup of the existing site and configuration.
@@ -878,9 +903,36 @@ Exit condition: from any public page, the owner can reach a ready-to-write compo
 
 Exit condition: production is stable, a test post has completed the full lifecycle, and rollback is no longer the primary recovery strategy.
 
-### Phase 9: Convenience improvements — Deferred
+### Phase 9: Publishing convenience and homepage focus — Complete
 
-After the core system is reliable:
+- Add image drag-and-drop and a compact file picker directly below the Markdown editor.
+- Preserve uploaded originals, create compressed WebP variants in R2 immediately, and insert
+  `![file name](public media URL)` at the cursor.
+- Lead the homepage with recent writing and an archive call to action.
+- Preserve project and homelab information in an expandable secondary section.
+
+Exit condition: images can be inserted without leaving the writing path, and the homepage makes
+recent publishing its primary changing content.
+
+### Phase 10: Final presentation and deployment refinement — Complete
+
+- Keep local OIDC callbacks on the localhost origin being visited and allow temporary Worker preview
+  URLs to use their own callback origin.
+- Show a clipped rendering of the newest post on the homepage with a clear full-post action.
+- Make `On`, `Today`, `Built`, `Found`, and `Archive` prominent in the first viewport.
+- Present Projects, Links, and Homelab as separate previews with independently expanding remainder
+  lists and no public JavaScript requirement.
+- Show publication dates on every post view and index card, adding an edited-date asterisk only when
+  a later published revision exists.
+- Target preview and production versions at one Worker. Let Workers Builds upload non-production
+  branches to temporary preview URLs and deploy `main` to the apex and `www` Custom Domains.
+- Serve the same public representation with apex canonical metadata on both production hostnames,
+  and normalize private `www` routes to the apex without cacheable redirects.
+
+Exit condition: the final visual, date, authentication-origin, branch-preview, and dual-host checks
+pass without introducing required public JavaScript or a second application Worker.
+
+The following ideas remain optional backlog rather than required delivery phases:
 
 - Scheduled publication.
 - Per-series feeds.

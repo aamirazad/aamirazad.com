@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PublishedDate from "$lib/components/PublishedDate.svelte";
   import { SITE_ORIGIN } from "$lib/site";
   let { data } = $props();
 </script>
@@ -19,7 +20,12 @@
       {#each data.index.items as post}<li>
           <a href={post.canonicalPath}>{post.title}</a>
           <p>{post.summary}</p>
-          <small>{post.format} · {new Date(post.publishedAt).toLocaleDateString()}</small>
+          <small
+            >{post.format} · <PublishedDate
+              publishedAt={post.publishedAt}
+              modifiedAt={post.modifiedAt}
+            /></small
+          >
         </li>{/each}
     </ol>{:else}<p>Nothing published here yet.</p>{/if}
   {#if data.index.totalPages > 1}<nav class="pagination">

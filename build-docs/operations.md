@@ -72,4 +72,25 @@ Roll back only to an inspected version, then repeat the production smoke checkli
 pnpm exec wrangler rollback <version-id> --env production
 ```
 
-Production now uses Worker Custom Domains for the apex and `www`; the old Vercel DNS records are no longer an origin fallback. Use Wrangler deployment rollback for an application regression. The disaster-recovery procedure and retained Astro source reference are recorded in `build-docs/production-cutover.md`.
+Production uses application Worker Custom Domains for the apex and `www`; the old Vercel DNS
+records are no longer an origin fallback. Both hosts serve the same response because the zone
+cache key does not include hostname; apex canonical metadata remains authoritative. Use Wrangler
+deployment rollback for an application regression. The disaster-recovery procedure and retained
+Astro source reference are recorded in `build-docs/production-cutover.md`.
+
+## Branch deployment
+
+Cloudflare Workers Builds targets the single `aamirazad-com` Worker. Its production branch is
+`main`; non-production branch builds are enabled. Configure these commands in **Settings → Build**:
+
+```text
+Build: pnpm build
+Production deploy: pnpm exec wrangler deploy --env production
+Non-production deploy: pnpm exec wrangler versions upload --env preview
+```
+
+The non-production command creates a preview version and temporary `workers.dev` URL without
+changing the active deployment or attaching `preview.aamirazad.com`. After one branch preview and
+one `main` deployment succeed through Workers Builds, remove the legacy `aamirazad-com-preview`
+Worker and its `preview.aamirazad.com` Custom Domain. Confirm the target and retain a rollback version
+before deletion; the old Worker cannot be recovered by a source-control revert.

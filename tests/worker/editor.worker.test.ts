@@ -1,7 +1,7 @@
 import { applyD1Migrations, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { uploadPostAsset } from "../../src/lib/server/content/assets";
+import { uploadPostAsset, uploadPostAssetForMarkdown } from "../../src/lib/server/content/assets";
 import { ensureImageVariants } from "../../src/lib/server/content/image-variants";
 import {
   createMeaningfulDraft,
@@ -118,5 +118,31 @@ describe("draft editor storage", () => {
       expect(variant.r2Key).toContain(variant.contentHash);
       await expect(env.MEDIA.get(variant.r2Key)).resolves.not.toBeNull();
     }
+  });
+
+  it("compresses composer uploads to WebP and returns insertable Markdown", async () => {
+    const post = await createPost(env, "on", "article", "owner");
+    const png = Uint8Array.from(
+      atob(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      ),
+      (character) => character.charCodeAt(0),
+    );
+    const result = await uploadPostAssetForMarkdown(
+      env,
+      post.id,
+      new File([png], "Tiny [Pixel].png", { type: "image/png" }),
+      "owner",
+    );
+    expect(result.markdown).toMatch(
+      new RegExp(`^!\\[tiny-pixel\\]\\(/media/${result.asset.id}/[a-f0-9]{64}/1w-webp\\)$`, "u"),
+    );
+    const variant = await env.DB.prepare(
+      "SELECT r2_key FROM asset_variants WHERE asset_id = ? AND mime_type = 'image/webp'",
+    )
+      .bind(result.asset.id)
+      .first<{ r2_key: string }>();
+    expect(variant).not.toBeNull();
+    await expect(env.MEDIA.get(variant!.r2_key)).resolves.not.toBeNull();
   });
 });

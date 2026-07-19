@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ cookies, getClientAddress, platform,
   const env = requireRuntimeEnv(platform);
   await enforceRateLimit(env, getClientAddress(), "oidc_login", 10, 10 * 60);
 
-  const context = await loadOidcContext(env);
+  const context = await loadOidcContext(env, url);
   const state = oauth.generateRandomState();
   const nonce = oauth.generateRandomNonce();
   const codeVerifier = oauth.generateRandomCodeVerifier();

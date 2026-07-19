@@ -35,6 +35,10 @@
   let jobStatus = $state("");
   let ready = false;
   let titleInput: HTMLInputElement;
+  let bodyInput: HTMLTextAreaElement;
+  let fileInput: HTMLInputElement;
+  let uploading = $state(false);
+  let draggingImage = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let savePromise: Promise<void> | null = null;
   let lastSaved = "";
@@ -282,6 +286,54 @@
   function currentRecoveryKey(): string {
     return postId ? `publishing:draft:${postId}` : recoveryKey;
   }
+
+  async function uploadImages(files: FileList | File[]) {
+    const images = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (!images.length) {
+      message = "Drop or choose a JPEG, PNG, WebP, or GIF image.";
+      return;
+    }
+    if (!meaningful()) {
+      message = "Add a title or some writing before attaching an image.";
+      return;
+    }
+    uploading = true;
+    message = `Compressing ${images.length === 1 ? "image" : `${images.length} images`}…`;
+    try {
+      await persistUntilCurrent();
+      if (!postId || saveState === "offline" || saveState === "conflict") return;
+      for (const image of images) {
+        const data = new FormData();
+        data.set("image", image);
+        const response = await fetch(`/api/posts/${postId}/assets`, { method: "POST", body: data });
+        const result = (await response.json()) as { markdown?: string; message?: string };
+        if (!response.ok || !result.markdown)
+          throw new Error(result.message ?? "Image upload failed.");
+        insertMarkdown(result.markdown);
+      }
+      message = `${images.length === 1 ? "Image" : "Images"} compressed to WebP and inserted.`;
+    } catch (caught) {
+      message = caught instanceof Error ? caught.message : "Image upload failed.";
+    } finally {
+      uploading = false;
+      if (fileInput) fileInput.value = "";
+    }
+  }
+
+  function insertMarkdown(markdown: string) {
+    const start = bodyInput.selectionStart ?? bodyMarkdown.length;
+    const end = bodyInput.selectionEnd ?? start;
+    const before = bodyMarkdown.slice(0, start);
+    const after = bodyMarkdown.slice(end);
+    const prefix = before && !before.endsWith("\n") ? "\n\n" : "";
+    const suffix = after && !after.startsWith("\n") ? "\n\n" : "";
+    bodyMarkdown = `${before}${prefix}${markdown}${suffix}${after}`;
+    const cursor = before.length + prefix.length + markdown.length;
+    requestAnimationFrame(() => {
+      bodyInput.focus();
+      bodyInput.setSelectionRange(cursor, cursor);
+    });
+  }
 </script>
 
 <svelte:head>
@@ -334,16 +386,53 @@
         /></span
       >
     </label>
-    <label class="composer-body">
+    <label
+      class:dragging={draggingImage}
+      class="composer-body"
+      ondragenter={(event) => {
+        if (event.dataTransfer?.types.includes("Files")) draggingImage = true;
+      }}
+      ondragover={(event) => event.preventDefault()}
+      ondragleave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          draggingImage = false;
+      }}
+      ondrop={(event) => {
+        event.preventDefault();
+        draggingImage = false;
+        if (event.dataTransfer?.files) void uploadImages(event.dataTransfer.files);
+      }}
+    >
       <span>Markdown</span>
       <textarea
         rows="18"
         maxlength="250000"
         spellcheck="true"
         bind:value={bodyMarkdown}
+        bind:this={bodyInput}
         placeholder="Start writing…"
       ></textarea>
     </label>
+    <div class="composer-upload">
+      <input
+        class="visually-hidden"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        multiple
+        bind:this={fileInput}
+        onchange={(event) => {
+          if (event.currentTarget.files) void uploadImages(event.currentTarget.files);
+        }}
+      />
+      <button
+        class="button-link"
+        type="button"
+        disabled={uploading}
+        onclick={() => fileInput.click()}
+        >{uploading ? "Compressing image…" : "＋ Add image"}</button
+      >
+      <small>or drop an image into the editor</small>
+    </div>
 
     <details class="composer-options">
       <summary>Format and details</summary>

@@ -4,7 +4,6 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 
 import { cacheTagsForPath } from "./src/lib/published";
 import { publicCachePolicy } from "./src/lib/server/cache-policy";
-import { canonicalRedirect } from "./src/lib/server/canonical-origin";
 import { PublishWorkflow } from "./src/lib/server/content/publish-workflow";
 
 export { PublishWorkflow };
@@ -15,24 +14,20 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
     const ctx = this.ctx;
     const incomingUrl = new URL(request.url);
     const canonicalOrigin = new URL(env.APP_ORIGIN);
-    const destination = canonicalRedirect(request.url, env.APP_ORIGIN, env.ENVIRONMENT);
-    if (destination) {
+    if (
+      incomingUrl.hostname === "www.aamirazad.com" &&
+      canonicalOrigin.hostname === "aamirazad.com" &&
+      isPrivatePath(incomingUrl.pathname)
+    ) {
       return new Response(null, {
-        status: 308,
+        status: 307,
         headers: {
-          "cache-control": "public, max-age=3600",
-          location: destination,
+          "cache-control": "private, no-store",
+          location: new URL(`${incomingUrl.pathname}${incomingUrl.search}`, canonicalOrigin).href,
         },
       });
     }
-    const canonicalRequest =
-      incomingUrl.origin === canonicalOrigin.origin
-        ? request
-        : new Request(
-            new URL(`${incomingUrl.pathname}${incomingUrl.search}`, canonicalOrigin),
-            request,
-          );
-    const resolved = await svelteWorker.fetch(canonicalRequest, env, ctx);
+    const resolved = await svelteWorker.fetch(request, env, ctx);
     const response = new Response(resolved.body, resolved);
     if (response.headers.get("x-public-cache") === "1") {
       const pathname = new URL(request.url).pathname;
@@ -49,4 +44,10 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
     if (!this.ctx.cache) throw new Error("Workers cache purge context is unavailable");
     return this.ctx.cache.purge(options);
   }
+}
+
+function isPrivatePath(pathname: string): boolean {
+  return ["/admin", "/api", "/auth", "/preview"].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 }

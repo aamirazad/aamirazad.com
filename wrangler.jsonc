@@ -43,10 +43,13 @@
   ],
   "env": {
     "preview": {
-      "name": "aamirazad-com-preview",
-      "routes": [{ "pattern": "preview.aamirazad.com", "custom_domain": true }],
+      // Upload a preview version of the production Worker without promoting it or
+      // assigning a permanent custom domain.
+      "name": "aamirazad-com",
+      "workers_dev": false,
+      "preview_urls": true,
       "vars": {
-        "APP_ORIGIN": "https://preview.aamirazad.com",
+        "APP_ORIGIN": "https://aamirazad.com",
         "ENVIRONMENT": "preview",
       },
       "images": { "binding": "IMAGES" },
@@ -73,6 +76,7 @@
     "production": {
       "name": "aamirazad-com",
       "workers_dev": false,
+      "preview_urls": true,
       "routes": [
         { "pattern": "aamirazad.com", "custom_domain": true },
         { "pattern": "www.aamirazad.com", "custom_domain": true },

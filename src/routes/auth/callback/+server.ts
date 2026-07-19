@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ cookies, getClientAddress, platform,
   if (!transaction) error(400, "The login request expired or was already used");
 
   try {
-    const context = await loadOidcContext(env);
+    const context = await loadOidcContext(env, url);
     const parameters = oauth.validateAuthResponse(
       context.server,
       context.client,

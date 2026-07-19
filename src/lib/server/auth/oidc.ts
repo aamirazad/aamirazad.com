@@ -11,7 +11,7 @@ export type OidcContext = {
   redirectUri: string;
 };
 
-export async function loadOidcContext(env: RuntimeEnv): Promise<OidcContext> {
+export async function loadOidcContext(env: RuntimeEnv, requestUrl?: URL): Promise<OidcContext> {
   const configured = new URL(env.OIDC_DISCOVERY_URL);
   const issuer = discoveryIssuer(configured);
   const response = await oauth.discoveryRequest(issuer, { algorithm: "oidc" });
@@ -27,8 +27,19 @@ export async function loadOidcContext(env: RuntimeEnv): Promise<OidcContext> {
     client,
     clientAuth: oauth.ClientSecretPost(env.OIDC_CLIENT_SECRET),
     issuer,
-    redirectUri: `${env.APP_ORIGIN}/auth/callback`,
+    redirectUri: `${oidcRedirectOrigin(env.APP_ORIGIN, requestUrl)}/auth/callback`,
   };
+}
+
+export function oidcRedirectOrigin(configuredOrigin: string, requestUrl?: URL): string {
+  if (!requestUrl) return new URL(configuredOrigin).origin;
+  const hostname = requestUrl.hostname;
+  const usesRequestOrigin =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]" ||
+    hostname.endsWith(".workers.dev");
+  return usesRequestOrigin ? requestUrl.origin : new URL(configuredOrigin).origin;
 }
 
 export async function ownerClaimsAreAllowed(

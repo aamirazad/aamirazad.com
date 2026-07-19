@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PublishedDate from "$lib/components/PublishedDate.svelte";
   import { SITE_NAME, SITE_ORIGIN } from "$lib/site";
   let { data } = $props();
   // svelte-ignore state_referenced_locally -- public page data is immutable for this SSR-only route
@@ -30,9 +31,8 @@
     <header>
       <p class="eyebrow">{post.series} · {post.format}</p>
       <h1>{post.title}</h1>
-      {#if post.summary}<p class="post-summary">{post.summary}</p>{/if}<time
-        datetime={post.publishedAt}>{new Date(post.publishedAt).toLocaleDateString()}</time
-      >
+      {#if post.summary}<p class="post-summary">{post.summary}</p>{/if}
+      <PublishedDate publishedAt={post.publishedAt} modifiedAt={post.modifiedAt} />
     </header>
     {#if post.format === "link" && post.sourceUrl}<p class="source-card">
         <a href={post.sourceUrl} rel="noopener noreferrer">{post.sourceTitle || post.sourceUrl} ↗</a

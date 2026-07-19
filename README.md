@@ -27,10 +27,19 @@ pnpm format:check
 pnpm check
 pnpm test
 pnpm build
-pnpm exec wrangler deploy --dry-run --env preview
+pnpm exec wrangler deploy --dry-run --env production
 ```
 
 ## Deployment
+
+Cloudflare Workers Builds owns branch deployment. Configure `main` as the production branch with
+`pnpm build` as the build command, `pnpm exec wrangler deploy --env production` as the production
+deploy command, and `pnpm exec wrangler versions upload --env preview` as the non-production branch
+deploy command. A pull request is uploaded as a preview version of the same Worker and receives a
+temporary `workers.dev` URL; merging to `main` promotes a production version to the apex and `www`
+custom domains.
+
+For an equivalent manual upload or deployment:
 
 ```sh
 pnpm deploy:preview
