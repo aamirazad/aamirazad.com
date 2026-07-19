@@ -30,8 +30,9 @@ Work is paused after Phase 4 on branch `codex/publish-content`. Phases 0 through
 | 4 — Publishing projection | Complete | `45b02b9` |
 | 5 — Caching and performance hardening | Next | Not started |
 | 6 — Portable export and recovery | Pending | Not started |
-| 7 — Production cutover | Pending | Not started |
-| 8 — Convenience improvements | Deferred | Not started |
+| 7 — Publishing experience refinement | Pending | Not started |
+| 8 — Production cutover | Pending | Not started |
+| 9 — Convenience improvements | Deferred | Not started |
 
 The Phase 4 Worker is deployed at `https://preview.aamirazad.com` as version `17d3a79c-4382-44a8-af66-e21ac74877bb`. Production has not been cut over. Preview D1 has no pending migrations. The final verification completed with 11 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, and a successful deployed publish/archive lifecycle. The runtime test confirmed that a cached post, feed, and sitemap were projected from R2 and that archiving caused the very next article request to miss cache and return `404`. The temporary verification post was archived and soft-deleted; its immutable preview job and audit history intentionally remain.
 
@@ -583,6 +584,16 @@ Pocket ID being unavailable should prevent new logins but must not affect anonym
 
 The editor should be designed mobile-first because convenience is central to the project.
 
+The interaction design should follow a "less is more" principle: entering the admin area should put the owner directly into a ready-to-write composer, common choices should require one click or tap, and controls that are not relevant to the current post should stay out of sight. The interface should prefer strong defaults, direct manipulation, and progressive disclosure over setup screens, dropdown menus, and separate create-draft steps.
+
+The public site should include a visually quiet admin link in the top-right corner. It may become more visible on pointer hover, but it must not depend on hover: it must have a persistent tap target, become clearly visible on keyboard focus, have an accessible name, and meet focus and contrast requirements. On coarse-pointer and touch devices it should remain discoverable without adding visual clutter. Following the link should start authentication when needed and otherwise open the composer directly.
+
+Opening the admin area should immediately show an empty, focused composer that is ready for input. The owner must not have to visit a draft list, open a menu, or click `Create draft` before writing. Avoid accumulating empty server-side drafts: begin with an ephemeral composer and create or autosave the durable draft as soon as the owner enters meaningful content. Existing drafts should remain reachable through a quiet secondary affordance without displacing the new-post composer.
+
+The editorial series should be a compact set of visible, single-tap buttons labeled `On`, `Today`, `Built`, and `Found`; do not use a dropdown. `On` is selected by default. Changing the series should immediately update the suggested title convention while preserving text the owner has already entered. The default format is `article`; format-specific controls should appear only when inferred from the content or deliberately requested through a small secondary control.
+
+The primary path should read naturally as: open admin, write, and publish. Autosave should remove the need for a routine save action. Preview, revision history, slug editing, archive controls, and advanced metadata should be available but visually subordinate or progressively disclosed. Publishing should remain an explicit, prominent action with a concise confirmation only when it prevents a meaningful mistake; routine publishing should not be slowed by redundant dialogs.
+
 Initial capabilities:
 
 - Choose a series and format.
@@ -836,7 +847,21 @@ Exit condition: public route budgets and caching correctness tests pass in the d
 
 Exit condition: the site can be rebuilt from the provider-independent portable export without the original D1 database.
 
-### Phase 7: Production cutover — Pending
+### Phase 7: Publishing experience refinement — Pending
+
+- Add the subtle top-right admin entrance and verify it remains usable by mouse, keyboard, screen reader, and touch without competing with public content.
+- Route an authenticated owner directly to a focused, empty composer; route an unauthenticated owner through Pocket ID and then return directly to that composer.
+- Remove the create-draft gate and delay durable draft creation until meaningful input exists.
+- Replace series dropdowns with visible `On`, `Today`, `Built`, and `Found` buttons, defaulting to `On`.
+- Default to the article format and progressively reveal format-specific or advanced fields only when needed.
+- Make autosave implicit and trustworthy, keep publish as the clear primary action, and demote draft navigation, preview, revisions, slug controls, archive actions, and metadata from the main writing path.
+- Preserve entered content while changing series or revealing additional options.
+- Test the complete open-admin-to-publish path on desktop and phone, including authentication return, offline/retry states, keyboard-only operation, reduced motion, and screen-reader labeling.
+- Measure the interaction cost: after authentication, the owner can begin typing without an additional click, can choose any series with one click or tap, and can publish a valid default article without opening a dropdown.
+
+Exit condition: from any public page, the owner can reach a ready-to-write composer, create and publish a default `On` article with no setup choices or dropdowns, and complete the same flow accessibly on desktop and mobile.
+
+### Phase 8: Production cutover — Pending
 
 - Freeze unrelated changes briefly.
 - Take a final backup of the existing site and configuration.
@@ -847,7 +872,7 @@ Exit condition: the site can be rebuilt from the provider-independent portable e
 
 Exit condition: production is stable, a test post has completed the full lifecycle, and rollback is no longer the primary recovery strategy.
 
-### Phase 8: Convenience improvements — Deferred
+### Phase 9: Convenience improvements — Deferred
 
 After the core system is reliable:
 
