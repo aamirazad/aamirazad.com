@@ -3,6 +3,7 @@ import svelteWorker from "./.svelte-kit/cloudflare/_worker.js";
 import { WorkerEntrypoint } from "cloudflare:workers";
 
 import { cacheTagsForPath } from "./src/lib/published";
+import { publicCachePolicy } from "./src/lib/server/cache-policy";
 import { PublishWorkflow } from "./src/lib/server/content/publish-workflow";
 
 export { PublishWorkflow };
@@ -16,18 +17,18 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
     const canonicalRequest =
       incomingUrl.origin === canonicalOrigin.origin
         ? request
-        : new Request(new URL(`${incomingUrl.pathname}${incomingUrl.search}`, canonicalOrigin), request);
+        : new Request(
+            new URL(`${incomingUrl.pathname}${incomingUrl.search}`, canonicalOrigin),
+            request,
+          );
     const resolved = await svelteWorker.fetch(canonicalRequest, env, ctx);
     const response = new Response(resolved.body, resolved);
     if (response.headers.get("x-public-cache") === "1") {
       const pathname = new URL(request.url).pathname;
+      const policy = publicCachePolicy(pathname);
       response.headers.delete("x-public-cache");
-      response.headers.set(
-        "cache-control",
-        pathname.startsWith("/media/")
-          ? "public, max-age=31536000, immutable"
-          : "public, max-age=60, stale-while-revalidate=300, stale-if-error=604800",
-      );
+      response.headers.set("cache-control", policy.browser);
+      response.headers.set("cloudflare-cdn-cache-control", policy.edge);
       response.headers.set("cache-tag", cacheTagsForPath(pathname).join(","));
     }
     return response;

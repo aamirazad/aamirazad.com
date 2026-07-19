@@ -43,13 +43,31 @@
         {#if post.quoteAttribution}<footer>— {post.quoteAttribution}</footer>{/if}
       </blockquote>{/if}
     {#if post.assets.length}<div class="published-gallery">
-        {#each post.assets as asset}<figure>
-            <img
-              src={`/media/${asset.id}/original`}
-              alt={asset.altText}
-              width={asset.width ?? undefined}
-              height={asset.height ?? undefined}
-            />{#if asset.caption}<figcaption>{asset.caption}</figcaption>{/if}
+        {#each post.assets as asset}{@const variants = asset.variants ?? []}
+          {@const webp = variants.filter((variant) => variant.mimeType === "image/webp")}
+          {@const fallback = variants.find((variant) => variant.name === "fallback")}
+          <figure>
+            <picture>
+              {#if webp.length}<source
+                  type="image/webp"
+                  srcset={webp
+                    .map(
+                      (variant) =>
+                        `/media/${asset.id}/${variant.contentHash}/${variant.name} ${variant.width}w`,
+                    )
+                    .join(", ")}
+                  sizes="(max-width: 800px) calc(100vw - 2.5rem), 760px"
+                />{/if}<img
+                src={fallback
+                  ? `/media/${asset.id}/${fallback.contentHash}/${fallback.name}`
+                  : `/media/${asset.id}/original`}
+                alt={asset.altText}
+                width={fallback?.width ?? asset.width ?? undefined}
+                height={fallback?.height ?? asset.height ?? undefined}
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>{#if asset.caption}<figcaption>{asset.caption}</figcaption>{/if}
           </figure>{/each}
       </div>{/if}
     <div class="rendered-markdown">{@html post.html}</div>

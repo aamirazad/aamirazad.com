@@ -11,6 +11,7 @@ import {
   type PublishedPost,
 } from "$lib/published";
 import { renderMarkdown } from "$lib/server/content/markdown";
+import { ensureImageVariants } from "$lib/server/content/image-variants";
 import type { PublishOperation } from "$lib/server/content/publish";
 import type { RuntimeEnv } from "$lib/server/env";
 
@@ -162,6 +163,19 @@ export async function writeProjection(
             mimeType: asset.mimeType,
             originalFilename: asset.originalFilename,
             sha256: asset.sha256,
+            variants: Object.fromEntries(
+              (asset.variants ?? []).map((variant) => [
+                variant.name,
+                {
+                  r2Key: variant.r2Key,
+                  contentHash: variant.contentHash,
+                  width: variant.width,
+                  height: variant.height,
+                  mimeType: variant.mimeType,
+                  byteSize: variant.byteSize,
+                },
+              ]),
+            ),
           },
         ]),
       ),
@@ -266,19 +280,28 @@ async function loadAssets(env: RuntimeEnv, postId: string): Promise<PublishedAss
   )
     .bind(postId)
     .all<AssetRow>();
-  return result.results.map((asset) => ({
-    id: asset.id,
-    originalKey: asset.original_key,
-    originalFilename: asset.original_filename,
-    mimeType: asset.mime_type,
-    byteSize: asset.byte_size,
-    width: asset.width,
-    height: asset.height,
-    altText: asset.alt_text,
-    caption: asset.caption ?? "",
-    position: asset.position,
-    sha256: asset.sha256,
-  }));
+  return Promise.all(
+    result.results.map(async (asset) => ({
+      id: asset.id,
+      originalKey: asset.original_key,
+      originalFilename: asset.original_filename,
+      mimeType: asset.mime_type,
+      byteSize: asset.byte_size,
+      width: asset.width,
+      height: asset.height,
+      altText: asset.alt_text,
+      caption: asset.caption ?? "",
+      position: asset.position,
+      sha256: asset.sha256,
+      variants: await ensureImageVariants(env, {
+        id: asset.id,
+        originalKey: asset.original_key,
+        mimeType: asset.mime_type,
+        width: asset.width,
+        height: asset.height,
+      }),
+    })),
+  );
 }
 
 async function writeIndexesAndFeeds(

@@ -2,6 +2,7 @@ import { applyD1Migrations, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { uploadPostAsset } from "../../src/lib/server/content/assets";
+import { ensureImageVariants } from "../../src/lib/server/content/image-variants";
 import {
   createPost,
   createRevision,
@@ -70,5 +71,23 @@ describe("draft editor storage", () => {
     expect(asset).toMatchObject({ width: 1, height: 1, altText: "A pixel" });
     await expect(env.MEDIA.get(`media/originals/${asset.id}/pixel.png`)).resolves.not.toBeNull();
     await expect(listPostAssets(env, post.id)).resolves.toHaveLength(1);
+
+    const variants = await ensureImageVariants(env, {
+      id: asset.id,
+      originalKey: `media/originals/${asset.id}/pixel.png`,
+      mimeType: "image/png",
+      width: asset.width,
+      height: asset.height,
+    });
+    expect(variants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "1w-webp", width: 1, height: 1, mimeType: "image/webp" }),
+        expect.objectContaining({ name: "fallback", width: 1, height: 1, mimeType: "image/png" }),
+      ]),
+    );
+    for (const variant of variants) {
+      expect(variant.r2Key).toContain(variant.contentHash);
+      await expect(env.MEDIA.get(variant.r2Key)).resolves.not.toBeNull();
+    }
   });
 });

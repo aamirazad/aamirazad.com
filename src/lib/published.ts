@@ -12,6 +12,17 @@ export type PublishedAsset = {
   caption: string;
   position: number;
   sha256: string;
+  variants: PublishedAssetVariant[];
+};
+
+export type PublishedAssetVariant = {
+  name: string;
+  r2Key: string;
+  contentHash: string;
+  width: number;
+  height: number;
+  mimeType: string;
+  byteSize: number;
 };
 
 export type PublishedPost = {
@@ -50,7 +61,23 @@ export type ProjectionManifest = {
   aliases: Record<string, string>;
   media: Record<
     string,
-    { originalKey: string; mimeType: string; originalFilename: string; sha256: string }
+    {
+      originalKey: string;
+      mimeType: string;
+      originalFilename: string;
+      sha256: string;
+      variants: Record<
+        string,
+        {
+          r2Key: string;
+          contentHash: string;
+          width: number;
+          height: number;
+          mimeType: string;
+          byteSize: number;
+        }
+      >;
+    }
   >;
 };
 

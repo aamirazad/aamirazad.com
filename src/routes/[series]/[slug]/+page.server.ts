@@ -6,10 +6,14 @@ import { requireRuntimeEnv } from "$lib/server/env";
 
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ params, platform, url }) => {
+export const load: PageServerLoad = async ({ params, platform, setHeaders, url }) => {
   if (!isSeries(params.series)) error(404, "Post not found");
   const result = await readPublishedPost(requireRuntimeEnv(platform), url.pathname);
   if (!result) error(404, "Post not found");
   if ("redirect" in result) redirect(308, result.redirect);
+  setHeaders({
+    etag: `"${result.post.contentHash}"`,
+    "last-modified": new Date(result.post.modifiedAt).toUTCString(),
+  });
   return { post: result.post };
 };

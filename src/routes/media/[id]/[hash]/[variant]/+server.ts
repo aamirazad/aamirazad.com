@@ -1,20 +1,22 @@
 import { error } from "@sveltejs/kit";
-import { readManifest } from "$lib/server/public-content";
+
 import { requireRuntimeEnv } from "$lib/server/env";
+import { readManifest } from "$lib/server/public-content";
+
 import type { RequestHandler } from "./$types";
+
 export const GET: RequestHandler = async ({ params, platform }) => {
   const env = requireRuntimeEnv(platform);
-  const manifest = await readManifest(env);
-  const media = manifest?.media[params.id];
-  if (!media) error(404, "Image not found");
-  const fallback = media.variants?.fallback;
-  const object = await env.MEDIA.get(fallback?.r2Key ?? media.originalKey);
+  const variant = (await readManifest(env))?.media[params.id]?.variants?.[params.variant];
+  if (!variant || variant.contentHash !== params.hash) error(404, "Image not found");
+  const object = await env.MEDIA.get(variant.r2Key);
   if (!object) error(404, "Image not found");
   const headers = new Headers();
   object.writeHttpMetadata(headers);
-  headers.set("content-type", fallback?.mimeType ?? media.mimeType);
+  headers.set("content-type", variant.mimeType);
   headers.set("etag", object.httpEtag);
   headers.set("last-modified", object.uploaded.toUTCString());
   return new Response(object.body, { headers });
 };
+
 export const HEAD = GET;

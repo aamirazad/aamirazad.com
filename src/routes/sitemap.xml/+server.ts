@@ -6,6 +6,11 @@ export const GET: RequestHandler = async ({ platform }) => {
   const object = await readGeneratedObject(requireRuntimeEnv(platform), "sitemap.xml");
   if (!object) error(404, "Sitemap not generated");
   return new Response(object.body, {
-    headers: { "content-type": "application/xml; charset=utf-8" },
+    headers: {
+      "content-type": "application/xml; charset=utf-8",
+      etag: object.httpEtag,
+      "last-modified": object.uploaded.toUTCString(),
+    },
   });
 };
+export const HEAD = GET;

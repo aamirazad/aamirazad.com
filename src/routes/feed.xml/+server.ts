@@ -6,6 +6,11 @@ export const GET: RequestHandler = async ({ platform }) => {
   const object = await readGeneratedObject(requireRuntimeEnv(platform), "feeds/feed.xml");
   if (!object) error(404, "Feed not generated");
   return new Response(object.body, {
-    headers: { "content-type": "application/atom+xml; charset=utf-8" },
+    headers: {
+      "content-type": "application/atom+xml; charset=utf-8",
+      etag: object.httpEtag,
+      "last-modified": object.uploaded.toUTCString(),
+    },
   });
 };
+export const HEAD = GET;

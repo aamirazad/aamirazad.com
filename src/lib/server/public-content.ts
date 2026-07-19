@@ -33,13 +33,31 @@ export async function readPublishedIndex(
   name: string,
   page = 1,
 ): Promise<PublishedIndex> {
+  return (await readPublishedIndexResult(env, name, page)).index;
+}
+
+export async function readPublishedIndexResult(
+  env: RuntimeEnv,
+  name: string,
+  page = 1,
+): Promise<{ index: PublishedIndex; generation: string; updatedAt: string }> {
   const manifest = await readManifest(env);
-  if (!manifest) return { schemaVersion: 1, title: name, page: 1, totalPages: 1, items: [] };
+  if (!manifest) {
+    return {
+      index: { schemaVersion: 1, title: name, page: 1, totalPages: 1, items: [] },
+      generation: "empty",
+      updatedAt: new Date(0).toISOString(),
+    };
+  }
   const object = await env.CONTENT.get(
     projectionKey(manifest.generation, `indexes/${name}/${page}.json`),
   );
   if (!object) error(404, "Page not found");
-  return object.json<PublishedIndex>();
+  return {
+    index: await object.json<PublishedIndex>(),
+    generation: manifest.generation,
+    updatedAt: manifest.updatedAt,
+  };
 }
 
 export async function readGeneratedObject(

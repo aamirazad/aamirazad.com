@@ -19,31 +19,33 @@ This is a technical plan. It does not define the final visual design in detail, 
 
 Last updated: 2026-07-18.
 
-Work is paused after Phase 4 on branch `codex/publish-content`. Phases 0 through 4 are complete, tested at their stopping points, and committed:
+Implementation is continuing on branch `codex/publish-content`. Phases 0 through 5 are complete and tested at their stopping points:
 
-| Phase | Status | Commit |
-| --- | --- | --- |
-| 0 — Decisions and baseline | Complete | `1684dc0` |
-| 1 — SvelteKit foundation | Complete | `e8866bf` |
-| 2 — Storage and authentication | Complete | `c336a13` |
-| 3 — Draft editor | Complete | `1a5a296` |
-| 4 — Publishing projection | Complete | `45b02b9` |
-| 5 — Caching and performance hardening | Next | Not started |
-| 6 — Portable export and recovery | Pending | Not started |
-| 7 — Publishing experience refinement | Pending | Not started |
-| 8 — Production cutover | Pending | Not started |
-| 9 — Convenience improvements | Deferred | Not started |
+| Phase                                 | Status   | Commit          |
+| ------------------------------------- | -------- | --------------- |
+| 0 — Decisions and baseline            | Complete | `1684dc0`       |
+| 1 — SvelteKit foundation              | Complete | `e8866bf`       |
+| 2 — Storage and authentication        | Complete | `c336a13`       |
+| 3 — Draft editor                      | Complete | `1a5a296`       |
+| 4 — Publishing projection             | Complete | `45b02b9`       |
+| 5 — Caching and performance hardening | Complete | Pending handoff |
+| 6 — Portable export and recovery      | Pending  | Not started     |
+| 7 — Publishing experience refinement  | Pending  | Not started     |
+| 8 — Production cutover                | Pending  | Not started     |
+| 9 — Convenience improvements          | Deferred | Not started     |
 
 The Phase 4 Worker is deployed at `https://preview.aamirazad.com` as version `17d3a79c-4382-44a8-af66-e21ac74877bb`. Production has not been cut over. Preview D1 has no pending migrations. The final verification completed with 11 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, and a successful deployed publish/archive lifecycle. The runtime test confirmed that a cached post, feed, and sitemap were projected from R2 and that archiving caused the very next article request to miss cache and return `404`. The temporary verification post was archived and soft-deleted; its immutable preview job and audit history intentionally remain.
 
-The next agent must start with Phase 5 and must not begin Phase 6 until the Phase 5 exit condition passes and its changes have been committed. In particular:
+The Phase 5 Worker is deployed to preview as version `b7e78d11-abfd-43f3-96f0-f2bcb47942aa`. Public HTML was observed moving from `MISS` to `HIT`, the same public response remained cacheable when a session cookie was supplied, and `/admin` remained `private, no-store` with Cloudflare cache bypass. The stopping-point checks pass with 13 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, 2,525 compressed CSS bytes, and no required public JavaScript. Live Lighthouse and multi-region measurements are intentionally deferred until the main publishing functionality is complete.
+
+Phase 5 added the following safeguards:
 
 1. Audit the existing Workers Cache configuration, public response headers, cache tags, Static Assets routing, and private-route bypass behavior. Preserve the public-entrypoint purge RPC in `worker.ts`; Workers Cache purges are entrypoint-scoped.
 2. Add responsive image variants while retaining immutable R2 originals, then verify variant dimensions, formats, cache policy, and fallbacks.
 3. Add automated public asset-size and Lighthouse CI budgets.
 4. Test anonymous pages and authenticated routes for session leakage or accidental caching.
-5. Measure deployed preview cache hit behavior, representative public latency, and multi-region behavior against the Phase 5 budgets.
-6. Run the complete checks, deploy to preview, repeat live smoke tests, and create a conventional Phase 5 commit at the stopping point.
+5. Verify deployed preview cache hits, public responses with a session cookie, administrative cache bypass, and static asset headers.
+6. Keep Lighthouse and multi-region measurements configured but defer running them until after the main publishing functionality is complete, as directed by the owner on 2026-07-18.
 
 Important handoff details:
 
@@ -827,15 +829,15 @@ Exit condition: all five formats can be drafted and previewed reliably from desk
 
 Exit condition: a new entry can be published through the site, appears publicly within the target time, remains available during a simulated D1 outage, and can be updated without partial public state.
 
-### Phase 5: Caching and performance hardening — Next
+### Phase 5: Caching and performance hardening — Complete
 
 - Configure Cloudflare Cache Rules and response headers.
 - Verify no session leakage or accidental administrative caching.
 - Add image variants and immutable media caching.
 - Add asset-size and Lighthouse CI budgets.
-- Measure cache hit ratio and multi-region response times.
+- Verify preview cache behavior. Defer Lighthouse and multi-region measurements until after the main publishing functionality is complete.
 
-Exit condition: public route budgets and caching correctness tests pass in the deployed preview environment.
+Exit condition: automated public asset budgets and caching correctness checks pass, and the functional changes are deployed to preview. Live Lighthouse and multi-region measurements are explicitly deferred.
 
 ### Phase 6: Portable export and recovery — Pending
 
