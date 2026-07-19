@@ -19,7 +19,7 @@ This is a technical plan. It does not define the final visual design in detail, 
 
 Last updated: 2026-07-18.
 
-Implementation is continuing on branch `codex/publish-content`. Phases 0 through 6 are complete and tested at their stopping points:
+Implementation is continuing on branch `codex/publish-content`. Phases 0 through 7 are complete and tested at their stopping points:
 
 | Phase                                 | Status   | Commit          |
 | ------------------------------------- | -------- | --------------- |
@@ -29,8 +29,8 @@ Implementation is continuing on branch `codex/publish-content`. Phases 0 through
 | 3 — Draft editor                      | Complete | `1a5a296`       |
 | 4 — Publishing projection             | Complete | `45b02b9`       |
 | 5 — Caching and performance hardening | Complete | `12c0622`       |
-| 6 — Portable export and recovery      | Complete | Pending handoff |
-| 7 — Publishing experience refinement  | Pending  | Not started     |
+| 6 — Portable export and recovery      | Complete | `5c629ef`       |
+| 7 — Publishing experience refinement  | Complete | Pending handoff |
 | 8 — Production cutover                | Pending  | Not started     |
 | 9 — Convenience improvements          | Deferred | Not started     |
 
@@ -39,6 +39,8 @@ The Phase 4 Worker is deployed at `https://preview.aamirazad.com` as version `17
 The Phase 5 Worker is deployed to preview as version `b7e78d11-abfd-43f3-96f0-f2bcb47942aa`. Public HTML was observed moving from `MISS` to `HIT`, the same public response remained cacheable when a session cookie was supplied, and `/admin` remained `private, no-store` with Cloudflare cache bypass. The stopping-point checks pass with 13 application tests, 7 Worker integration tests, zero Svelte diagnostics, a successful production build, 2,525 compressed CSS bytes, and no required public JavaScript. Live Lighthouse and multi-region measurements are intentionally deferred until the main publishing functionality is complete.
 
 The Phase 6 Worker is deployed to preview as version `09cc7779-2d85-489c-afa2-b8b993fe858e`. The portable TAR contains Markdown working copies and revisions, versioned metadata, aliases, asset relationships, original media, generated variants, and the current public projection while excluding authentication and operational records. The recovery integration test deletes every exported content and media object and restores the readable public post using only fresh `CONTENT` and `MEDIA` bindings, without D1. Preview migration `0003_remove_backup_scaffolding.sql` is applied, preview has no pending migrations, and the unused `BACKUPS` bindings and `backup_jobs` table are gone. The stopping point passes 15 application tests, 8 Worker integration tests, zero Svelte diagnostics, formatting, and the production build.
+
+The Phase 7 Worker is deployed to preview as version `9b80a81a-034f-46e8-ac6a-82e51b883bee`. Every public page now includes a quiet 44-pixel editor entrance in its server-rendered HTML. After Pocket ID returns to `/admin`, focus moves directly to the empty title continuation with `On` and `article` selected; series choices are visible radio buttons, formats and metadata are progressive details, and existing drafts, recovery export, revisions, previews, slug controls, and archive actions are outside the primary writing path. No durable row is created for the empty/default state. The first meaningful edit is retained in browser recovery storage, autosaved with optimistic concurrency, and can publish through the existing durable workflow from the composer. The path includes offline retry, conflict and publication status announcements, keyboard-native controls, touch-sized series choices, and no motion dependency. The stopping point passes 15 application tests, 9 Worker integration tests, zero Svelte diagnostics, formatting, a production build, 3,107 compressed CSS bytes, and no required public JavaScript. The owner-authenticated browser gesture path was not impersonated; authentication return behavior and the underlying storage/publication lifecycle are covered independently.
 
 Phase 5 added the following safeguards:
 
@@ -851,7 +853,7 @@ Exit condition: automated public asset budgets and caching correctness checks pa
 
 Exit condition: the site can be rebuilt from the provider-independent portable export without the original D1 database.
 
-### Phase 7: Publishing experience refinement — Pending
+### Phase 7: Publishing experience refinement — Complete
 
 - Add the subtle top-right admin entrance and verify it remains usable by mouse, keyboard, screen reader, and touch without competing with public content.
 - Route an authenticated owner directly to a focused, empty composer; route an unauthenticated owner through Pocket ID and then return directly to that composer.

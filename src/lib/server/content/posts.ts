@@ -84,6 +84,57 @@ export async function createPost(
   return post;
 }
 
+export async function createMeaningfulDraft(
+  env: RuntimeEnv,
+  input: DraftInput,
+  actor: string,
+): Promise<EditablePost> {
+  if (!hasMeaningfulInput(input)) throw new Error("Add something before saving a draft");
+  const id = uuidV7();
+  const now = new Date().toISOString();
+  const slug = input.slug || slugify(input.title.replace(/^(On|Today|I Built|I Found)\s+/u, ""));
+  await env.DB.batch([
+    env.DB.prepare(
+      `INSERT INTO posts (id, series, format, title, slug, summary, body_markdown,
+      source_url, source_title, source_description, quote_text, quote_attribution,
+      created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(
+      id,
+      input.series,
+      input.format,
+      input.title,
+      slug,
+      input.summary,
+      input.bodyMarkdown,
+      nullable(input.sourceUrl),
+      nullable(input.sourceTitle),
+      nullable(input.sourceDescription),
+      nullable(input.quoteText),
+      nullable(input.quoteAttribution),
+      now,
+      now,
+    ),
+    env.DB.prepare(
+      `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
+      VALUES (?, ?, 'draft.created', ?, ?)`,
+    ).bind(uuidV7(), actor, id, now),
+  ]);
+  const post = await getPost(env, id);
+  if (!post) throw new Error("Draft creation did not return a post");
+  return post;
+}
+
+export function hasMeaningfulInput(input: DraftInput): boolean {
+  const prefix = titlePrefix(input.series).trim();
+  return Boolean(
+    (input.title.trim() && input.title.trim() !== prefix) ||
+    input.bodyMarkdown.trim() ||
+    input.summary.trim() ||
+    input.sourceUrl.trim() ||
+    input.quoteText.trim(),
+  );
+}
+
 export async function updateDraft(
   env: RuntimeEnv,
   id: string,

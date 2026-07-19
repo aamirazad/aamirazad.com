@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import SeriesPicker from "$lib/components/SeriesPicker.svelte";
 
   let { data, form } = $props();
   // svelte-ignore state_referenced_locally -- page data intentionally seeds an editable client copy
@@ -167,7 +168,7 @@
         aria-live="polite">{saveState}</span
       >
       <a class="secondary-button" href={`/preview/${draft.id}`} target="_blank">Full preview</a>
-      <button class="primary-button" type="submit" form="checkpoint-form">Save revision</button>
+      <button class="secondary-button" type="submit" form="checkpoint-form">Save revision</button>
       <button class="primary-button" type="submit" form="checkpoint-form" formaction="?/publish"
         >Publish</button
       >
@@ -196,14 +197,8 @@
   <form id="checkpoint-form" method="POST" action="?/checkpoint" class="editor-grid">
     <input type="hidden" name="version" value={draft.version} />
     <section class="editor-fields" aria-label="Draft fields">
+      <SeriesPicker bind:value={draft.series} />
       <div class="field-row">
-        <label
-          >Series<select name="series" bind:value={draft.series}
-            ><option value="on">on</option><option value="today">today</option><option value="built"
-              >built</option
-            ><option value="found">found</option></select
-          ></label
-        >
         <label
           >Format<select name="format" bind:value={draft.format}
             ><option value="article">article</option><option value="note">note</option><option
@@ -213,19 +208,21 @@
         >
       </div>
       <label>Title<input name="title" maxlength="180" bind:value={draft.title} /></label>
-      <label
-        >Slug<input
-          name="slug"
-          maxlength="96"
-          bind:value={draft.slug}
-          placeholder="generated-from-title"
-        /></label
-      >
-      <label
-        >Summary<textarea name="summary" rows="3" maxlength="500" bind:value={draft.summary}
-        ></textarea></label
-      >
-
+      <details class="composer-options">
+        <summary>Slug and summary</summary>
+        <label
+          >Slug<input
+            name="slug"
+            maxlength="96"
+            bind:value={draft.slug}
+            placeholder="generated-from-title"
+          /></label
+        >
+        <label
+          >Summary<textarea name="summary" rows="3" maxlength="500" bind:value={draft.summary}
+          ></textarea></label
+        >
+      </details>
       {#if draft.format === "link"}
         <fieldset>
           <legend>Link</legend>
@@ -323,7 +320,7 @@
   <form id="archive-form" method="POST" action="?/archive"></form>
 
   <section class="editor-lower-grid">
-    <div class="panel">
+    <div class="panel" id="images">
       <h2>Images</h2>
       <form method="POST" action="?/upload" enctype="multipart/form-data" class="stacked-form">
         <label
