@@ -6,6 +6,8 @@ const config = {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
+      // Keep the adapter's generated entrypoint separate from the checked-in Worker wrapper.
+      config: "wrangler.svelte.jsonc",
       platformProxy: {
         configPath: "wrangler.jsonc",
         environment: "preview",

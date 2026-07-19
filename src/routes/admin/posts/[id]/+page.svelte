@@ -10,6 +10,8 @@
   let recoveryMessage = $state("");
   let linkMessage = $state("");
   let issues = $state<{ field: string; message: string }[]>([]);
+  // svelte-ignore state_referenced_locally -- server job state intentionally seeds the polling state
+  let job = $state(data.job);
   let ready = false;
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let previewTimer: ReturnType<typeof setTimeout> | undefined;
@@ -32,6 +34,7 @@
       }
     }
     ready = true;
+    if (job && job.status !== "complete" && job.status !== "failed") void pollJob(job.id);
   });
 
   $effect(() => {
@@ -116,6 +119,20 @@
     }
   }
 
+  async function pollJob(jobId: string) {
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      const response = await fetch(`/api/publish-jobs/${jobId}`);
+      if (!response.ok) return;
+      job = (await response.json()) as typeof job;
+      if (job?.status === "complete") {
+        location.replace(`/admin/posts/${draft.id}?published=1`);
+        return;
+      }
+      if (job?.status === "failed") return;
+    }
+  }
+
   function contentSnapshot(value: typeof draft): string {
     return JSON.stringify({
       series: value.series,
@@ -151,6 +168,12 @@
       >
       <a class="secondary-button" href={`/preview/${draft.id}`} target="_blank">Full preview</a>
       <button class="primary-button" type="submit" form="checkpoint-form">Save revision</button>
+      <button class="primary-button" type="submit" form="checkpoint-form" formaction="?/publish"
+        >Publish</button
+      >
+      {#if draft.status === "published"}
+        <button class="secondary-button" type="submit" form="archive-form">Archive</button>
+      {/if}
     </div>
   </nav>
 
@@ -159,6 +182,13 @@
       This draft was changed elsewhere. Copy any unsaved text, then reload to resolve the conflict.
     </p>{/if}
   {#if form?.message}<p class="notice error" role="alert">{form.message}</p>{/if}
+  {#if job}
+    <p class:errored={job.status === "failed"} class="publish-progress" aria-live="polite">
+      {job.operation === "archive" ? "Archiving" : "Publishing"}: {job.status}{job.errorMessage
+        ? ` — ${job.errorMessage}`
+        : ""}
+    </p>
+  {/if}
   {#if issues.length}<ul class="validation-list">
       {#each issues as issue}<li>{issue.message}</li>{/each}
     </ul>{/if}
@@ -290,6 +320,7 @@
       </article>
     </aside>
   </form>
+  <form id="archive-form" method="POST" action="?/archive"></form>
 
   <section class="editor-lower-grid">
     <div class="panel">

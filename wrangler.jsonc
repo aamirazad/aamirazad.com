@@ -1,17 +1,21 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "aamirazad-com",
-  "main": ".svelte-kit/cloudflare/_worker.js",
+  "main": "worker.ts",
   "compatibility_date": "2026-07-18",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "binding": "ASSETS",
     "directory": ".svelte-kit/cloudflare",
+    "run_worker_first": true,
   },
   "observability": {
     "enabled": true,
     "logs": { "head_sampling_rate": 1 },
     "traces": { "enabled": true, "head_sampling_rate": 0.01 },
+  },
+  "cache": {
+    "enabled": true,
   },
   "vars": {
     "APP_ORIGIN": "http://localhost:3000",
@@ -29,6 +33,13 @@
     { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
     { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
     { "binding": "BACKUPS", "bucket_name": "personal-site-preview" },
+  ],
+  "workflows": [
+    {
+      "binding": "PUBLISH_WORKFLOW",
+      "name": "personal-site-publish-local",
+      "class_name": "PublishWorkflow",
+    },
   ],
   "env": {
     "preview": {
@@ -51,6 +62,13 @@
         { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
         { "binding": "BACKUPS", "bucket_name": "personal-site-preview" },
       ],
+      "workflows": [
+        {
+          "binding": "PUBLISH_WORKFLOW",
+          "name": "personal-site-publish-preview",
+          "class_name": "PublishWorkflow",
+        },
+      ],
     },
     "production": {
       "name": "aamirazad-com",
@@ -71,6 +89,13 @@
         { "binding": "CONTENT", "bucket_name": "personal-site" },
         { "binding": "MEDIA", "bucket_name": "personal-site" },
         { "binding": "BACKUPS", "bucket_name": "personal-site" },
+      ],
+      "workflows": [
+        {
+          "binding": "PUBLISH_WORKFLOW",
+          "name": "personal-site-publish-production",
+          "class_name": "PublishWorkflow",
+        },
       ],
     },
   },

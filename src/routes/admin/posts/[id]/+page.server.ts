@@ -3,6 +3,7 @@ import { error, fail, redirect } from "@sveltejs/kit";
 import { isPostFormat, isSeries, parseDraftInput } from "$lib/content";
 import { updateAssetMetadata, uploadPostAsset } from "$lib/server/content/assets";
 import { renderMarkdown } from "$lib/server/content/markdown";
+import { enqueueArchive, enqueuePublication, readPublishJob } from "$lib/server/content/publish";
 import {
   createRevision,
   getPost,
@@ -15,7 +16,7 @@ import { requireRuntimeEnv } from "$lib/server/env";
 
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ params, platform }) => {
+export const load: PageServerLoad = async ({ params, platform, url }) => {
   const env = requireRuntimeEnv(platform);
   const post = await getPost(env, params.id);
   if (!post) error(404, "Post not found");
@@ -24,7 +25,14 @@ export const load: PageServerLoad = async ({ params, platform }) => {
     listRevisions(env, post.id),
     renderMarkdown(post.bodyMarkdown),
   ]);
-  return { post, assets, revisions, previewHtml };
+  const jobId = url.searchParams.get("job");
+  return {
+    post,
+    assets,
+    revisions,
+    previewHtml,
+    job: jobId ? await readPublishJob(env, jobId) : null,
+  };
 };
 
 export const actions: Actions = {
@@ -38,6 +46,35 @@ export const actions: Actions = {
       event.locals.owner.subject,
     );
     redirect(303, `/admin/posts/${event.params.id}?saved=revision`);
+  },
+  publish: async (event) => {
+    const saved = await saveSubmittedDraft(event);
+    if (saved && "failure" in saved) return saved;
+    if (!event.locals.owner) return fail(401);
+    const result = await enqueuePublication(
+      requireRuntimeEnv(event.platform),
+      event.params.id,
+      event.locals.owner.subject,
+    );
+    if (result.issues.length) {
+      return fail(400, { message: result.issues.map((issue) => issue.message).join(" ") });
+    }
+    redirect(303, `/admin/posts/${event.params.id}?job=${result.jobId}`);
+  },
+  archive: async ({ params, platform, locals }) => {
+    if (!locals.owner) return fail(401);
+    try {
+      const jobId = await enqueueArchive(
+        requireRuntimeEnv(platform),
+        params.id,
+        locals.owner.subject,
+      );
+      redirect(303, `/admin/posts/${params.id}?job=${jobId}`);
+    } catch (caught) {
+      return fail(400, {
+        message: caught instanceof Error ? caught.message : "Archiving could not start.",
+      });
+    }
   },
   restore: async ({ request, params, platform, locals }) => {
     const data = await request.formData();

@@ -65,10 +65,10 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (privatePath || event.url.pathname.startsWith("/auth/")) {
     response.headers.set("cache-control", "private, no-store");
   } else if (event.request.method === "GET" || event.request.method === "HEAD") {
-    response.headers.set(
-      "cache-control",
-      "public, max-age=60, s-maxage=3600, stale-while-revalidate=604800, stale-if-error=604800",
-    );
+    // The adapter's legacy Cache API layer must not retain dynamic HTML. The outer Worker
+    // replaces this with the public policy used by Workers Cache after SvelteKit returns.
+    response.headers.set("cache-control", "no-cache");
+    response.headers.set("x-public-cache", "1");
   }
 
   return response;

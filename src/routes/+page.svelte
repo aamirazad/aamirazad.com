@@ -7,6 +7,7 @@
     homelab,
     projects,
   } from "$lib/site";
+  let { data } = $props();
 </script>
 
 <svelte:head>
@@ -38,6 +39,25 @@
     <p class="subtitle">Student and developer</p>
     <p class="blurb">{SITE_DESCRIPTION}</p>
   </header>
+
+  {#if data.latest.length}
+    <section>
+      <h2>Latest</h2>
+      <ul class="published-list">
+        {#each data.latest as post}
+          <li>
+            <a href={post.canonicalPath}>{post.title}</a>
+            <p>{post.summary}</p>
+            <small
+              >{post.series} · {post.format} · {new Date(
+                post.publishedAt,
+              ).toLocaleDateString()}</small
+            >
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 
   <section>
     <h2>Contact</h2>
