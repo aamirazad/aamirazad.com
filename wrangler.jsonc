@@ -74,8 +74,8 @@
       "name": "aamirazad-com",
       "workers_dev": false,
       "routes": [
-        { "pattern": "aamirazad.com", "custom_domain": true },
-        { "pattern": "www.aamirazad.com", "custom_domain": true },
+        { "pattern": "aamirazad.com/*", "zone_name": "aamirazad.com" },
+        { "pattern": "www.aamirazad.com/*", "zone_name": "aamirazad.com" },
       ],
       "vars": {
         "APP_ORIGIN": "https://aamirazad.com",

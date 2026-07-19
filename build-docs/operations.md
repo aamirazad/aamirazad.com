@@ -72,4 +72,4 @@ Roll back only to an inspected version, then repeat the production smoke checkli
 pnpm exec wrangler rollback <version-id> --env production
 ```
 
-Worker version rollback does not restore an external hosting provider's DNS records. The initial Vercel-to-Worker route recovery procedure and retained Astro source reference are recorded in `build-docs/production-cutover.md`.
+The initial Vercel-to-Worker cutover uses zone Routes while retaining the existing proxied Vercel DNS. Removing those routes restores the prior origin without a DNS migration. The exact recovery procedure and retained Astro source reference are recorded in `build-docs/production-cutover.md`.

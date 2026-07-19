@@ -22,7 +22,9 @@ The production Cloudflare resources were staged before routing traffic:
 
 ## Route design
 
-Both `aamirazad.com` and `www.aamirazad.com` are attached as Worker Custom Domains. The apex is canonical. Production requests arriving on `www` receive a cacheable `308` to the same path and query on the apex; preview and local development keep their existing origin normalization behavior.
+Both `aamirazad.com/*` and `www.aamirazad.com/*` are attached as zone Routes on the existing proxied Vercel DNS records. The Worker answers the request without forwarding to Vercel. Routes are used because Cloudflare Custom Domains cannot be created on hostnames with existing CNAME records; the attempted Custom Domain trigger was rejected with `409` before route activation.
+
+The apex is canonical. Production requests arriving on `www` receive a cacheable `308` to the same path and query on the apex; preview and local development keep their existing origin normalization behavior. Keeping the Vercel DNS and deployment intact makes the initial rollback a route removal rather than a DNS migration.
 
 ## Cutover smoke checklist
 
@@ -42,9 +44,8 @@ For an application regression after a subsequent Worker deployment, use Wrangler
 
 For an initial-cutover failure that requires the Astro site:
 
-1. Remove the `aamirazad.com` and `www.aamirazad.com` Custom Domains from `aamirazad-com` so the Worker no longer owns them.
-2. In Vercel, re-confirm both domains on the retained project and use the exact DNS values Vercel displays for that project; restore those records in Cloudflare DNS with the previous proxy setting.
-3. Verify apex→www, homepage, legacy redirects, and sitemap responses contain `x-vercel-id` again.
-4. If the retained deployment must be rebuilt, check out `f54c39848096e232245b72c8facd57bde2b919f9`, install its locked dependencies, and build the Astro application.
+1. Remove the `aamirazad.com/*` and `www.aamirazad.com/*` routes from `aamirazad-com` and deploy triggers. The untouched proxied DNS records will resume sending traffic to Vercel.
+2. Verify apex→www, homepage, legacy redirects, and sitemap responses contain `x-vercel-id` again.
+3. If the retained deployment must be rebuilt, check out `f54c39848096e232245b72c8facd57bde2b919f9`, install its locked dependencies, and build the Astro application.
 
-Do not delete the Vercel project or the Git source reference until production publication, archive, export, and recovery have been exercised successfully and the Cloudflare Worker is the accepted rollback target.
+Do not delete the Vercel project, change the underlying DNS records, or remove the Git source reference until production publication, archive, export, and recovery have been exercised successfully and the Cloudflare Worker is the accepted rollback target.
