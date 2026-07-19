@@ -57,3 +57,19 @@ pnpm exec wrangler d1 migrations apply personal-site --remote --env production
 ```
 
 Migration `0003_remove_backup_scaffolding.sql` removes the unused `backup_jobs` table. The unused `BACKUPS` bindings were removed at the same stopping point; portable export is assembled on demand and is not stored server-side.
+
+## Worker deployment rollback
+
+List production deployment history before choosing a target:
+
+```sh
+pnpm exec wrangler deployments list --env production
+```
+
+Roll back only to an inspected version, then repeat the production smoke checklist:
+
+```sh
+pnpm exec wrangler rollback <version-id> --env production
+```
+
+Worker version rollback does not restore an external hosting provider's DNS records. The initial Vercel-to-Worker route recovery procedure and retained Astro source reference are recorded in `build-docs/production-cutover.md`.

@@ -73,6 +73,10 @@
     "production": {
       "name": "aamirazad-com",
       "workers_dev": false,
+      "routes": [
+        { "pattern": "aamirazad.com", "custom_domain": true },
+        { "pattern": "www.aamirazad.com", "custom_domain": true },
+      ],
       "vars": {
         "APP_ORIGIN": "https://aamirazad.com",
         "ENVIRONMENT": "production",

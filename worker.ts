@@ -4,6 +4,7 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 
 import { cacheTagsForPath } from "./src/lib/published";
 import { publicCachePolicy } from "./src/lib/server/cache-policy";
+import { canonicalRedirect } from "./src/lib/server/canonical-origin";
 import { PublishWorkflow } from "./src/lib/server/content/publish-workflow";
 
 export { PublishWorkflow };
@@ -14,6 +15,16 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
     const ctx = this.ctx;
     const incomingUrl = new URL(request.url);
     const canonicalOrigin = new URL(env.APP_ORIGIN);
+    const destination = canonicalRedirect(request.url, env.APP_ORIGIN, env.ENVIRONMENT);
+    if (destination) {
+      return new Response(null, {
+        status: 308,
+        headers: {
+          "cache-control": "public, max-age=3600",
+          location: destination,
+        },
+      });
+    }
     const canonicalRequest =
       incomingUrl.origin === canonicalOrigin.origin
         ? request
