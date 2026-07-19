@@ -72,4 +72,4 @@ Roll back only to an inspected version, then repeat the production smoke checkli
 pnpm exec wrangler rollback <version-id> --env production
 ```
 
-The initial Vercel-to-Worker cutover uses zone Routes while retaining the existing proxied Vercel DNS. Removing those routes restores the prior origin without a DNS migration. The exact recovery procedure and retained Astro source reference are recorded in `build-docs/production-cutover.md`.
+Production now uses Worker Custom Domains for the apex and `www`; the old Vercel DNS records are no longer an origin fallback. Use Wrangler deployment rollback for an application regression. The disaster-recovery procedure and retained Astro source reference are recorded in `build-docs/production-cutover.md`.
