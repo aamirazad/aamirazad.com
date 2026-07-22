@@ -13,10 +13,10 @@
 
   const visibleProjects = projects.slice(0, 3);
   const moreProjects = projects.slice(3);
-  const visibleLinks = contactLinks.slice(0, 5);
-  const moreLinks = contactLinks.slice(5);
-  const visibleHomelab = homelab.slice(0, 5);
-  const moreHomelab = homelab.slice(5);
+  const visibleLinks = contactLinks.slice(0, 6);
+  const moreLinks = contactLinks.slice(6);
+  const visibleHomelab = homelab.slice(0, 6);
+  const moreHomelab = homelab.slice(6);
 
   const writingTabs = [
     { id: "all", label: "All", description: "" },
