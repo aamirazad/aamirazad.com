@@ -1,5 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import "@fontsource-variable/inter/wght.css";
+  import "@fontsource-variable/inter/wght-italic.css";
+  import "@fontsource-variable/noto-serif/wght.css";
   import "../app.css";
 
   let { children } = $props();

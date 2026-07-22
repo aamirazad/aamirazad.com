@@ -17,6 +17,35 @@
   const moreLinks = contactLinks.slice(5);
   const visibleHomelab = homelab.slice(0, 5);
   const moreHomelab = homelab.slice(5);
+
+  const writingTabs = [
+    { id: "all", label: "All", description: "" },
+    {
+      id: "on",
+      label: "On",
+      description: "Notes and reflections on the things that have my attention.",
+    },
+    {
+      id: "today",
+      label: "Today",
+      description: "A small record of what I’m doing, learning, and thinking today.",
+    },
+    {
+      id: "found",
+      label: "Found",
+      description: "Interesting things I’ve found and want to keep close.",
+    },
+  ] as const;
+
+  type WritingTab = (typeof writingTabs)[number]["id"];
+
+  let activeWritingTab: WritingTab = $state("all");
+  let activeWriting = $derived(writingTabs.find((tab) => tab.id === activeWritingTab)!);
+  let visibleWriting = $derived(data.writing[activeWritingTab].slice(0, 3));
+
+  function selectWritingTab(tab: WritingTab) {
+    activeWritingTab = tab;
+  }
 </script>
 
 <svelte:head>
@@ -32,58 +61,70 @@
 </svelte:head>
 
 <main class="shell homepage">
-  <nav class="site-nav homepage-nav" aria-label="Primary navigation">
-    <a href="/">Aamir Azad</a>
-    <ul>
-      <li><a class="series-on" href="/on">On</a></li>
-      <li><a class="series-today" href="/today">Today</a></li>
-      <li><a class="series-built" href="/built">Built</a></li>
-      <li><a class="series-found" href="/found">Found</a></li>
-      <li><a class="series-archive" href="/archive">Archive</a></li>
-    </ul>
+  <nav class="homepage-actions" aria-label="Contact">
+    <a href="/github" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+      <img src="/icons/github.svg" alt="" />
+    </a>
+    <a href="mailto:aamirmazad@gmail.com" aria-label="Email Aamir Azad">
+      <img src="/icons/mail.svg" alt="" />
+    </a>
   </nav>
 
   <header class="hero">
-    <p class="hero-kicker">Student · developer · curious human</p>
     <h1>{SITE_NAME}</h1>
     <p class="blurb">{SITE_DESCRIPTION}</p>
-    <div class="hero-shapes" aria-hidden="true"><span></span><span></span><span></span></div>
   </header>
 
-  {#if data.featured}
-    <article class="featured-post">
-      <header>
-        <p class={`eyebrow series-ink series-${data.featured.series}`}>
-          {data.featured.series} · {data.featured.format}
-        </p>
-        <h2><a href={data.featured.canonicalPath}>{data.featured.title}</a></h2>
-        {#if data.featured.summary}<p class="featured-summary">{data.featured.summary}</p>{/if}
-        <PublishedDate
-          publishedAt={data.featured.publishedAt}
-          modifiedAt={data.featured.modifiedAt}
-        />
-      </header>
-      {#if data.featured.html}
-        <div class="featured-excerpt">
-          <div class="rendered-markdown">{@html data.featured.html}</div>
+  <section class="writing-section" id="writing" aria-labelledby="writing-heading">
+    <h2 id="writing-heading">Writing</h2>
+    <div class="writing-tabs" role="tablist" aria-label="Writing series">
+      {#each writingTabs as tab}
+        <button
+          type="button"
+          role="tab"
+          id={`writing-tab-${tab.id}`}
+          aria-selected={activeWritingTab === tab.id}
+          aria-controls="writing-panel"
+          onclick={() => selectWritingTab(tab.id)}>{tab.label}</button
+        >
+      {/each}
+    </div>
+
+    <div
+      class="writing-panel"
+      id="writing-panel"
+      role="tabpanel"
+      aria-labelledby={`writing-tab-${activeWritingTab}`}
+    >
+      {#if activeWriting.description}
+        <p class="writing-description">{activeWriting.description}</p>
+      {/if}
+
+      {#if visibleWriting.length}
+        <ol class="writing-list">
+          {#each visibleWriting as post}
+            <li>
+              <a href={post.canonicalPath}>{post.title}</a>
+              {#if post.summary}<p>{post.summary}</p>{/if}
+              <PublishedDate publishedAt={post.publishedAt} modifiedAt={post.modifiedAt} />
+            </li>
+          {/each}
+        </ol>
+        {#if activeWritingTab === "all"}
+          <a class="writing-all" href="/archive">Show all writing <span>→</span></a>
+        {/if}
+      {:else}
+        <div class="writing-empty">
+          <p>No new posts</p>
         </div>
       {/if}
-      <a class="read-more" href={data.featured.canonicalPath}>Read the full post <span>→</span></a>
-    </article>
-  {:else}
-    <section class="empty-feature">
-      <p>New writing will appear here soon.</p>
-    </section>
-  {/if}
+    </div>
+  </section>
 
   <div class="homepage-sections">
     <section class="homepage-section projects-section">
       <div class="homepage-section-heading">
-        <div>
-          <p class="eyebrow">Making</p>
-          <h2>Projects</h2>
-        </div>
-        <span class="section-number" aria-hidden="true">01</span>
+        <h2>Projects</h2>
       </div>
       <p class="section-blurb">
         Things I build to learn, solve a problem, or see how far an idea can go.
@@ -93,14 +134,35 @@
           <li>
             <div class="item-header">
               {#if project.href}
-                <a href={project.href} rel="noopener noreferrer">{project.name}</a>
+                <a href={project.href} target="_blank" rel="noopener noreferrer"
+                  ><span class="external-link-text">{project.name}</span><span
+                    class="external-link-icon"
+                    aria-hidden="true">↗</span
+                  ></a
+                >
               {:else}<span>{project.name}</span>{/if}
               {#if project.wip}<span class="tag">Work in progress</span>{/if}
               {#if project.badge}<span class="tag">{project.badge}</span>{/if}
               {#if project.github}
-                <a class="meta-link" href={`https://github.com/${project.github}`}>GitHub</a>
+                <a
+                  class="meta-link"
+                  href={`https://github.com/${project.github}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  ><span class="external-link-text">GitHub</span><span
+                    class="external-link-icon"
+                    aria-hidden="true">↗</span
+                  ></a
+                >
               {/if}
-              {#if project.code}<a class="meta-link" href={project.code}>Code</a>{/if}
+              {#if project.code}
+                <a class="meta-link" href={project.code} target="_blank" rel="noopener noreferrer"
+                  ><span class="external-link-text">Code</span><span
+                    class="external-link-icon"
+                    aria-hidden="true">↗</span
+                  ></a
+                >
+              {/if}
             </div>
             <p class="item-description">{project.description}</p>
           </li>
@@ -117,14 +179,39 @@
               <li>
                 <div class="item-header">
                   {#if project.href}
-                    <a href={project.href} rel="noopener noreferrer">{project.name}</a>
+                    <a href={project.href} target="_blank" rel="noopener noreferrer"
+                      ><span class="external-link-text">{project.name}</span><span
+                        class="external-link-icon"
+                        aria-hidden="true">↗</span
+                      ></a
+                    >
                   {:else}<span>{project.name}</span>{/if}
                   {#if project.wip}<span class="tag">Work in progress</span>{/if}
                   {#if project.badge}<span class="tag">{project.badge}</span>{/if}
                   {#if project.github}
-                    <a class="meta-link" href={`https://github.com/${project.github}`}>GitHub</a>
+                    <a
+                      class="meta-link"
+                      href={`https://github.com/${project.github}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      ><span class="external-link-text">GitHub</span><span
+                        class="external-link-icon"
+                        aria-hidden="true">↗</span
+                      ></a
+                    >
                   {/if}
-                  {#if project.code}<a class="meta-link" href={project.code}>Code</a>{/if}
+                  {#if project.code}
+                    <a
+                      class="meta-link"
+                      href={project.code}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      ><span class="external-link-text">Code</span><span
+                        class="external-link-icon"
+                        aria-hidden="true">↗</span
+                      ></a
+                    >
+                  {/if}
                 </div>
                 <p class="item-description">{project.description}</p>
               </li>
@@ -136,16 +223,14 @@
 
     <section class="homepage-section links-section">
       <div class="homepage-section-heading">
-        <div>
-          <p class="eyebrow">Elsewhere</p>
-          <h2>Links</h2>
-        </div>
-        <span class="section-number" aria-hidden="true">02</span>
+        <h2>Links</h2>
       </div>
       <p class="section-blurb">Code, contact details, and a few other places to find me.</p>
       <ul class="link-list featured-links">
         {#each visibleLinks as link}
-          <li><a href={link.href} rel="me noopener noreferrer">{link.label}<span>↗</span></a></li>
+          <li>
+            <a href={link.href} rel="me">{link.label}</a>
+          </li>
         {/each}
       </ul>
       {#if moreLinks.length}
@@ -157,7 +242,7 @@
           <ul class="link-list featured-links expanded-list">
             {#each moreLinks as link}
               <li>
-                <a href={link.href} rel="me noopener noreferrer">{link.label}<span>↗</span></a>
+                <a href={link.href} rel="me">{link.label}</a>
               </li>
             {/each}
           </ul>
@@ -167,19 +252,15 @@
 
     <section class="homepage-section homelab-section">
       <div class="homepage-section-heading">
-        <div>
-          <p class="eyebrow">Self-hosted</p>
-          <h2>Homelab</h2>
-        </div>
-        <span class="section-number" aria-hidden="true">03</span>
+        <h2>Homelab</h2>
       </div>
       <p class="section-blurb">The services and systems I run, maintain, and learn from.</p>
       <ul class="link-list service-list">
         {#each visibleHomelab as item}
           <li>
-            {#if item.href}<a href={item.href} rel="noopener noreferrer">{item.name}</a>{:else}<span
-                >{item.name}</span
-              >{/if}
+            {#if item.href}
+              <a href={item.href}>{item.name}</a>
+            {:else}<span>{item.name}</span>{/if}
           </li>
         {/each}
       </ul>
@@ -192,8 +273,9 @@
           <ul class="link-list service-list expanded-list">
             {#each moreHomelab as item}
               <li>
-                {#if item.href}<a href={item.href} rel="noopener noreferrer">{item.name}</a
-                  >{:else}<span>{item.name}</span>{/if}
+                {#if item.href}
+                  <a href={item.href}>{item.name}</a>
+                {:else}<span>{item.name}</span>{/if}
               </li>
             {/each}
           </ul>
