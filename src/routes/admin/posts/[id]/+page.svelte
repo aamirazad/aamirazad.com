@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import RenderedMarkdown from "$lib/components/RenderedMarkdown.svelte";
   import SeriesPicker from "$lib/components/SeriesPicker.svelte";
 
   let { data, form } = $props();
@@ -158,13 +159,19 @@
   /></svelte:head
 >
 
-<main class="editor-shell">
-  <nav class="editor-nav" aria-label="Editor navigation">
+<main class="mx-auto w-[min(calc(100%-2rem),1440px)] pt-6 pb-20">
+  <nav
+    class="sticky top-0 z-10 -mx-[0.6rem] flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--color-background)_92%,transparent)] px-[0.6rem] py-[0.8rem] backdrop-blur-xl max-sm:flex-col max-sm:items-start"
+    aria-label="Editor navigation"
+  >
     <a href="/admin">← All entries</a>
-    <div class="editor-actions">
+    <div
+      class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
+    >
       <span
-        class:warning={saveState === "offline" || saveState === "conflict"}
-        class="save-status"
+        class:text-[#ffb4a9]={saveState === "offline" || saveState === "conflict"}
+        class:text-soft={saveState !== "offline" && saveState !== "conflict"}
+        class="min-w-16 text-right text-[0.8rem] capitalize max-sm:order-3 max-sm:w-full max-sm:text-left"
         aria-live="polite">{saveState}</span
       >
       <a class="secondary-button" href={`/preview/${draft.id}`} target="_blank">Full preview</a>
@@ -178,28 +185,54 @@
     </div>
   </nav>
 
-  {#if recoveryMessage}<p class="notice" role="status">{recoveryMessage}</p>{/if}
-  {#if saveState === "conflict"}<p class="notice error" role="alert">
+  {#if recoveryMessage}<p
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
+      role="status"
+    >
+      {recoveryMessage}
+    </p>{/if}
+  {#if saveState === "conflict"}<p
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 text-[#ffb4a9]"
+      role="alert"
+    >
       This draft was changed elsewhere. Copy any unsaved text, then reload to resolve the conflict.
     </p>{/if}
-  {#if form?.message}<p class="notice error" role="alert">{form.message}</p>{/if}
+  {#if form?.message}<p
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 text-[#ffb4a9]"
+      role="alert"
+    >
+      {form.message}
+    </p>{/if}
   {#if job}
-    <p class:errored={job.status === "failed"} class="publish-progress" aria-live="polite">
+    <p
+      class:border-[#62332d]={job.status === "failed"}
+      class:bg-[#211310]={job.status === "failed"}
+      class:text-[#ffb4a9]={job.status === "failed"}
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-[0.9rem] py-[0.7rem] text-[#c8dcc9] capitalize"
+      aria-live="polite"
+    >
       {job.operation === "archive" ? "Archiving" : "Publishing"}: {job.status}{job.errorMessage
         ? ` — ${job.errorMessage}`
         : ""}
     </p>
   {/if}
-  {#if issues.length}<ul class="validation-list">
+  {#if issues.length}<ul
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
+    >
       {#each issues as issue}<li>{issue.message}</li>{/each}
     </ul>{/if}
 
-  <form id="checkpoint-form" method="POST" action="?/checkpoint" class="editor-grid">
+  <form
+    id="checkpoint-form"
+    method="POST"
+    action="?/checkpoint"
+    class="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)] gap-6 max-sm:grid-cols-1"
+  >
     <input type="hidden" name="version" value={draft.version} />
-    <section class="editor-fields" aria-label="Draft fields">
+    <section class="grid gap-4" aria-label="Draft fields">
       <SeriesPicker bind:value={draft.series} />
-      <div class="field-row">
-        <label
+      <div class="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
+        <label class="flex-1"
           >Format<select name="format" bind:value={draft.format}
             ><option value="article">article</option><option value="note">note</option><option
               value="link">link</option
@@ -208,8 +241,12 @@
         >
       </div>
       <label>Title<input name="title" maxlength="180" bind:value={draft.title} /></label>
-      <details class="composer-options">
-        <summary>Slug and summary</summary>
+      <details
+        class="grid gap-4 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
+      >
+        <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
+          Slug and summary
+        </summary>
         <label
           >Slug<input
             name="slug"
@@ -237,7 +274,9 @@
           <button class="secondary-button" type="button" onclick={fetchMetadata}
             >Fetch metadata</button
           >
-          {#if linkMessage}<p class="field-help" aria-live="polite">{linkMessage}</p>{/if}
+          {#if linkMessage}<p class="text-[0.8rem] text-soft" aria-live="polite">
+              {linkMessage}
+            </p>{/if}
           <label
             >Source title<input
               name="sourceTitle"
@@ -289,8 +328,9 @@
         />
       {/if}
 
-      <label class="markdown-field"
+      <label
         >Markdown<textarea
+          class="min-h-128 font-mono text-sm max-sm:min-h-88"
           name="bodyMarkdown"
           rows="22"
           maxlength="250000"
@@ -301,11 +341,14 @@
       >
     </section>
 
-    <aside class="live-preview" aria-label="Live Markdown preview">
+    <aside
+      class="sticky top-22 max-h-[calc(100vh-7rem)] min-h-140 self-start overflow-auto rounded-[0.6rem] border border-border bg-surface p-6 max-sm:static max-sm:max-h-none max-sm:min-h-0"
+      aria-label="Live Markdown preview"
+    >
       <p class="eyebrow">Live preview</p>
       <article>
-        <h1>{draft.title || "Untitled"}</h1>
-        {#if draft.summary}<p class="post-summary">{draft.summary}</p>{/if}
+        <h1 class="text-[clamp(2rem,5vw,3rem)]">{draft.title || "Untitled"}</h1>
+        {#if draft.summary}<p class="text-[1.1rem] text-muted">{draft.summary}</p>{/if}
         {#if draft.format === "link" && draft.sourceUrl}<p>
             <a href={draft.sourceUrl}>{draft.sourceTitle || draft.sourceUrl} ↗</a>
           </p>{/if}
@@ -313,16 +356,16 @@
             <p>{draft.quoteText}</p>
             <footer>— {draft.quoteAttribution}</footer>
           </blockquote>{/if}
-        <div class="rendered-markdown">{@html previewHtml}</div>
+        <RenderedMarkdown html={previewHtml} />
       </article>
     </aside>
   </form>
   <form id="archive-form" method="POST" action="?/archive"></form>
 
-  <section class="editor-lower-grid">
-    <div class="panel" id="images">
+  <section class="mt-6 grid grid-cols-2 gap-6 max-sm:grid-cols-1">
+    <div class="rounded-[0.6rem] border border-border bg-surface p-5" id="images">
       <h2>Images</h2>
-      <form method="POST" action="?/upload" enctype="multipart/form-data" class="stacked-form">
+      <form method="POST" action="?/upload" enctype="multipart/form-data" class="grid gap-[0.9rem]">
         <label
           >Image<input
             name="image"
@@ -343,10 +386,18 @@
         <button class="secondary-button" type="submit">Upload original</button>
       </form>
       {#if data.assets.length}
-        <div class="asset-list">
+        <div class="mt-6 grid gap-4">
           {#each data.assets as asset}
-            <form method="POST" action="?/asset" class="asset-card">
-              <img src={`/api/assets/${asset.id}`} alt={asset.altText} />
+            <form
+              method="POST"
+              action="?/asset"
+              class="grid gap-[0.9rem] border-t border-border pt-4"
+            >
+              <img
+                class="block h-auto max-h-112 w-full rounded-[0.35rem] bg-[#080808] object-contain"
+                src={`/api/assets/${asset.id}`}
+                alt={asset.altText}
+              />
               <input type="hidden" name="assetId" value={asset.id} />
               <p>
                 <strong>{asset.originalFilename}</strong><br /><small
@@ -362,13 +413,15 @@
       {/if}
     </div>
 
-    <div class="panel">
+    <div class="rounded-[0.6rem] border border-border bg-surface p-5">
       <h2>Revision history</h2>
       {#if data.revisions.length === 0}<p>Create a save point to begin revision history.</p>{:else}
-        <ol class="revision-list">
-          {#each data.revisions as revision}<li>
+        <ol class="m-0 list-none p-0">
+          {#each data.revisions as revision}<li
+              class="flex items-center justify-between gap-4 border-b border-border py-[0.8rem]"
+            >
               <div>
-                <strong>{revision.title || "Untitled"}</strong><small
+                <strong>{revision.title || "Untitled"}</strong><small class="block"
                   >{revision.reason} · {new Date(revision.createdAt).toLocaleString()}</small
                 >
               </div>

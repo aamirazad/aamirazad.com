@@ -341,13 +341,16 @@
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
-<main class="shell admin-shell composer-shell">
+<main class="shell w-[min(calc(100%-2.5rem),820px)]">
   <nav class="site-nav" aria-label="Editor navigation">
     <a href="/admin">Publishing</a>
-    <div class="editor-actions">
+    <div
+      class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
+    >
       <span
-        class:warning={saveState === "offline" || saveState === "conflict"}
-        class="save-status"
+        class:text-[#ffb4a9]={saveState === "offline" || saveState === "conflict"}
+        class:text-soft={saveState !== "offline" && saveState !== "conflict"}
+        class="min-w-16 text-right text-[0.8rem] capitalize max-sm:order-3 max-sm:w-full max-sm:text-left"
         aria-live="polite">{saveState}</span
       >
       <button class="primary-button" type="button" onclick={publish} disabled={Boolean(jobStatus)}>
@@ -356,28 +359,37 @@
     </div>
   </nav>
 
-  <header class="composer-header">
+  <header class="mt-12 mb-8">
     <p class="eyebrow">New entry</p>
-    <h1>What do you want to say?</h1>
+    <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">What do you want to say?</h1>
   </header>
 
   {#if message}<p
-      class:errored={saveState === "conflict"}
-      class="notice"
+      class:border-[#62332d]={saveState === "conflict"}
+      class:bg-[#211310]={saveState === "conflict"}
+      class:text-[#ffb4a9]={saveState === "conflict"}
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
       role={saveState === "conflict" ? "alert" : "status"}
     >
       {message}
     </p>{/if}
-  {#if issues.length}<ul class="validation-list" aria-label="Publishing issues" role="alert">
+  {#if issues.length}<ul
+      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
+      aria-label="Publishing issues"
+      role="alert"
+    >
       {#each issues as issue}<li>{issue.message}</li>{/each}
     </ul>{/if}
 
-  <form class="composer" onsubmit={(event) => event.preventDefault()}>
+  <form class="grid gap-[1.35rem]" onsubmit={(event) => event.preventDefault()}>
     <SeriesPicker bind:value={series} />
-    <label class="composer-title">
-      <span>Title</span>
-      <span class="title-line"
-        ><strong aria-hidden="true">{titlePrefix(series)}</strong><input
+    <label>
+      <span class="mb-2 p-0 text-xs font-[650] tracking-[0.12em] text-soft uppercase">Title</span>
+      <span
+        class="flex items-baseline border-b border-border font-serif text-[clamp(1.65rem,5vw,2.5rem)] text-text"
+        ><strong class="flex-none font-normal" aria-hidden="true">{titlePrefix(series)}</strong
+        ><input
+          class="min-h-14 min-w-0 border-0 bg-transparent px-[0.15em] [font:inherit]"
           aria-label={`Title after the ${titlePrefix(series).trim()} prefix`}
           maxlength={180 - titlePrefix(series).length}
           bind:value={headline}
@@ -387,8 +399,6 @@
       >
     </label>
     <label
-      class:dragging={draggingImage}
-      class="composer-body"
       ondragenter={(event) => {
         if (event.dataTransfer?.types.includes("Files")) draggingImage = true;
       }}
@@ -403,8 +413,13 @@
         if (event.dataTransfer?.files) void uploadImages(event.dataTransfer.files);
       }}
     >
-      <span>Markdown</span>
+      <span class="mb-2 p-0 text-xs font-[650] tracking-[0.12em] text-soft uppercase">Markdown</span
+      >
       <textarea
+        class:border-text={draggingImage}
+        class:bg-[#181818]={draggingImage}
+        class:bg-surface={!draggingImage}
+        class="min-h-[45vh] border-border p-4 text-base"
         rows="18"
         maxlength="250000"
         spellcheck="true"
@@ -413,9 +428,9 @@
         placeholder="Start writing…"
       ></textarea>
     </label>
-    <div class="composer-upload">
+    <div class="mt-[-0.45rem] flex items-baseline gap-3 text-soft">
       <input
-        class="visually-hidden"
+        class="absolute size-px overflow-hidden border-0 p-0 whitespace-nowrap [clip:rect(0,0,0,0)]"
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         multiple
@@ -434,14 +449,30 @@
       <small>or drop an image into the editor</small>
     </div>
 
-    <details class="composer-options">
-      <summary>Format and details</summary>
+    <details
+      class="grid gap-4 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
+    >
+      <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
+        Format and details
+      </summary>
       <fieldset>
         <legend>Format</legend>
-        <div class="choice-buttons format-buttons">
+        <div class="grid grid-cols-5 gap-[0.45rem] max-sm:grid-cols-2">
           {#each FORMATS as choice}
-            <label class:chosen={format === choice}>
-              <input type="radio" name="format" bind:group={format} value={choice} />
+            <label
+              class="relative grid min-h-11 cursor-pointer place-items-center rounded-[0.4rem] border border-border bg-surface has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus"
+              class:border-text={format === choice}
+              class:bg-text={format === choice}
+              class:text-background={format === choice}
+              class:text-muted={format !== choice}
+            >
+              <input
+                class="absolute min-h-px w-px opacity-0"
+                type="radio"
+                name="format"
+                bind:group={format}
+                value={choice}
+              />
               <span>{choice}</span>
             </label>
           {/each}
@@ -462,7 +493,9 @@
         <label>Attribution<input maxlength="500" bind:value={quoteAttribution} /></label>
       {/if}
       {#if format === "photo"}
-        <p class="field-help">Image tools appear as soon as this draft has meaningful text.</p>
+        <p class="text-[0.8rem] text-soft">
+          Image tools appear as soon as this draft has meaningful text.
+        </p>
         {#if postId}<a class="secondary-button" href={`/admin/posts/${postId}#images`}>Add images</a
           >{/if}
       {/if}
@@ -477,17 +510,21 @@
     </details>
   </form>
 
-  <details class="drafts secondary-workspace">
-    <summary>Existing entries ({data.posts.length})</summary>
+  <details
+    class="mt-10 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
+  >
+    <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
+      Existing entries ({data.posts.length})
+    </summary>
     {#if data.posts.length === 0}
       <p>No saved entries yet.</p>
     {:else}
-      <ol class="draft-list">
+      <ol class="m-0 list-none p-0">
         {#each data.posts as post}
-          <li>
-            <a href={`/admin/posts/${post.id}`}>
+          <li class="border-b border-border">
+            <a class="grid gap-[0.2rem] py-4 no-underline" href={`/admin/posts/${post.id}`}>
               <span>{post.title.trim() || "Untitled"}</span>
-              <small>{post.series} · {post.format} · {post.status}</small>
+              <small class="block">{post.series} · {post.format} · {post.status}</small>
             </a>
           </li>
         {/each}
@@ -495,17 +532,23 @@
     {/if}
   </details>
 
-  <details class="secondary-workspace">
-    <summary>Recovery tools</summary>
-    <div class="compact-panel">
-      <p>Download Markdown, metadata, media, and the current public projection.</p>
+  <details class="mt-6 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4">
+    <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
+      Recovery tools
+    </summary>
+    <div
+      class="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start [&_:is(h2,p)]:my-0"
+    >
+      <p class="mt-[0.35rem]">
+        Download Markdown, metadata, media, and the current public projection.
+      </p>
       <form method="POST" action="/admin/export">
         <button type="submit">Export content</button>
       </form>
     </div>
   </details>
 
-  <form method="POST" action="/auth/logout" class="logout-form">
+  <form method="POST" action="/auth/logout" class="mt-10">
     <button class="button-link" type="submit">Log out</button>
   </form>
 </main>

@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const redirects = JSON.parse(
-  await readFile(new URL("../baseline/legacy-redirects.json", import.meta.url), "utf8"),
+  await readFile(new URL("../src/lib/data/legacy-redirects.json", import.meta.url), "utf8"),
 );
 const publicSurface = JSON.parse(
-  await readFile(new URL("../baseline/public-surface.json", import.meta.url), "utf8"),
+  await readFile(new URL("../tests/fixtures/public-surface.json", import.meta.url), "utf8"),
 );
 
 const paths = Object.keys(redirects);

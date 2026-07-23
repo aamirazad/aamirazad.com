@@ -60,26 +60,54 @@
   <meta name="twitter:card" content="summary" />
 </svelte:head>
 
-<main class="shell homepage">
-  <nav class="homepage-actions" aria-label="Contact">
-    <a href="/github" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-      <img src="/icons/github.svg" alt="" />
+<main class="shell relative w-[min(calc(100%-2.5rem),1040px)]">
+  <nav class="absolute top-[1.15rem] right-16 flex gap-[0.45rem]" aria-label="Contact">
+    <a
+      class="grid size-8 place-items-center rounded-full text-muted no-underline hover:bg-surface hover:text-text focus-visible:bg-surface focus-visible:text-text"
+      href="/github"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="GitHub"
+    >
+      <img class="size-4 opacity-84 invert" src="/icons/github.svg" alt="" />
     </a>
-    <a href="mailto:aamirmazad@gmail.com" aria-label="Email Aamir Azad">
-      <img src="/icons/mail.svg" alt="" />
+    <a
+      class="grid size-8 place-items-center rounded-full text-muted no-underline hover:bg-surface hover:text-text focus-visible:bg-surface focus-visible:text-text"
+      href="mailto:aamirmazad@gmail.com"
+      aria-label="Email Aamir Azad"
+    >
+      <img class="size-4 opacity-84 invert" src="/icons/mail.svg" alt="" />
     </a>
   </nav>
 
-  <header class="hero">
-    <h1>{SITE_NAME}</h1>
-    <p class="blurb">{SITE_DESCRIPTION}</p>
+  <header
+    class="relative isolate mb-14 min-h-76 overflow-hidden py-[clamp(2rem,6vw,4.5rem)] max-sm:min-h-68 max-sm:px-[1.4rem] max-sm:py-8"
+  >
+    <h1
+      class="relative z-0 mb-4 inline-block font-serif text-[clamp(3rem,8vw,5.75rem)] leading-[0.95] font-normal before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:-z-1 before:h-[260%] before:w-[145%] before:-translate-x-1/2 before:-translate-y-1/2 before:-rotate-8 before:bg-[radial-gradient(ellipse_at_center,rgb(222_111_45_/_20%),transparent_70%)] before:content-[''] max-sm:text-[clamp(2.75rem,11vw,4rem)]"
+    >
+      {SITE_NAME}
+    </h1>
+    <p class="mb-0 max-w-[49ch] pb-[1em] text-[clamp(1rem,2vw,1.16rem)]">
+      {SITE_DESCRIPTION}
+    </p>
   </header>
 
-  <section class="writing-section" id="writing" aria-labelledby="writing-heading">
-    <h2 id="writing-heading">Writing</h2>
-    <div class="writing-tabs" role="tablist" aria-label="Writing series">
+  <section class="mt-0 border-t border-border pt-5" id="writing" aria-labelledby="writing-heading">
+    <h2
+      class="mb-5 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+      id="writing-heading"
+    >
+      Writing
+    </h2>
+    <div
+      class="mb-6 flex gap-[1.35rem] border-b border-border"
+      role="tablist"
+      aria-label="Writing series"
+    >
       {#each writingTabs as tab}
         <button
+          class="relative cursor-pointer border-0 bg-transparent px-0 pt-[0.2rem] pb-[0.6rem] text-sm text-soft after:absolute after:right-0 after:bottom-[-1px] after:left-0 after:h-0.5 after:scale-x-0 after:bg-text after:content-[''] after:[transform-origin:center] after:[transition:transform_160ms_ease] hover:text-text focus-visible:text-text aria-selected:text-text aria-selected:after:scale-x-100"
           type="button"
           role="tab"
           id={`writing-tab-${tab.id}`}
@@ -90,81 +118,112 @@
       {/each}
     </div>
 
-    <div
-      class="writing-panel"
-      id="writing-panel"
-      role="tabpanel"
-      aria-labelledby={`writing-tab-${activeWritingTab}`}
-    >
+    <div id="writing-panel" role="tabpanel" aria-labelledby={`writing-tab-${activeWritingTab}`}>
       {#if activeWriting.description}
-        <p class="writing-description">{activeWriting.description}</p>
+        <p class="mb-[1.15rem] text-muted">{activeWriting.description}</p>
       {/if}
 
       {#if visibleWriting.length}
-        <ol class="writing-list">
+        <ol class="m-0 list-none p-0">
           {#each visibleWriting as post}
-            <li>
-              <a href={post.canonicalPath}>{post.title}</a>
-              {#if post.summary}<p>{post.summary}</p>{/if}
+            <li class="border-t border-border py-4">
+              <a
+                class="font-serif text-[clamp(1.15rem,2.5vw,1.45rem)] leading-tight font-semibold text-text no-underline hover:underline"
+                href={post.canonicalPath}>{post.title}</a
+              >
+              {#if post.summary}<p class="mt-[0.35rem] mb-[0.45rem]">{post.summary}</p>{/if}
               <PublishedDate publishedAt={post.publishedAt} modifiedAt={post.modifiedAt} />
             </li>
           {/each}
         </ol>
         {#if activeWritingTab === "all"}
-          <a class="writing-all" href="/archive">Show all writing <span>→</span></a>
+          <a class="mt-5 inline-block text-[0.86rem] font-[650] text-muted" href="/archive"
+            >Show all writing <span class="ml-[0.35rem] text-blue">→</span></a
+          >
         {/if}
       {:else}
-        <div class="writing-empty">
-          <p>No new posts</p>
+        <div
+          class="flex min-h-24 items-center gap-[0.55rem] border-y border-dashed border-border py-5"
+        >
+          <p class="m-0">No new posts</p>
         </div>
       {/if}
     </div>
   </section>
 
-  <div class="homepage-sections">
-    <section class="homepage-section projects-section">
-      <div class="homepage-section-heading">
-        <h2>Projects</h2>
+  <div class="mt-16 grid grid-cols-2 gap-[clamp(2.5rem,6vw,5rem)] max-sm:grid-cols-1">
+    <section
+      class="col-span-full mt-0 border-t border-t-[color-mix(in_srgb,var(--color-mint)_55%,var(--color-border))] pt-5 max-sm:col-auto"
+    >
+      <div class="mb-4">
+        <h2
+          class="mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+        >
+          Projects
+        </h2>
       </div>
-      <p class="section-blurb">
+      <p class="max-w-[62ch] pb-[1em]">
         Things I build to learn, solve a problem, or see how far an idea can go.
       </p>
-      <ul class="project-list">
+      <ul class="m-0 grid list-none gap-5 p-0">
         {#each visibleProjects as project}
-          <li>
-            <div class="item-header">
+          <li class="border-b border-border pb-5 last:border-b-0 last:pb-0">
+            <div class="flex flex-wrap items-center gap-x-[0.65rem] gap-y-2 font-[550]">
               {#if project.href}
-                <a href={project.href} target="_blank" rel="noopener noreferrer"
-                  ><span class="external-link-text">{project.name}</span><span
-                    class="external-link-icon"
+                <a
+                  class="group inline-flex items-baseline gap-[0.2em] no-underline"
+                  href={project.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  ><span
+                    class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
+                    >{project.name}</span
+                  ><span
+                    class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
                     aria-hidden="true">↗</span
                   ></a
                 >
               {:else}<span>{project.name}</span>{/if}
-              {#if project.wip}<span class="tag">Work in progress</span>{/if}
-              {#if project.badge}<span class="tag">{project.badge}</span>{/if}
+              {#if project.wip}<span
+                  class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
+                  >Work in progress</span
+                >{/if}
+              {#if project.badge}<span
+                  class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
+                  >{project.badge}</span
+                >{/if}
               {#if project.github}
                 <a
-                  class="meta-link"
+                  class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
                   href={`https://github.com/${project.github}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  ><span class="external-link-text">GitHub</span><span
-                    class="external-link-icon"
+                  ><span
+                    class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
+                    >GitHub</span
+                  ><span
+                    class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
                     aria-hidden="true">↗</span
                   ></a
                 >
               {/if}
               {#if project.code}
-                <a class="meta-link" href={project.code} target="_blank" rel="noopener noreferrer"
-                  ><span class="external-link-text">Code</span><span
-                    class="external-link-icon"
+                <a
+                  class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
+                  href={project.code}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  ><span
+                    class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
+                    >Code</span
+                  ><span
+                    class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
                     aria-hidden="true">↗</span
                   ></a
                 >
               {/if}
             </div>
-            <p class="item-description">{project.description}</p>
+            <p class="mt-[0.35rem] mb-0">{project.description}</p>
           </li>
         {/each}
       </ul>
@@ -174,46 +233,65 @@
             <span class="when-closed">Show {moreProjects.length} more projects</span>
             <span class="when-open">Show fewer projects</span>
           </summary>
-          <ul class="project-list expanded-list">
+          <ul class="m-0 grid list-none gap-5 p-0 pt-0">
             {#each moreProjects as project}
-              <li>
-                <div class="item-header">
+              <li class="border-b border-border pb-5 last:border-b-0 last:pb-0">
+                <div class="flex flex-wrap items-center gap-x-[0.65rem] gap-y-2 font-[550]">
                   {#if project.href}
-                    <a href={project.href} target="_blank" rel="noopener noreferrer"
-                      ><span class="external-link-text">{project.name}</span><span
-                        class="external-link-icon"
+                    <a
+                      class="group inline-flex items-baseline gap-[0.2em] no-underline"
+                      href={project.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      ><span
+                        class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
+                        >{project.name}</span
+                      ><span
+                        class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
                         aria-hidden="true">↗</span
                       ></a
                     >
                   {:else}<span>{project.name}</span>{/if}
-                  {#if project.wip}<span class="tag">Work in progress</span>{/if}
-                  {#if project.badge}<span class="tag">{project.badge}</span>{/if}
+                  {#if project.wip}<span
+                      class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
+                      >Work in progress</span
+                    >{/if}
+                  {#if project.badge}<span
+                      class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
+                      >{project.badge}</span
+                    >{/if}
                   {#if project.github}
                     <a
-                      class="meta-link"
+                      class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
                       href={`https://github.com/${project.github}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      ><span class="external-link-text">GitHub</span><span
-                        class="external-link-icon"
+                      ><span
+                        class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
+                        >GitHub</span
+                      ><span
+                        class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
                         aria-hidden="true">↗</span
                       ></a
                     >
                   {/if}
                   {#if project.code}
                     <a
-                      class="meta-link"
+                      class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
                       href={project.code}
                       target="_blank"
                       rel="noopener noreferrer"
-                      ><span class="external-link-text">Code</span><span
-                        class="external-link-icon"
+                      ><span
+                        class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
+                        >Code</span
+                      ><span
+                        class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
                         aria-hidden="true">↗</span
                       ></a
                     >
                   {/if}
                 </div>
-                <p class="item-description">{project.description}</p>
+                <p class="mt-[0.35rem] mb-0">{project.description}</p>
               </li>
             {/each}
           </ul>
@@ -221,15 +299,25 @@
       {/if}
     </section>
 
-    <section class="homepage-section links-section">
-      <div class="homepage-section-heading">
-        <h2>Links</h2>
+    <section
+      class="mt-0 border-t border-t-[color-mix(in_srgb,var(--color-blue)_55%,var(--color-border))] pt-5"
+    >
+      <div class="mb-4">
+        <h2
+          class="mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+        >
+          Links
+        </h2>
       </div>
-      <p class="section-blurb">Code, contact details, and a few other places to find me.</p>
-      <ul class="link-list featured-links">
+      <p class="max-w-[62ch] pb-[1em]">Code, contact details, and a few other places to find me.</p>
+      <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0 max-sm:grid-cols-1">
         {#each visibleLinks as link}
           <li>
-            <a href={link.href} rel="me">{link.label}</a>
+            <a
+              class="flex items-center justify-between gap-2 border-b border-border py-[0.4rem] text-muted"
+              href={link.href}
+              rel="me">{link.label}</a
+            >
           </li>
         {/each}
       </ul>
@@ -239,10 +327,14 @@
             <span class="when-closed">Show {moreLinks.length} more links</span>
             <span class="when-open">Show fewer links</span>
           </summary>
-          <ul class="link-list featured-links expanded-list">
+          <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0 pt-0 max-sm:grid-cols-1">
             {#each moreLinks as link}
               <li>
-                <a href={link.href} rel="me">{link.label}</a>
+                <a
+                  class="flex items-center justify-between gap-2 border-b border-border py-[0.4rem] text-muted"
+                  href={link.href}
+                  rel="me">{link.label}</a
+                >
               </li>
             {/each}
           </ul>
@@ -250,17 +342,28 @@
       {/if}
     </section>
 
-    <section class="homepage-section homelab-section">
-      <div class="homepage-section-heading">
-        <h2>Homelab</h2>
+    <section
+      class="mt-0 border-t border-t-[color-mix(in_srgb,var(--color-violet)_55%,var(--color-border))] pt-5"
+    >
+      <div class="mb-4">
+        <h2
+          class="mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+        >
+          Homelab
+        </h2>
       </div>
-      <p class="section-blurb">The services and systems I run, maintain, and learn from.</p>
-      <ul class="link-list service-list">
+      <p class="max-w-[62ch] pb-[1em]">The services and systems I run, maintain, and learn from.</p>
+      <ul
+        class="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-[0.45rem] p-0"
+      >
         {#each visibleHomelab as item}
-          <li>
+          <li class="border-b border-border pb-[0.45rem]">
             {#if item.href}
-              <a href={item.href}>{item.name}</a>
-            {:else}<span>{item.name}</span>{/if}
+              <a
+                class="flex items-center justify-between gap-2 text-[0.84rem] text-muted"
+                href={item.href}>{item.name}</a
+              >
+            {:else}<span class="text-[0.84rem]">{item.name}</span>{/if}
           </li>
         {/each}
       </ul>
@@ -270,12 +373,17 @@
             <span class="when-closed">Show {moreHomelab.length} more services</span>
             <span class="when-open">Show fewer services</span>
           </summary>
-          <ul class="link-list service-list expanded-list">
+          <ul
+            class="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-[0.45rem] p-0 pt-0"
+          >
             {#each moreHomelab as item}
-              <li>
+              <li class="border-b border-border pb-[0.45rem]">
                 {#if item.href}
-                  <a href={item.href}>{item.name}</a>
-                {:else}<span>{item.name}</span>{/if}
+                  <a
+                    class="flex items-center justify-between gap-2 text-[0.84rem] text-muted"
+                    href={item.href}>{item.name}</a
+                  >
+                {:else}<span class="text-[0.84rem]">{item.name}</span>{/if}
               </li>
             {/each}
           </ul>
@@ -284,3 +392,58 @@
     </section>
   </div>
 </main>
+
+<style lang="postcss">
+  @reference "../app.css";
+
+  .section-expand {
+    @apply mt-5 border-t border-border open:pb-6;
+  }
+
+  .section-expand::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      block-size 260ms ease,
+      content-visibility 260ms allow-discrete,
+      opacity 180ms ease;
+  }
+
+  .section-expand[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  .section-expand[open] > summary {
+    @apply mb-7;
+  }
+
+  .section-expand > summary {
+    @apply cursor-pointer list-none pt-4 text-[0.82rem] font-[650] text-muted;
+  }
+
+  .section-expand > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .section-expand > summary::after {
+    @apply float-right text-soft content-['+'];
+  }
+
+  .section-expand[open] > summary::after {
+    content: "−";
+  }
+
+  .when-open {
+    @apply hidden;
+  }
+
+  .section-expand[open] .when-open {
+    @apply inline;
+  }
+
+  .section-expand[open] .when-closed {
+    @apply hidden;
+  }
+</style>

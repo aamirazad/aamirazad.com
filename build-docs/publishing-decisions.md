@@ -17,7 +17,7 @@ Recorded 2026-07-18 for Phase 0 of the publishing-platform plan.
 
 The committed baseline inventories the homepage metadata/headings, 30 redirect endpoints, two machine-readable routes, and five static compatibility routes. The migration source is retained locally under `old-site/` only as a content and visual reference; the new application does not import or build it.
 
-The former site is a single server-rendered Astro homepage with no required browser JavaScript, a system-font dark theme, a 760 px content column, and the title/description captured in `baseline/public-surface.json`. The replacement may improve typography and navigation, but must retain all contact, project, homelab, metadata, and redirect content.
+The former site is a single server-rendered Astro homepage with no required browser JavaScript, a system-font dark theme, a 760 px content column, and the title/description captured in `tests/fixtures/public-surface.json`. The replacement may improve typography and navigation, but must retain all contact, project, homelab, metadata, and redirect content.
 
 ## Performance baseline and budgets
 

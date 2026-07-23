@@ -1,4 +1,4 @@
-import redirects from "../../baseline/legacy-redirects.json";
+import redirects from "./data/legacy-redirects.json";
 
 export const legacyRedirects: Readonly<Record<string, string>> = redirects;
 
