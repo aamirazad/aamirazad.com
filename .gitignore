@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.pnpm-store
 /.pnp
 .pnp.js
 
@@ -14,6 +15,8 @@
 
 # production
 /build
+/.svelte-kit
+/.wrangler
 
 # misc
 .DS_Store
@@ -25,6 +28,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+worker-startup.cpuprofile
 
 # env files
 .env
@@ -35,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+old-site

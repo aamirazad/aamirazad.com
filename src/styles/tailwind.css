@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0b0b0b;
+  --color-surface: #121212;
+  --color-text: #f2f2f2;
+  --color-muted: #c3c3c3;
+  --color-soft: #8b8b8b;
+  --color-border: #252525;
+  --color-focus: #8ec5ff;
+  --color-blue: #7db7ff;
+  --color-violet: #b7a0ff;
+  --color-mint: #77d5bd;
+  --color-amber: #efbb72;
+  --font-sans: "Inter Variable", Inter, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+  --font-serif: "Noto Serif Variable", "Noto Serif", Georgia, serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-synthesis: none;
+  }
+
+  html {
+    @apply min-w-80 bg-background;
+    interpolate-size: allow-keywords;
+  }
+
+  body {
+    @apply m-0 min-h-screen bg-background font-sans text-text leading-[1.6];
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  a {
+    @apply text-inherit decoration-1 underline-offset-[0.22em] hover:text-white;
+  }
+
+  :is(a, button, input, select, textarea):focus-visible {
+    @apply outline-2 outline-offset-3 outline-text;
+  }
+
+  h1 {
+    @apply mb-[0.3rem] text-[clamp(2.25rem,7vw,3.35rem)] leading-[1.08];
+  }
+
+  h2 {
+    @apply mb-3 text-xs tracking-[0.24em] text-soft uppercase;
+  }
+
+  p {
+    @apply text-muted;
+  }
+
+  button {
+    @apply text-inherit disabled:cursor-wait disabled:opacity-65;
+  }
+
+  label {
+    @apply grid gap-[0.35rem] text-[0.82rem] font-semibold text-muted;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply w-full rounded-[0.35rem] border border-[#343434] bg-[#0e0e0e] text-text;
+  }
+
+  input,
+  select {
+    @apply min-h-[2.6rem] px-[0.65rem] py-2;
+  }
+
+  textarea {
+    @apply resize-y p-[0.65rem] leading-[1.55];
+  }
+
+  fieldset {
+    @apply m-0 grid gap-[0.9rem] rounded-[0.45rem] border border-border p-4;
+  }
+
+  legend {
+    @apply px-[0.4rem] text-xs tracking-[0.12em] text-soft uppercase;
+  }
+
+  blockquote {
+    @apply mx-0 border-l-3 border-border pl-5;
+  }
+
+  figcaption {
+    @apply mt-[0.45rem] text-[0.85rem] text-soft;
+  }
+
+  small {
+    @apply text-[0.8rem] text-soft;
+  }
+}

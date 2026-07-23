@@ -1,0 +1,110 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "aamirazad-com",
+  "main": "worker.ts",
+  "compatibility_date": "2026-07-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".svelte-kit/cloudflare",
+    "run_worker_first": ["/*", "!/_app/immutable/*", "!/favicon.svg", "!/robots.txt", "!/ssh"],
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 },
+  },
+  "cache": {
+    "enabled": true,
+  },
+  "images": { "binding": "IMAGES" },
+  "vars": {
+    "APP_ORIGIN": "http://localhost:3000",
+    "ENVIRONMENT": "local",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "personal-site-preview",
+      "database_id": "dacb0074-f416-4cc0-81fd-bb2d761a2d1b",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
+    { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
+  ],
+  "workflows": [
+    {
+      "binding": "PUBLISH_WORKFLOW",
+      "name": "personal-site-publish-local",
+      "class_name": "PublishWorkflow",
+    },
+  ],
+  "env": {
+    "preview": {
+      // Upload a preview version of the production Worker without promoting it or
+      // assigning a permanent custom domain.
+      "name": "aamirazad-com",
+      "workers_dev": false,
+      "preview_urls": true,
+      "vars": {
+        "APP_ORIGIN": "https://aamirazad.com",
+        "ENVIRONMENT": "preview",
+      },
+      "images": { "binding": "IMAGES" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "personal-site-preview",
+          "database_id": "dacb0074-f416-4cc0-81fd-bb2d761a2d1b",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
+        { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
+      ],
+      "workflows": [
+        {
+          "binding": "PUBLISH_WORKFLOW",
+          "name": "personal-site-publish-preview",
+          "class_name": "PublishWorkflow",
+        },
+      ],
+    },
+    "production": {
+      "name": "aamirazad-com",
+      "workers_dev": false,
+      "preview_urls": true,
+      "routes": [
+        { "pattern": "aamirazad.com", "custom_domain": true },
+        { "pattern": "www.aamirazad.com", "custom_domain": true },
+      ],
+      "vars": {
+        "APP_ORIGIN": "https://aamirazad.com",
+        "ENVIRONMENT": "production",
+      },
+      "images": { "binding": "IMAGES" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "personal-site",
+          "database_id": "82166898-9f90-46e1-b6ed-dfa33b7f4474",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        { "binding": "CONTENT", "bucket_name": "personal-site" },
+        { "binding": "MEDIA", "bucket_name": "personal-site" },
+      ],
+      "workflows": [
+        {
+          "binding": "PUBLISH_WORKFLOW",
+          "name": "personal-site-publish-production",
+          "class_name": "PublishWorkflow",
+        },
+      ],
+    },
+  },
+}
