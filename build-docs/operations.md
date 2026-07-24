@@ -94,3 +94,8 @@ changing the active deployment or attaching `preview.aamirazad.com`. After one b
 one `main` deployment succeed through Workers Builds, remove the legacy `aamirazad-com-preview`
 Worker and its `preview.aamirazad.com` Custom Domain. Confirm the target and retain a rollback version
 before deletion; the old Worker cannot be recovered by a source-control revert.
+
+The package `prebuild` hook also selects the named Wrangler environment from Cloudflare's
+`WORKERS_CI_BRANCH` variable. It writes `CLOUDFLARE_ENV=production` for `main` and
+`CLOUDFLARE_ENV=preview` for every other branch, so the correct bindings are still selected if the
+dashboard deploy commands are reset to Cloudflare's defaults. Explicit `--env` flags take precedence.
