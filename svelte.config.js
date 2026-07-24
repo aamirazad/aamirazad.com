@@ -1,6 +1,8 @@
 import adapter from "@sveltejs/adapter-cloudflare";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
+const analyticsOrigin = "https://analytics.aamirazad.com";
+
 /** @type {import("@sveltejs/kit").Config} */
 const config = {
   preprocess: vitePreprocess(),
@@ -18,13 +20,13 @@ const config = {
       directives: {
         "default-src": ["self"],
         "base-uri": ["none"],
-        "connect-src": ["self"],
+        "connect-src": ["self", analyticsOrigin],
         "font-src": ["self"],
         "form-action": ["self"],
         "frame-ancestors": ["none"],
         "img-src": ["self", "data:"],
         "object-src": ["none"],
-        "script-src": ["self"],
+        "script-src": ["self", analyticsOrigin],
         "style-src": ["self"],
       },
     },
