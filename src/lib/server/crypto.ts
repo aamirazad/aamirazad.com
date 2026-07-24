@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "node:crypto";
+
 const encoder = new TextEncoder();
 
 export function randomToken(byteLength = 32): string {
@@ -47,18 +49,7 @@ export async function timingSafeStringEqual(left: string, right: string): Promis
     crypto.subtle.digest("SHA-256", encoder.encode(left)),
     crypto.subtle.digest("SHA-256", encoder.encode(right)),
   ]);
-  if (!supportsTimingSafeEqual(crypto.subtle)) {
-    throw new Error("The runtime does not support constant-time comparison");
-  }
-  return crypto.subtle.timingSafeEqual(leftHash, rightHash);
-}
-
-type TimingSafeSubtleCrypto = SubtleCrypto & {
-  timingSafeEqual(left: ArrayBuffer, right: ArrayBuffer): boolean;
-};
-
-function supportsTimingSafeEqual(subtle: SubtleCrypto): subtle is TimingSafeSubtleCrypto {
-  return "timingSafeEqual" in subtle;
+  return timingSafeEqual(new Uint8Array(leftHash), new Uint8Array(rightHash));
 }
 
 function toBase64Url(bytes: Uint8Array): string {

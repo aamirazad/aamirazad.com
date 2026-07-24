@@ -39,6 +39,11 @@ deploy command. A pull request is uploaded as a preview version of the same Work
 temporary `workers.dev` URL; merging to `main` promotes a production version to the apex and `www`
 custom domains.
 
+The `prebuild` hook also makes this binding selection fail-safe when Workers Builds uses its default
+deploy commands. Cloudflare supplies `WORKERS_CI_BRANCH`; the hook persists
+`CLOUDFLARE_ENV=production` for `main` and `CLOUDFLARE_ENV=preview` for every other branch before
+Wrangler runs. Local builds, which do not have `WORKERS_CI_BRANCH`, leave `.env` unchanged.
+
 For an equivalent manual upload or deployment:
 
 ```sh

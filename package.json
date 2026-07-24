@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/select-cloudflare-environment.mjs",
     "build": "vite build",
     "check:assets": "node scripts/check-public-assets.mjs",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

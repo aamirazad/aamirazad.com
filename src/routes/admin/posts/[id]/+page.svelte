@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import EditorBreadcrumbs from "$lib/components/EditorBreadcrumbs.svelte";
   import RenderedMarkdown from "$lib/components/RenderedMarkdown.svelte";
   import SeriesPicker from "$lib/components/SeriesPicker.svelte";
 
@@ -160,11 +161,10 @@
 >
 
 <main class="mx-auto w-[min(calc(100%-2rem),1440px)] pt-6 pb-20">
-  <nav
+  <header
     class="sticky top-0 z-10 -mx-[0.6rem] flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--color-background)_92%,transparent)] px-[0.6rem] py-[0.8rem] backdrop-blur-xl max-sm:flex-col max-sm:items-start"
-    aria-label="Editor navigation"
   >
-    <a href="/admin">← All entries</a>
+    <EditorBreadcrumbs />
     <div
       class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
     >
@@ -183,7 +183,7 @@
         <button class="secondary-button" type="submit" form="archive-form">Archive</button>
       {/if}
     </div>
-  </nav>
+  </header>
 
   {#if recoveryMessage}<p
       class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-4 py-3 text-[#c8dcc9]"

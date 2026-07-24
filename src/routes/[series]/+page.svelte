@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head
-  ><title>{data.series} · Aamir Azad</title><meta
+  ><title>{data.series}</title><meta
     name="description"
     content={`Published entries in ${data.series}.`}
   /><link rel="canonical" href={`${SITE_ORIGIN}/${data.series}`} /></svelte:head

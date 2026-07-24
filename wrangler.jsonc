@@ -19,6 +19,8 @@
   },
   "images": { "binding": "IMAGES" },
   "vars": {
+    // Local defaults. Workers Builds selects env.preview or env.production in
+    // scripts/select-cloudflare-environment.mjs before Wrangler runs.
     "APP_ORIGIN": "http://localhost:3000",
     "ENVIRONMENT": "local",
   },
