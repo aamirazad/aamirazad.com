@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: site-build
-          path: .svelte-kit/cloudflare
+          path: .svelte-kit
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
@@ -97,30 +97,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: site-build
-          path: .svelte-kit/cloudflare
+          path: .svelte-kit
 
-      - name: Start local site
+      - name: Verify site build
         run: |
-          pnpm exec wrangler dev \
-            --local \
-            --ip 127.0.0.1 \
-            --port 8787 \
-            --show-interactive-dev-session=false \
-            > "$RUNNER_TEMP/wrangler.log" 2>&1 &
-          echo "$!" > "$RUNNER_TEMP/wrangler.pid"
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --retry 30 \
-            --retry-delay 1 \
-            --retry-all-errors \
-            http://127.0.0.1:8787/ \
-            > /dev/null
+          test -f .svelte-kit/cloudflare/_worker.js
+          test -f .svelte-kit/cloudflare-tmp/manifest.js
+          test -f .svelte-kit/output/server/index.js
+          test -f .svelte-kit/tsconfig.json
 
       - name: Run Lighthouse
         uses: treosh/lighthouse-ci-action@v12
         with:
+          configPath: .github/lighthouse-ci.json
           urls: |
             http://127.0.0.1:8787/
             http://127.0.0.1:8787/on
@@ -128,14 +117,3 @@ jobs:
           runs: 3
           uploadArtifacts: true
           temporaryPublicStorage: true
-
-      - name: Show local site log on failure
-        if: ${{ failure() }}
-        run: cat "$RUNNER_TEMP/wrangler.log"
-
-      - name: Stop local site
-        if: ${{ always() }}
-        run: |
-          if [[ -f "$RUNNER_TEMP/wrangler.pid" ]]; then
-            kill "$(cat "$RUNNER_TEMP/wrangler.pid")" || true
-          fi
