@@ -1,5 +1,6 @@
 <script lang="ts">
   import { replaceState } from "$app/navigation";
+  import EditorBreadcrumbs from "$lib/components/EditorBreadcrumbs.svelte";
   import SeriesPicker from "$lib/components/SeriesPicker.svelte";
   import {
     FORMATS,
@@ -342,8 +343,8 @@
 </svelte:head>
 
 <main class="shell w-[min(calc(100%-2.5rem),820px)]">
-  <nav class="site-nav" aria-label="Editor navigation">
-    <a href="/admin">Publishing</a>
+  <header class="site-nav">
+    <EditorBreadcrumbs />
     <div
       class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
     >
@@ -357,7 +358,7 @@
         {jobStatus ? `Publishing: ${jobStatus}` : "Publish"}
       </button>
     </div>
-  </nav>
+  </header>
 
   <header class="mt-12 mb-8">
     <p class="eyebrow">New entry</p>
