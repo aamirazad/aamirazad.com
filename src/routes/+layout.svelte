@@ -3,9 +3,51 @@
   import "@fontsource-variable/inter/wght.css";
   import "@fontsource-variable/inter/wght-italic.css";
   import "@fontsource-variable/noto-serif/wght.css";
+  import { onMount } from "svelte";
   import "../app.css";
 
+  const ANALYTICS_SCRIPT_ID = "rybbit-analytics";
+  const ANALYTICS_SCRIPT_SRC = "https://analytics.aamirazad.com/api/script.js";
+
   let { children } = $props();
+
+  function loadAnalytics(): void {
+    if (document.getElementById(ANALYTICS_SCRIPT_ID)) return;
+
+    const script = document.createElement("script");
+    script.id = ANALYTICS_SCRIPT_ID;
+    script.src = ANALYTICS_SCRIPT_SRC;
+    script.dataset.siteId = "1";
+    script.async = true;
+    document.head.appendChild(script);
+  }
+
+  onMount(() => {
+    let cancelled = false;
+    let cancelScheduledLoad = () => {};
+
+    void document.fonts.ready.then(() => {
+      if (cancelled) return;
+
+      const requestIdle = Reflect.get(window, "requestIdleCallback") as
+        typeof window.requestIdleCallback | undefined;
+      const cancelIdle = Reflect.get(window, "cancelIdleCallback") as
+        typeof window.cancelIdleCallback | undefined;
+
+      if (requestIdle && cancelIdle) {
+        const handle = requestIdle.call(window, loadAnalytics, { timeout: 3_000 });
+        cancelScheduledLoad = () => cancelIdle.call(window, handle);
+      } else {
+        const handle = globalThis.setTimeout(loadAnalytics, 0);
+        cancelScheduledLoad = () => globalThis.clearTimeout(handle);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      cancelScheduledLoad();
+    };
+  });
 </script>
 
 <svelte:head>
