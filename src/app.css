@@ -1,1 +1,5 @@
 @import "./styles/tailwind.css";
+
+.sveltekit-body {
+  display: contents;
+}

@@ -28,6 +28,7 @@ const config = {
         "object-src": ["none"],
         "script-src": ["self", analyticsOrigin],
         "style-src": ["self"],
+        "style-src-attr": ["unsafe-hashes", "sha256-S8qMpvofolR8Mpjy4kQvEm7m1q8clzU4dfDH0AmvZjo="],
       },
     },
   },

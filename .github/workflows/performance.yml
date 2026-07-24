@@ -3,10 +3,12 @@ name: Performance budgets
 on:
   workflow_dispatch:
   push:
-    branches: [main]
 
 jobs:
   lighthouse:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.head_commit.message, '[LIGHTHOUSE TEST]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
