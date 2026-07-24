@@ -4,6 +4,7 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 
 import { cacheTagsForPath } from "./src/lib/published";
 import { publicCachePolicy } from "./src/lib/server/cache-policy";
+import { normalizeWorkersDevRequestProtocol } from "./src/lib/server/cloudflare-request";
 import { PublishWorkflow } from "./src/lib/server/content/publish-workflow";
 
 export { PublishWorkflow };
@@ -12,7 +13,8 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
   async fetch(request: Request): Promise<Response> {
     const env = this.env;
     const ctx = this.ctx;
-    const incomingUrl = new URL(request.url);
+    const applicationRequest = normalizeWorkersDevRequestProtocol(request);
+    const incomingUrl = new URL(applicationRequest.url);
     const canonicalOrigin = new URL(env.APP_ORIGIN);
     if (
       incomingUrl.hostname === "www.aamirazad.com" &&
@@ -27,10 +29,10 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
         },
       });
     }
-    const resolved = await svelteWorker.fetch(request, env, ctx);
+    const resolved = await svelteWorker.fetch(applicationRequest, env, ctx);
     const response = new Response(resolved.body, resolved);
     if (response.headers.get("x-public-cache") === "1") {
-      const pathname = new URL(request.url).pathname;
+      const pathname = incomingUrl.pathname;
       const policy = publicCachePolicy(pathname);
       response.headers.delete("x-public-cache");
       response.headers.set("cache-control", policy.browser);
