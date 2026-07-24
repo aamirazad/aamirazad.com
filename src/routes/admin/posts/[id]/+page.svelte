@@ -289,8 +289,7 @@
               name="sourceDescription"
               rows="3"
               maxlength="2000"
-              bind:value={draft.sourceDescription}
-            ></textarea></label
+              bind:value={draft.sourceDescription}></textarea></label
           >
         </fieldset>
       {:else}
@@ -309,8 +308,7 @@
               name="quoteText"
               rows="5"
               maxlength="10000"
-              bind:value={draft.quoteText}
-            ></textarea></label
+              bind:value={draft.quoteText}></textarea></label
           >
           <label
             >Attribution<input
@@ -336,8 +334,7 @@
           maxlength="250000"
           spellcheck="true"
           bind:value={draft.bodyMarkdown}
-          placeholder="Write in Markdown…"
-        ></textarea></label
+          placeholder="Write in Markdown…"></textarea></label
       >
     </section>
 

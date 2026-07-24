@@ -426,8 +426,7 @@
         spellcheck="true"
         bind:value={bodyMarkdown}
         bind:this={bodyInput}
-        placeholder="Start writing…"
-      ></textarea>
+        placeholder="Start writing…"></textarea>
     </label>
     <div class="mt-[-0.45rem] flex items-baseline gap-3 text-soft">
       <input

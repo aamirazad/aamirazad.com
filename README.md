@@ -7,7 +7,7 @@ The previous Astro implementation is retained locally in `old-site/` only as a s
 ## Requirements
 
 - Node.js 24 or newer
-- pnpm 11.1.2 (the `packageManager` field is authoritative)
+- pnpm 11.17.0 (the `packageManager` field is authoritative)
 - A Wrangler-authenticated Cloudflare account for resource or deployment commands
 
 ## Development
