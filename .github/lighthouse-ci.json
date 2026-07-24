@@ -1,0 +1,9 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "pnpm exec wrangler dev --local --ip 127.0.0.1 --port 8787 --show-interactive-dev-session=false",
+      "startServerReadyPattern": "Ready on http://127.0.0.1:8787",
+      "startServerReadyTimeout": 30000
+    }
+  }
+}
