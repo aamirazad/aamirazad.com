@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-  <title>{post.title} · {SITE_NAME}</title><meta name="description" content={post.summary} /><link
+  <title>{post.title}</title><meta name="description" content={post.summary} /><link
     rel="canonical"
     href={`${SITE_ORIGIN}${post.canonicalPath}`}
   />
