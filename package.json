@@ -16,7 +16,6 @@
     "test": "vitest run",
     "test:worker": "vitest run --config vitest.worker.config.ts",
     "test:watch": "vitest",
-    "lighthouse": "lhci autorun --config=.lighthouserc.json",
     "types": "pnpm exec wrangler types worker-configuration.d.ts --env-file .env.example && node scripts/normalize-worker-types.mjs",
     "deploy:preview": "pnpm build && pnpm exec wrangler versions upload --env preview",
     "deploy:production": "pnpm build && pnpm exec wrangler deploy --env production"
@@ -24,7 +23,6 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "0.18.6",
     "@cloudflare/workers-types": "5.20260719.1",
-    "@lhci/cli": "0.15.1",
     "@sveltejs/adapter-cloudflare": "7.2.9",
     "@sveltejs/kit": "2.70.0",
     "@sveltejs/vite-plugin-svelte": "7.0.0",
