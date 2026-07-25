@@ -7,6 +7,7 @@ import {
   createMeaningfulDraft,
   createPost,
   createRevision,
+  deletePost,
   getPost,
   listPostAssets,
   listRevisions,
@@ -79,6 +80,28 @@ describe("draft editor storage", () => {
     const restored = await getPost(env, created.id);
     expect(restored?.title).toBe("On first");
     await expect(listRevisions(env, created.id)).resolves.toHaveLength(2);
+  });
+
+  it("soft-deletes drafts from the editor", async () => {
+    const created = await createPost(env, "on", "article", "owner");
+    await expect(deletePost(env, created.id, "owner")).resolves.toBe("deleted");
+    await expect(getPost(env, created.id)).resolves.toBeNull();
+    await expect(deletePost(env, created.id, "owner")).resolves.toBeNull();
+  });
+
+  it("requires published posts to be archived before deletion", async () => {
+    const created = await createPost(env, "on", "article", "owner");
+    const revisionId = await createRevision(env, created.id, "owner");
+    await env.DB.prepare(
+      "UPDATE posts SET status = 'published', published_revision_id = ? WHERE id = ?",
+    )
+      .bind(revisionId, created.id)
+      .run();
+    await expect(deletePost(env, created.id, "owner")).resolves.toBe("must-archive");
+    await env.DB.prepare("UPDATE posts SET status = 'archived' WHERE id = ?")
+      .bind(created.id)
+      .run();
+    await expect(deletePost(env, created.id, "owner")).resolves.toBe("deleted");
   });
 
   it("stores an original image in R2 and links its metadata", async () => {

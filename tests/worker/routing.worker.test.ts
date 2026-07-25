@@ -1,5 +1,9 @@
-import { SELF } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { applyD1Migrations, env, SELF } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
+
+beforeEach(async () => {
+  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+});
 
 describe("production host routing", () => {
   it("serves public pages on the apex and www with apex canonical metadata", async () => {

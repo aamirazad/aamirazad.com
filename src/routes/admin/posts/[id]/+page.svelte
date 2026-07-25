@@ -241,10 +241,8 @@
         >
       </div>
       <label>Title<input name="title" maxlength="180" bind:value={draft.title} /></label>
-      <details
-        class="grid gap-4 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
-      >
-        <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
+      <details class="grid gap-4 border-y border-border open:pb-5 [&>:not(summary)]:mx-0">
+        <summary class="cursor-pointer py-[0.9rem] font-[650] text-muted">
           Slug and summary
         </summary>
         <label
@@ -339,7 +337,7 @@
     </section>
 
     <aside
-      class="sticky top-22 max-h-[calc(100vh-7rem)] min-h-140 self-start overflow-auto rounded-[0.6rem] border border-border bg-surface p-6 max-sm:static max-sm:max-h-none max-sm:min-h-0"
+      class="sticky top-22 max-h-[calc(100vh-7rem)] min-h-140 self-start overflow-auto border-l border-border pl-6 max-sm:static max-sm:max-h-none max-sm:min-h-0 max-sm:border-t max-sm:border-l-0 max-sm:pt-6 max-sm:pl-0"
       aria-label="Live Markdown preview"
     >
       <p class="eyebrow">Live preview</p>
@@ -360,7 +358,7 @@
   <form id="archive-form" method="POST" action="?/archive"></form>
 
   <section class="mt-6 grid grid-cols-2 gap-6 max-sm:grid-cols-1">
-    <div class="rounded-[0.6rem] border border-border bg-surface p-5" id="images">
+    <div class="border-t border-border pt-5" id="images">
       <h2>Images</h2>
       <form method="POST" action="?/upload" enctype="multipart/form-data" class="grid gap-[0.9rem]">
         <label
@@ -410,7 +408,7 @@
       {/if}
     </div>
 
-    <div class="rounded-[0.6rem] border border-border bg-surface p-5">
+    <div class="border-t border-border pt-5">
       <h2>Revision history</h2>
       {#if data.revisions.length === 0}<p>Create a save point to begin revision history.</p>{:else}
         <ol class="m-0 list-none p-0">

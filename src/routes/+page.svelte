@@ -1,16 +1,15 @@
 <script lang="ts">
   import PublishedDate from "$lib/components/PublishedDate.svelte";
-  import {
-    SITE_DESCRIPTION,
-    SITE_NAME,
-    SITE_ORIGIN,
-    contactLinks,
-    homelab,
-    projects,
-  } from "$lib/site";
+  import { SITE_DESCRIPTION, SITE_NAME, SITE_ORIGIN } from "$lib/site";
 
   let { data } = $props();
 
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const projects = data.siteItems.filter((item) => item.kind === "project");
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const contactLinks = data.siteItems.filter((item) => item.kind === "link");
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const homelab = data.siteItems.filter((item) => item.kind === "homelab");
   const visibleProjects = projects.slice(0, 3);
   const moreProjects = projects.slice(3);
   const visibleLinks = contactLinks.slice(0, 6);
@@ -184,7 +183,7 @@
                   ></a
                 >
               {:else}<span>{project.name}</span>{/if}
-              {#if project.wip}<span
+              {#if project.isWip}<span
                   class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
                   >Work in progress</span
                 >{/if}
@@ -207,10 +206,10 @@
                   ></a
                 >
               {/if}
-              {#if project.code}
+              {#if project.codeUrl}
                 <a
                   class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
-                  href={project.code}
+                  href={project.codeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   ><span
@@ -252,7 +251,7 @@
                       ></a
                     >
                   {:else}<span>{project.name}</span>{/if}
-                  {#if project.wip}<span
+                  {#if project.isWip}<span
                       class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
                       >Work in progress</span
                     >{/if}
@@ -275,10 +274,10 @@
                       ></a
                     >
                   {/if}
-                  {#if project.code}
+                  {#if project.codeUrl}
                     <a
                       class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
-                      href={project.code}
+                      href={project.codeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       ><span
@@ -316,7 +315,7 @@
             <a
               class="flex items-center justify-between gap-2 border-b border-border py-[0.4rem] text-muted"
               href={link.href}
-              rel="me">{link.label}</a
+              rel="me">{link.name}</a
             >
           </li>
         {/each}
@@ -333,7 +332,7 @@
                 <a
                   class="flex items-center justify-between gap-2 border-b border-border py-[0.4rem] text-muted"
                   href={link.href}
-                  rel="me">{link.label}</a
+                  rel="me">{link.name}</a
                 >
               </li>
             {/each}

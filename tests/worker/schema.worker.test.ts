@@ -19,6 +19,7 @@ describe("D1 publishing schema", () => {
     expect(names).toContain("assets");
     expect(names).toContain("sessions");
     expect(names).toContain("publish_jobs");
+    expect(names).toContain("site_items");
     expect(names).not.toContain("backup_jobs");
   });
 
