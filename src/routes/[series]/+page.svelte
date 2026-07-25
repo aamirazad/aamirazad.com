@@ -13,7 +13,6 @@
 <main class="shell">
   <nav class="site-nav"><a href="/">Aamir Azad</a><a href="/archive">Archive</a></nav>
   <header class="mb-10">
-    <p class="eyebrow">Series</p>
     <h1>{data.series}</h1>
   </header>
   {#if data.index.items.length}<ol class="m-0 grid list-none gap-0 p-0">

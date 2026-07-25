@@ -30,7 +30,6 @@
   </nav>
   <article>
     <header class="mb-10">
-      <p class="eyebrow">{post.series} · {post.format}</p>
       <h1>{post.title}</h1>
       {#if post.summary}<p class="text-[1.1rem] text-muted">{post.summary}</p>{/if}
       <PublishedDate publishedAt={post.publishedAt} modifiedAt={post.modifiedAt} emphasized />

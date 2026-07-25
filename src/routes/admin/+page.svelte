@@ -411,7 +411,6 @@
       </header>
 
       <header class="mt-12 mb-8 border-b border-border pb-7">
-        <p class="eyebrow">New entry</p>
         <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">What do you want to say?</h1>
       </header>
 

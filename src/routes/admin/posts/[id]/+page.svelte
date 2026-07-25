@@ -340,7 +340,6 @@
       class="sticky top-22 max-h-[calc(100vh-7rem)] min-h-140 self-start overflow-auto border-l border-border pl-6 max-sm:static max-sm:max-h-none max-sm:min-h-0 max-sm:border-t max-sm:border-l-0 max-sm:pt-6 max-sm:pl-0"
       aria-label="Live Markdown preview"
     >
-      <p class="eyebrow">Live preview</p>
       <article>
         <h1 class="text-[clamp(2rem,5vw,3rem)]">{draft.title || "Untitled"}</h1>
         {#if draft.summary}<p class="text-[1.1rem] text-muted">{draft.summary}</p>{/if}

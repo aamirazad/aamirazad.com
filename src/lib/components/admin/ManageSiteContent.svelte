@@ -163,7 +163,6 @@
 </svelte:head>
 
 <header class="mb-8 border-b border-border pb-7">
-  <p class="eyebrow">Homepage</p>
   <h1 class="m-0 text-[clamp(1.8rem,5vw,2.7rem)]">Manage links</h1>
   <p class="mt-3 mb-0">Add, edit, and remove links, projects, and homelab services.</p>
 </header>
