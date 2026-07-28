@@ -59,9 +59,8 @@
   <title>Manage posts · Aamir Azad</title>
 </svelte:head>
 
-<header class="mb-10 border-b border-border pb-7">
-  <h1 class="m-0 text-[clamp(1.8rem,5vw,2.7rem)]">Manage posts</h1>
-  <p class="mt-3 mb-0">Edit drafts and published writing, or remove entries you no longer need.</p>
+<header class="mt-12 mb-8 border-b border-border pb-7">
+  <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">Manage posts</h1>
 </header>
 
 {#if message}

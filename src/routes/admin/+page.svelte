@@ -387,9 +387,9 @@
   </aside>
 
   <section class="min-w-0">
-    {#if activeView === "create"}
-      <header class="site-nav">
-        <EditorBreadcrumbs />
+    <header class="site-nav !items-start md:min-h-10">
+      <EditorBreadcrumbs />
+      {#if activeView === "create"}
         <div
           class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
         >
@@ -408,8 +408,10 @@
             {jobStatus ? `Publishing: ${jobStatus}` : "Publish"}
           </button>
         </div>
-      </header>
+      {/if}
+    </header>
 
+    {#if activeView === "create"}
       <header class="mt-12 mb-8 border-b border-border pb-7">
         <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">What do you want to say?</h1>
       </header>
@@ -588,3 +590,9 @@
     </form>
   </section>
 </main>
+
+<style>
+  :global(html) {
+    scrollbar-gutter: stable;
+  }
+</style>
