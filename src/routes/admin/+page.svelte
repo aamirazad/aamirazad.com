@@ -1,5 +1,7 @@
 <script lang="ts">
   import { replaceState } from "$app/navigation";
+  import ManagePosts from "$lib/components/admin/ManagePosts.svelte";
+  import ManageSiteContent from "$lib/components/admin/ManageSiteContent.svelte";
   import EditorBreadcrumbs from "$lib/components/EditorBreadcrumbs.svelte";
   import SeriesPicker from "$lib/components/SeriesPicker.svelte";
   import {
@@ -15,6 +17,8 @@
   import { onMount } from "svelte";
 
   let { data } = $props();
+  type AdminView = "create" | "posts" | "links";
+  let activeView = $state<AdminView>("create");
   let series = $state<Series>("on");
   let format = $state<PostFormat>("article");
   let headline = $state("");
@@ -35,8 +39,11 @@
   let issues = $state<ValidationIssue[]>([]);
   let jobStatus = $state("");
   let ready = false;
+  // svelte-ignore non_reactive_update -- element bindings are imperative editor handles
   let titleInput: HTMLInputElement;
+  // svelte-ignore non_reactive_update -- element bindings are imperative editor handles
   let bodyInput: HTMLTextAreaElement;
+  // svelte-ignore non_reactive_update -- element bindings are imperative editor handles
   let fileInput: HTMLInputElement;
   let uploading = $state(false);
   let draggingImage = $state(false);
@@ -67,7 +74,7 @@
       }
     }
     ready = true;
-    titleInput.focus();
+    if (activeView === "create") titleInput.focus();
     const retry = () => void persistUntilCurrent();
     window.addEventListener("online", retry);
     return () => window.removeEventListener("online", retry);
@@ -335,6 +342,11 @@
       bodyInput.setSelectionRange(cursor, cursor);
     });
   }
+
+  function selectView(view: AdminView) {
+    activeView = view;
+    if (view === "create") requestAnimationFrame(() => titleInput?.focus());
+  }
 </script>
 
 <svelte:head>
@@ -342,213 +354,254 @@
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
-<main class="shell w-[min(calc(100%-2.5rem),820px)]">
-  <header class="site-nav">
-    <EditorBreadcrumbs />
-    <div
-      class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
-    >
-      <span
-        class:text-[#ffb4a9]={saveState === "offline" || saveState === "conflict"}
-        class:text-soft={saveState !== "offline" && saveState !== "conflict"}
-        class="min-w-16 text-right text-[0.8rem] capitalize max-sm:order-3 max-sm:w-full max-sm:text-left"
-        aria-live="polite">{saveState}</span
-      >
-      <button class="primary-button" type="button" onclick={publish} disabled={Boolean(jobStatus)}>
-        {jobStatus ? `Publishing: ${jobStatus}` : "Publish"}
-      </button>
-    </div>
-  </header>
-
-  <header class="mt-12 mb-8">
-    <p class="eyebrow">New entry</p>
-    <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">What do you want to say?</h1>
-  </header>
-
-  {#if message}<p
-      class:border-[#62332d]={saveState === "conflict"}
-      class:bg-[#211310]={saveState === "conflict"}
-      class:text-[#ffb4a9]={saveState === "conflict"}
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
-      role={saveState === "conflict" ? "alert" : "status"}
-    >
-      {message}
-    </p>{/if}
-  {#if issues.length}<ul
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
-      aria-label="Publishing issues"
-      role="alert"
-    >
-      {#each issues as issue}<li>{issue.message}</li>{/each}
-    </ul>{/if}
-
-  <form class="grid gap-[1.35rem]" onsubmit={(event) => event.preventDefault()}>
-    <SeriesPicker bind:value={series} />
-    <label>
-      <span class="mb-2 p-0 text-xs font-[650] tracking-[0.12em] text-soft uppercase">Title</span>
-      <span
-        class="flex items-baseline border-b border-border font-serif text-[clamp(1.65rem,5vw,2.5rem)] text-text"
-        ><strong class="flex-none font-normal" aria-hidden="true">{titlePrefix(series)}</strong
-        ><input
-          class="min-h-14 min-w-0 border-0 bg-transparent px-[0.15em] [font:inherit]"
-          aria-label={`Title after the ${titlePrefix(series).trim()} prefix`}
-          maxlength={180 - titlePrefix(series).length}
-          bind:value={headline}
-          bind:this={titleInput}
-          placeholder="your subject"
-        /></span
-      >
-    </label>
-    <label
-      ondragenter={(event) => {
-        if (event.dataTransfer?.types.includes("Files")) draggingImage = true;
-      }}
-      ondragover={(event) => event.preventDefault()}
-      ondragleave={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-          draggingImage = false;
-      }}
-      ondrop={(event) => {
-        event.preventDefault();
-        draggingImage = false;
-        if (event.dataTransfer?.files) void uploadImages(event.dataTransfer.files);
-      }}
-    >
-      <span class="mb-2 p-0 text-xs font-[650] tracking-[0.12em] text-soft uppercase">Markdown</span
-      >
-      <textarea
-        class:border-text={draggingImage}
-        class:bg-[#181818]={draggingImage}
-        class:bg-surface={!draggingImage}
-        class="min-h-[45vh] border-border p-4 text-base"
-        rows="18"
-        maxlength="250000"
-        spellcheck="true"
-        bind:value={bodyMarkdown}
-        bind:this={bodyInput}
-        placeholder="Start writing…"></textarea>
-    </label>
-    <div class="mt-[-0.45rem] flex items-baseline gap-3 text-soft">
-      <input
-        class="absolute size-px overflow-hidden border-0 p-0 whitespace-nowrap [clip:rect(0,0,0,0)]"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        multiple
-        bind:this={fileInput}
-        onchange={(event) => {
-          if (event.currentTarget.files) void uploadImages(event.currentTarget.files);
-        }}
-      />
-      <button
-        class="button-link"
-        type="button"
-        disabled={uploading}
-        onclick={() => fileInput.click()}
-        >{uploading ? "Compressing image…" : "＋ Add image"}</button
-      >
-      <small>or drop an image into the editor</small>
-    </div>
-
-    <details
-      class="grid gap-4 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
-    >
-      <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
-        Format and details
-      </summary>
-      <fieldset>
-        <legend>Format</legend>
-        <div class="grid grid-cols-5 gap-[0.45rem] max-sm:grid-cols-2">
-          {#each FORMATS as choice}
-            <label
-              class="relative grid min-h-11 cursor-pointer place-items-center rounded-[0.4rem] border border-border bg-surface has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus"
-              class:border-text={format === choice}
-              class:bg-text={format === choice}
-              class:text-background={format === choice}
-              class:text-muted={format !== choice}
-            >
-              <input
-                class="absolute min-h-px w-px opacity-0"
-                type="radio"
-                name="format"
-                bind:group={format}
-                value={choice}
-              />
-              <span>{choice}</span>
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-      {#if format === "link"}
-        <label>Destination URL<input type="url" maxlength="2048" bind:value={sourceUrl} /></label>
-        <label>Source title<input maxlength="500" bind:value={sourceTitle} /></label>
-        <label
-          >Source description<textarea rows="3" maxlength="2000" bind:value={sourceDescription}
-          ></textarea></label
-        >
-      {/if}
-      {#if format === "quote"}
-        <label
-          >Quoted text<textarea rows="5" maxlength="10000" bind:value={quoteText}></textarea></label
-        >
-        <label>Attribution<input maxlength="500" bind:value={quoteAttribution} /></label>
-      {/if}
-      {#if format === "photo"}
-        <p class="text-[0.8rem] text-soft">
-          Image tools appear as soon as this draft has meaningful text.
-        </p>
-        {#if postId}<a class="secondary-button" href={`/admin/posts/${postId}#images`}>Add images</a
-          >{/if}
-      {/if}
-      <label>Summary<textarea rows="3" maxlength="500" bind:value={summary}></textarea></label>
-      <label
-        >Slug<input
-          maxlength="96"
-          bind:value={slug}
-          placeholder={slugify(headline) || "generated-from-title"}
-        /></label
-      >
-    </details>
-  </form>
-
-  <details
-    class="mt-10 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
+<main
+  class="mx-auto grid w-[min(calc(100%-2.5rem),1180px)] grid-cols-[11.5rem_minmax(0,860px)] justify-center gap-[clamp(2.5rem,6vw,5rem)] py-8 pb-24 max-md:grid-cols-1 max-md:gap-7 max-sm:w-[min(calc(100%-2rem),1180px)]"
+>
+  <aside
+    class="admin-card sticky top-8 z-20 self-start p-2 max-md:top-2 max-md:-mx-1 max-md:bg-[color-mix(in_srgb,var(--color-surface)_94%,transparent)] max-md:p-1 max-md:backdrop-blur-xl"
+    aria-label="Admin tools"
   >
-    <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
-      Existing entries ({data.posts.length})
-    </summary>
-    {#if data.posts.length === 0}
-      <p>No saved entries yet.</p>
-    {:else}
-      <ol class="m-0 list-none p-0">
-        {#each data.posts as post}
-          <li class="border-b border-border">
-            <a class="grid gap-[0.2rem] py-4 no-underline" href={`/admin/posts/${post.id}`}>
-              <span>{post.title.trim() || "Untitled"}</span>
-              <small class="block">{post.series} · {post.format} · {post.status}</small>
-            </a>
-          </li>
-        {/each}
-      </ol>
-    {/if}
-  </details>
-
-  <details class="mt-6 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4">
-    <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
-      Recovery tools
-    </summary>
-    <div
-      class="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start [&_:is(h2,p)]:my-0"
+    <nav class="grid gap-1 max-md:grid-cols-3">
+      <button
+        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        type="button"
+        aria-pressed={activeView === "create"}
+        onclick={() => selectView("create")}
+        ><span class="size-1.5 shrink-0 rounded-full bg-amber" aria-hidden="true"
+        ></span>Create</button
+      >
+      <button
+        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        type="button"
+        aria-pressed={activeView === "posts"}
+        onclick={() => selectView("posts")}
+        ><span class="size-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true"
+        ></span>Posts</button
+      >
+      <button
+        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        type="button"
+        aria-pressed={activeView === "links"}
+        onclick={() => selectView("links")}
+        ><span class="size-1.5 shrink-0 rounded-full bg-violet" aria-hidden="true"
+        ></span>Site</button
+      >
+    </nav>
+    <form
+      method="POST"
+      action="/auth/logout"
+      class="mt-3 border-t border-[#242424] px-2 pt-3 max-md:hidden"
     >
-      <p class="mt-[0.35rem]">
-        Download Markdown, metadata, media, and the current public projection.
-      </p>
-      <form method="POST" action="/admin/export">
-        <button type="submit">Export content</button>
-      </form>
-    </div>
-  </details>
+      <button class="button-link text-sm" type="submit">Log out</button>
+    </form>
+  </aside>
 
-  <form method="POST" action="/auth/logout" class="mt-10">
-    <button class="button-link" type="submit">Log out</button>
-  </form>
+  <section class="min-w-0">
+    <header class="site-nav !mb-10 !items-start md:min-h-10">
+      <EditorBreadcrumbs />
+      {#if activeView === "create"}
+        <div
+          class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
+        >
+          <span
+            class:text-[#ffb4a9]={saveState === "offline" || saveState === "conflict"}
+            class:text-soft={saveState !== "offline" && saveState !== "conflict"}
+            class="min-w-16 text-right text-[0.8rem] capitalize max-sm:order-3 max-sm:w-full max-sm:text-left"
+            aria-live="polite">{saveState}</span
+          >
+          <button
+            class="primary-button"
+            type="button"
+            onclick={publish}
+            disabled={Boolean(jobStatus)}
+          >
+            {jobStatus ? `Publishing: ${jobStatus}` : "Publish"}
+          </button>
+        </div>
+      {/if}
+    </header>
+
+    {#if activeView === "create"}
+      <header class="mt-2 mb-8">
+        <h1 class="admin-heading m-0 text-[clamp(2rem,5vw,3.2rem)]" data-accent="amber">
+          What do you want to say?
+        </h1>
+      </header>
+
+      {#if message}<p
+          class:bg-[#211310]={saveState === "conflict"}
+          class:text-[#ffb4a9]={saveState === "conflict"}
+          class="mt-4 mb-0 rounded-xl bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
+          role={saveState === "conflict" ? "alert" : "status"}
+        >
+          {message}
+        </p>{/if}
+      {#if issues.length}<ul
+          class="mt-4 mb-0 rounded-xl bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
+          aria-label="Publishing issues"
+          role="alert"
+        >
+          {#each issues as issue}<li>{issue.message}</li>{/each}
+        </ul>{/if}
+
+      <form class="grid gap-[1.35rem]" onsubmit={(event) => event.preventDefault()}>
+        <SeriesPicker bind:value={series} />
+        <label>
+          <span class="mb-2 p-0 text-xs font-[650] tracking-[0.12em] text-soft uppercase"
+            >Title</span
+          >
+          <span
+            class="admin-card flex items-baseline px-4 font-serif text-[clamp(1.65rem,5vw,2.5rem)] text-text"
+            ><strong class="flex-none font-normal" aria-hidden="true">{titlePrefix(series)}</strong
+            ><input
+              class="min-h-16 min-w-0 !border-0 !bg-transparent px-[0.15em] !shadow-none [font:inherit]"
+              aria-label={`Title after the ${titlePrefix(series).trim()} prefix`}
+              maxlength={180 - titlePrefix(series).length}
+              bind:value={headline}
+              bind:this={titleInput}
+              placeholder="your subject"
+            /></span
+          >
+        </label>
+        <label
+          ondragenter={(event) => {
+            if (event.dataTransfer?.types.includes("Files")) draggingImage = true;
+          }}
+          ondragover={(event) => event.preventDefault()}
+          ondragleave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+              draggingImage = false;
+          }}
+          ondrop={(event) => {
+            event.preventDefault();
+            draggingImage = false;
+            if (event.dataTransfer?.files) void uploadImages(event.dataTransfer.files);
+          }}
+        >
+          <span class="mb-2 p-0 text-xs font-[650] tracking-[0.12em] text-soft uppercase"
+            >Markdown</span
+          >
+          <textarea
+            class:ring-1={draggingImage}
+            class:ring-text={draggingImage}
+            class:bg-[#181818]={draggingImage}
+            class:bg-surface={!draggingImage}
+            class="min-h-[45vh] !border-0 p-5 text-base !shadow-none"
+            rows="18"
+            maxlength="250000"
+            spellcheck="true"
+            bind:value={bodyMarkdown}
+            bind:this={bodyInput}
+            placeholder="Start writing…"></textarea>
+        </label>
+        <div class="mt-[-0.45rem] flex items-baseline gap-3 text-soft">
+          <input
+            class="absolute size-px overflow-hidden border-0 p-0 whitespace-nowrap [clip:rect(0,0,0,0)]"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            bind:this={fileInput}
+            onchange={(event) => {
+              if (event.currentTarget.files) void uploadImages(event.currentTarget.files);
+            }}
+          />
+          <button
+            class="button-link"
+            type="button"
+            disabled={uploading}
+            onclick={() => fileInput.click()}
+            >{uploading ? "Compressing image…" : "＋ Add image"}</button
+          >
+          <small>or drop an image into the editor</small>
+        </div>
+
+        <details class="admin-details grid gap-4 open:pb-5 [&>:not(summary)]:mx-0">
+          <summary>Format and details</summary>
+          <fieldset class="!bg-transparent !p-0">
+            <legend>Format</legend>
+            <div class="grid grid-cols-5 gap-[0.45rem] max-sm:grid-cols-2">
+              {#each FORMATS as choice}
+                <label
+                  class="relative grid min-h-11 cursor-pointer place-items-center rounded-lg border-0 bg-[#181818] has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus"
+                  class:bg-[#292929]={format === choice}
+                  class:text-text={format === choice}
+                  class:text-muted={format !== choice}
+                >
+                  <input
+                    class="absolute min-h-px w-px opacity-0"
+                    type="radio"
+                    name="format"
+                    bind:group={format}
+                    value={choice}
+                  />
+                  <span>{choice}</span>
+                </label>
+              {/each}
+            </div>
+          </fieldset>
+          {#if format === "link"}
+            <label
+              >Destination URL<input type="url" maxlength="2048" bind:value={sourceUrl} /></label
+            >
+            <label>Source title<input maxlength="500" bind:value={sourceTitle} /></label>
+            <label
+              >Source description<textarea rows="3" maxlength="2000" bind:value={sourceDescription}
+              ></textarea></label
+            >
+          {/if}
+          {#if format === "quote"}
+            <label
+              >Quoted text<textarea rows="5" maxlength="10000" bind:value={quoteText}
+              ></textarea></label
+            >
+            <label>Attribution<input maxlength="500" bind:value={quoteAttribution} /></label>
+          {/if}
+          {#if format === "photo"}
+            <p class="text-[0.8rem] text-soft">
+              Image tools appear as soon as this draft has meaningful text.
+            </p>
+            {#if postId}<a class="secondary-button" href={`/admin/posts/${postId}#images`}
+                >Add images</a
+              >{/if}
+          {/if}
+          <label>Summary<textarea rows="3" maxlength="500" bind:value={summary}></textarea></label>
+          <label
+            >Slug<input
+              maxlength="96"
+              bind:value={slug}
+              placeholder={slugify(headline) || "generated-from-title"}
+            /></label
+          >
+        </details>
+      </form>
+
+      <details class="admin-details mt-10 open:pb-5">
+        <summary>Recovery tools</summary>
+        <div
+          class="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start [&_:is(h2,p)]:my-0"
+        >
+          <p class="mt-[0.35rem]">
+            Download Markdown, metadata, media, and the current public projection.
+          </p>
+          <form method="POST" action="/admin/export">
+            <button type="submit">Export content</button>
+          </form>
+        </div>
+      </details>
+    {:else if activeView === "posts"}
+      <ManagePosts initialPosts={data.posts} />
+    {:else}
+      <ManageSiteContent initialItems={data.siteItems} />
+    {/if}
+
+    <form method="POST" action="/auth/logout" class="mt-12 hidden max-md:block">
+      <button class="button-link" type="submit">Log out</button>
+    </form>
+  </section>
 </main>
+
+<style>
+  :global(html) {
+    scrollbar-gutter: stable;
+  }
+</style>

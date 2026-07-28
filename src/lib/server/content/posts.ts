@@ -60,6 +60,29 @@ export async function getPost(env: RuntimeEnv, id: string): Promise<EditablePost
   return row ? mapPost(row) : null;
 }
 
+export async function deletePost(
+  env: RuntimeEnv,
+  id: string,
+  actor: string,
+): Promise<"deleted" | "must-archive" | "busy" | null> {
+  const post = await getPost(env, id);
+  if (!post) return null;
+  if (post.status === "publishing") return "busy";
+  if (post.publishedRevisionId && post.status !== "archived") return "must-archive";
+  const now = new Date().toISOString();
+  await env.DB.batch([
+    env.DB.prepare(
+      `UPDATE posts SET deleted_at = ?, updated_at = ?, version = version + 1
+      WHERE id = ? AND deleted_at IS NULL`,
+    ).bind(now, now, id),
+    env.DB.prepare(
+      `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
+      VALUES (?, ?, 'post.deleted', ?, ?)`,
+    ).bind(uuidV7(), actor, id, now),
+  ]);
+  return "deleted";
+}
+
 export async function createPost(
   env: RuntimeEnv,
   series: Series,

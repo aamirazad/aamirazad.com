@@ -12,12 +12,9 @@
 >
 <main class="shell">
   <nav class="site-nav">
-    <a href={`/admin/posts/${data.post.id}`}>← Back to editor</a><span
-      class="text-[0.8rem] tracking-[0.12em] text-soft uppercase">Private preview</span
-    >
+    <a href={`/admin/posts/${data.post.id}`}>← Back to editor</a>
   </nav>
   <article>
-    <p class="eyebrow">{data.post.series} · {data.post.format}</p>
     <h1 class="text-[clamp(2rem,5vw,3rem)]">{data.post.title || "Untitled"}</h1>
     {#if data.post.summary}<p class="text-[1.1rem] text-muted">{data.post.summary}</p>{/if}
     {#if data.post.format === "link" && data.post.sourceUrl}<p>

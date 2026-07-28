@@ -1,22 +1,28 @@
 <script lang="ts">
   import PublishedDate from "$lib/components/PublishedDate.svelte";
-  import {
-    SITE_DESCRIPTION,
-    SITE_NAME,
-    SITE_ORIGIN,
-    contactLinks,
-    homelab,
-    projects,
-  } from "$lib/site";
+  import ProjectItem from "$lib/components/ProjectItem.svelte";
+  import { SITE_DESCRIPTION, SITE_NAME, SITE_ORIGIN } from "$lib/site";
 
   let { data } = $props();
 
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const projects = data.siteItems.filter((item) => item.kind === "project");
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const contactLinks = data.siteItems.filter((item) => item.kind === "link");
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const homelab = data.siteItems.filter((item) => item.kind === "homelab");
   const visibleProjects = projects.slice(0, 3);
   const moreProjects = projects.slice(3);
   const visibleLinks = contactLinks.slice(0, 6);
   const moreLinks = contactLinks.slice(6);
-  const visibleHomelab = homelab.slice(0, 6);
-  const moreHomelab = homelab.slice(6);
+  const publicHomelab = homelab.filter(
+    (item) => item.href && item.name.toLocaleLowerCase() !== "forgejo",
+  );
+  const privateHomelab = homelab.filter(
+    (item) => !item.href || item.name.toLocaleLowerCase() === "forgejo",
+  );
+  const visibleHomelab = publicHomelab.slice(0, 6);
+  const moreHomelab = publicHomelab.slice(6);
 
   const writingTabs = [
     { id: "all", label: "All", description: "" },
@@ -60,7 +66,7 @@
   <meta name="twitter:card" content="summary" />
 </svelte:head>
 
-<main class="shell relative w-[min(calc(100%-2.5rem),1040px)]">
+<main class="shell home-shell relative">
   <nav class="absolute top-[1.15rem] right-16 flex gap-[0.45rem]" aria-label="Contact">
     <a
       class="grid size-8 place-items-center rounded-full text-muted no-underline hover:bg-surface hover:text-text focus-visible:bg-surface focus-visible:text-text"
@@ -81,7 +87,7 @@
   </nav>
 
   <header
-    class="relative isolate mb-14 min-h-76 overflow-hidden py-[clamp(2rem,6vw,4.5rem)] max-sm:min-h-68 max-sm:px-[1.4rem] max-sm:py-8"
+    class="relative isolate mb-10 min-h-60 overflow-hidden py-[clamp(2rem,5vw,3.75rem)] max-sm:min-h-56 max-sm:px-[1.15rem] max-sm:py-8"
   >
     <h1
       class="relative z-0 mb-4 inline-block font-serif text-[clamp(3rem,8vw,5.75rem)] leading-[0.95] font-normal before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:-z-1 before:h-[260%] before:w-[145%] before:-translate-x-1/2 before:-translate-y-1/2 before:-rotate-8 before:bg-[radial-gradient(ellipse_at_center,rgb(222_111_45_/_20%),transparent_70%)] before:content-[''] max-sm:text-[clamp(2.75rem,11vw,4rem)]"
@@ -93,21 +99,21 @@
     </p>
   </header>
 
-  <section class="mt-0 border-t border-border pt-5" id="writing" aria-labelledby="writing-heading">
+  <section class="mt-0" id="writing" aria-labelledby="writing-heading">
     <h2
-      class="mb-5 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+      class="section-title section-title-writing mb-5 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
       id="writing-heading"
     >
       Writing
     </h2>
     <div
-      class="mb-6 flex gap-[1.35rem] border-b border-border"
+      class="mb-6 flex w-fit flex-wrap gap-1 rounded-full bg-surface p-1"
       role="tablist"
       aria-label="Writing series"
     >
       {#each writingTabs as tab}
         <button
-          class="relative cursor-pointer border-0 bg-transparent px-0 pt-[0.2rem] pb-[0.6rem] text-sm text-soft after:absolute after:right-0 after:bottom-[-1px] after:left-0 after:h-0.5 after:scale-x-0 after:bg-text after:content-[''] after:[transform-origin:center] after:[transition:transform_160ms_ease] hover:text-text focus-visible:text-text aria-selected:text-text aria-selected:after:scale-x-100"
+          class="cursor-pointer rounded-full border-0 bg-transparent px-3 py-1.5 text-sm text-soft transition-colors duration-160 hover:text-text focus-visible:text-text aria-selected:bg-[#202020] aria-selected:text-text"
           type="button"
           role="tab"
           id={`writing-tab-${tab.id}`}
@@ -124,15 +130,34 @@
       {/if}
 
       {#if visibleWriting.length}
-        <ol class="m-0 list-none p-0">
+        <ol
+          class="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(18rem,100%),1fr))] gap-3 p-0"
+        >
           {#each visibleWriting as post}
-            <li class="border-t border-border py-4">
-              <a
-                class="font-serif text-[clamp(1.15rem,2.5vw,1.45rem)] leading-tight font-semibold text-text no-underline hover:underline"
-                href={post.canonicalPath}>{post.title}</a
+            <li class="min-w-0">
+              <article
+                class="writing-card flex h-full min-h-48 flex-col rounded-xl bg-surface p-5 transition-colors duration-160"
+                data-series={post.series}
               >
-              {#if post.summary}<p class="mt-[0.35rem] mb-[0.45rem]">{post.summary}</p>{/if}
-              <PublishedDate publishedAt={post.publishedAt} modifiedAt={post.modifiedAt} />
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <span class="writing-series inline-flex items-center gap-1.5 text-xs text-soft">
+                    <span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                    {post.series}
+                  </span>
+                  <PublishedDate
+                    publishedAt={post.publishedAt}
+                    modifiedAt={post.modifiedAt}
+                    showLabel={false}
+                  />
+                </div>
+                <a
+                  class="font-serif text-[clamp(1.12rem,2vw,1.35rem)] leading-[1.3] font-semibold text-text no-underline hover:underline"
+                  href={post.canonicalPath}>{post.title}</a
+                >
+                {#if post.summary}
+                  <p class="mt-2 mb-0 line-clamp-3 text-[0.9rem] leading-[1.55]">{post.summary}</p>
+                {/if}
+              </article>
             </li>
           {/each}
         </ol>
@@ -142,22 +167,18 @@
           >
         {/if}
       {:else}
-        <div
-          class="flex min-h-24 items-center gap-[0.55rem] border-y border-dashed border-border py-5"
-        >
+        <div class="flex min-h-24 items-center gap-[0.55rem] rounded-xl bg-surface px-5 py-5">
           <p class="m-0">No new posts</p>
         </div>
       {/if}
     </div>
   </section>
 
-  <div class="mt-16 grid grid-cols-2 gap-[clamp(2.5rem,6vw,5rem)] max-sm:grid-cols-1">
-    <section
-      class="col-span-full mt-0 border-t border-t-[color-mix(in_srgb,var(--color-mint)_55%,var(--color-border))] pt-5 max-sm:col-auto"
-    >
+  <div class="mt-14 grid grid-cols-2 gap-x-[clamp(2.5rem,6vw,5rem)] gap-y-14 max-sm:grid-cols-1">
+    <section class="col-span-full mt-0 max-sm:col-auto">
       <div class="mb-4">
         <h2
-          class="mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+          class="section-title section-title-projects mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
         >
           Projects
         </h2>
@@ -165,66 +186,9 @@
       <p class="max-w-[62ch] pb-[1em]">
         Things I build to learn, solve a problem, or see how far an idea can go.
       </p>
-      <ul class="m-0 grid list-none gap-5 p-0">
+      <ul class="m-0 grid list-none grid-cols-3 gap-3 p-0 max-md:grid-cols-1">
         {#each visibleProjects as project}
-          <li class="border-b border-border pb-5 last:border-b-0 last:pb-0">
-            <div class="flex flex-wrap items-center gap-x-[0.65rem] gap-y-2 font-[550]">
-              {#if project.href}
-                <a
-                  class="group inline-flex items-baseline gap-[0.2em] no-underline"
-                  href={project.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><span
-                    class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
-                    >{project.name}</span
-                  ><span
-                    class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
-                    aria-hidden="true">↗</span
-                  ></a
-                >
-              {:else}<span>{project.name}</span>{/if}
-              {#if project.wip}<span
-                  class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
-                  >Work in progress</span
-                >{/if}
-              {#if project.badge}<span
-                  class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
-                  >{project.badge}</span
-                >{/if}
-              {#if project.github}
-                <a
-                  class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
-                  href={`https://github.com/${project.github}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><span
-                    class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
-                    >GitHub</span
-                  ><span
-                    class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
-                    aria-hidden="true">↗</span
-                  ></a
-                >
-              {/if}
-              {#if project.code}
-                <a
-                  class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
-                  href={project.code}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  ><span
-                    class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
-                    >Code</span
-                  ><span
-                    class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
-                    aria-hidden="true">↗</span
-                  ></a
-                >
-              {/if}
-            </div>
-            <p class="mt-[0.35rem] mb-0">{project.description}</p>
-          </li>
+          <li class="min-w-0"><ProjectItem {project} /></li>
         {/each}
       </ul>
       {#if moreProjects.length}
@@ -233,78 +197,19 @@
             <span class="when-closed">Show {moreProjects.length} more projects</span>
             <span class="when-open">Show fewer projects</span>
           </summary>
-          <ul class="m-0 grid list-none gap-5 p-0 pt-0">
+          <ul class="m-0 grid list-none grid-cols-3 gap-3 p-0 pt-0 max-md:grid-cols-1">
             {#each moreProjects as project}
-              <li class="border-b border-border pb-5 last:border-b-0 last:pb-0">
-                <div class="flex flex-wrap items-center gap-x-[0.65rem] gap-y-2 font-[550]">
-                  {#if project.href}
-                    <a
-                      class="group inline-flex items-baseline gap-[0.2em] no-underline"
-                      href={project.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      ><span
-                        class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
-                        >{project.name}</span
-                      ><span
-                        class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
-                        aria-hidden="true">↗</span
-                      ></a
-                    >
-                  {:else}<span>{project.name}</span>{/if}
-                  {#if project.wip}<span
-                      class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
-                      >Work in progress</span
-                    >{/if}
-                  {#if project.badge}<span
-                      class="rounded-full border border-border px-[0.55rem] py-[0.08rem] text-[0.65rem] font-medium tracking-[0.08em] text-soft uppercase"
-                      >{project.badge}</span
-                    >{/if}
-                  {#if project.github}
-                    <a
-                      class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
-                      href={`https://github.com/${project.github}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      ><span
-                        class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
-                        >GitHub</span
-                      ><span
-                        class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
-                        aria-hidden="true">↗</span
-                      ></a
-                    >
-                  {/if}
-                  {#if project.code}
-                    <a
-                      class="group inline-flex items-baseline gap-[0.2em] text-xs text-soft no-underline"
-                      href={project.code}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      ><span
-                        class="text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
-                        >Code</span
-                      ><span
-                        class="text-current no-underline transition-colors duration-160 group-hover:text-blue"
-                        aria-hidden="true">↗</span
-                      ></a
-                    >
-                  {/if}
-                </div>
-                <p class="mt-[0.35rem] mb-0">{project.description}</p>
-              </li>
+              <li class="min-w-0"><ProjectItem {project} /></li>
             {/each}
           </ul>
         </details>
       {/if}
     </section>
 
-    <section
-      class="mt-0 border-t border-t-[color-mix(in_srgb,var(--color-blue)_55%,var(--color-border))] pt-5"
-    >
+    <section class="mt-0">
       <div class="mb-4">
         <h2
-          class="mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+          class="section-title section-title-links mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
         >
           Links
         </h2>
@@ -314,9 +219,13 @@
         {#each visibleLinks as link}
           <li>
             <a
-              class="flex items-center justify-between gap-2 border-b border-border py-[0.4rem] text-muted"
+              class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.88rem] text-muted no-underline hover:text-text"
               href={link.href}
-              rel="me">{link.label}</a
+              rel="me"
+              >{link.name}<span
+                class="text-blue transition-transform duration-160 group-hover:translate-x-0.5"
+                aria-hidden="true">→</span
+              ></a
             >
           </li>
         {/each}
@@ -331,9 +240,13 @@
             {#each moreLinks as link}
               <li>
                 <a
-                  class="flex items-center justify-between gap-2 border-b border-border py-[0.4rem] text-muted"
+                  class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.88rem] text-muted no-underline hover:text-text"
                   href={link.href}
-                  rel="me">{link.label}</a
+                  rel="me"
+                  >{link.name}<span
+                    class="text-blue transition-transform duration-160 group-hover:translate-x-0.5"
+                    aria-hidden="true">→</span
+                  ></a
                 >
               </li>
             {/each}
@@ -342,28 +255,30 @@
       {/if}
     </section>
 
-    <section
-      class="mt-0 border-t border-t-[color-mix(in_srgb,var(--color-violet)_55%,var(--color-border))] pt-5"
-    >
+    <section class="mt-0">
       <div class="mb-4">
         <h2
-          class="mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
+          class="section-title section-title-homelab mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
         >
           Homelab
         </h2>
       </div>
       <p class="max-w-[62ch] pb-[1em]">The services and systems I run, maintain, and learn from.</p>
-      <ul
-        class="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-[0.45rem] p-0"
-      >
+
+      <h3 class="mb-2 text-xs font-semibold tracking-[0.08em] text-soft uppercase">
+        Public services
+      </h3>
+      <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0">
         {#each visibleHomelab as item}
-          <li class="border-b border-border pb-[0.45rem]">
-            {#if item.href}
-              <a
-                class="flex items-center justify-between gap-2 text-[0.84rem] text-muted"
-                href={item.href}>{item.name}</a
-              >
-            {:else}<span class="text-[0.84rem]">{item.name}</span>{/if}
+          <li>
+            <a
+              class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.84rem] text-muted no-underline hover:text-text"
+              href={item.href}
+              >{item.name}<span
+                class="text-violet transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
+                aria-hidden="true">↗</span
+              ></a
+            >
           </li>
         {/each}
       </ul>
@@ -373,21 +288,46 @@
             <span class="when-closed">Show {moreHomelab.length} more services</span>
             <span class="when-open">Show fewer services</span>
           </summary>
-          <ul
-            class="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-[0.45rem] p-0 pt-0"
-          >
+          <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0 pt-0">
             {#each moreHomelab as item}
-              <li class="border-b border-border pb-[0.45rem]">
-                {#if item.href}
-                  <a
-                    class="flex items-center justify-between gap-2 text-[0.84rem] text-muted"
-                    href={item.href}>{item.name}</a
-                  >
-                {:else}<span class="text-[0.84rem]">{item.name}</span>{/if}
+              <li>
+                <a
+                  class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.84rem] text-muted no-underline hover:text-text"
+                  href={item.href}
+                  >{item.name}<span
+                    class="text-violet transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
+                    aria-hidden="true">↗</span
+                  ></a
+                >
               </li>
             {/each}
           </ul>
         </details>
+      {/if}
+
+      {#if privateHomelab.length}
+        <div class="mt-5">
+          <h3 class="mb-2 text-xs font-semibold tracking-[0.08em] text-soft uppercase">
+            Private services
+          </h3>
+          <ul class="m-0 flex list-none flex-wrap gap-2 p-0">
+            {#each privateHomelab as item}
+              <li
+                class="inline-flex items-center gap-1.5 rounded-full bg-[#101010] px-3 py-1.5 text-[0.78rem] text-soft"
+              >
+                <svg class="size-3 text-[#666]" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="3" y="7" width="10" height="7" rx="2" fill="currentColor" />
+                  <path
+                    d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  />
+                </svg>
+                {item.name}
+              </li>
+            {/each}
+          </ul>
+        </div>
       {/if}
     </section>
   </div>
@@ -396,8 +336,60 @@
 <style lang="postcss">
   @reference "../app.css";
 
+  .home-shell {
+    width: min(calc(100% - 2.5rem), 1040px);
+  }
+
+  .section-title {
+    @apply flex items-center gap-3;
+  }
+
+  .section-title::before {
+    @apply h-7 w-1 rounded-full bg-current content-[''];
+  }
+
+  .section-title-writing::before {
+    @apply text-amber;
+  }
+
+  .section-title-projects::before {
+    @apply text-mint;
+  }
+
+  .section-title-links::before {
+    @apply text-blue;
+  }
+
+  .section-title-homelab::before {
+    @apply text-violet;
+  }
+
+  .writing-card:hover {
+    background: #161616;
+  }
+
+  .writing-series {
+    text-transform: capitalize;
+  }
+
+  .writing-card[data-series="on"] .writing-series {
+    @apply text-blue;
+  }
+
+  .writing-card[data-series="today"] .writing-series {
+    @apply text-mint;
+  }
+
+  .writing-card[data-series="found"] .writing-series {
+    @apply text-violet;
+  }
+
+  .writing-card[data-series="built"] .writing-series {
+    @apply text-amber;
+  }
+
   .section-expand {
-    @apply mt-5 border-t border-border open:pb-6;
+    @apply mt-4;
   }
 
   .section-expand::details-content {
@@ -416,11 +408,11 @@
   }
 
   .section-expand[open] > summary {
-    @apply mb-7;
+    @apply mb-4;
   }
 
   .section-expand > summary {
-    @apply cursor-pointer list-none pt-4 text-[0.82rem] font-[650] text-muted;
+    @apply inline-flex cursor-pointer list-none items-center gap-3 rounded-full bg-surface px-3 py-2 text-[0.8rem] font-[650] text-muted hover:text-text;
   }
 
   .section-expand > summary::-webkit-details-marker {
@@ -428,7 +420,7 @@
   }
 
   .section-expand > summary::after {
-    @apply float-right text-soft content-['+'];
+    @apply text-soft content-['+'];
   }
 
   .section-expand[open] > summary::after {
@@ -445,5 +437,11 @@
 
   .section-expand[open] .when-closed {
     @apply hidden;
+  }
+
+  @media (max-width: 40rem) {
+    .home-shell {
+      width: min(calc(100% - 2rem), 1040px);
+    }
   }
 </style>

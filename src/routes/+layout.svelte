@@ -61,7 +61,7 @@
   <a
     class="fixed top-[0.65rem] right-[0.65rem] z-30 grid size-11 place-items-center rounded-full border border-transparent text-[1.1rem] text-soft opacity-28 no-underline hover:border-border hover:bg-surface hover:opacity-100 focus-visible:border-border focus-visible:bg-surface focus-visible:opacity-100"
     href="/admin"
-    aria-label="Open the publishing editor"
+    aria-label="Open the admin interface"
     data-sveltekit-reload
   >
     <span aria-hidden="true">✎</span>
@@ -87,9 +87,5 @@
 
   :global(.site-nav ul) {
     @apply m-0 flex list-none flex-wrap gap-[0.85rem] p-0 text-sm text-soft;
-  }
-
-  :global(.eyebrow) {
-    @apply mb-[0.35rem] text-xs tracking-[0.16em] text-soft uppercase;
   }
 </style>

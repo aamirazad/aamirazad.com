@@ -9,6 +9,10 @@ export type PublicCachePolicy = {
 };
 
 export function publicCachePolicy(pathname: string): PublicCachePolicy {
+  if (pathname === "/") {
+    return { browser: "no-cache", edge: "no-cache" };
+  }
+
   if (pathname.startsWith("/media/")) {
     const immutable = `public, max-age=${IMMUTABLE_TTL}, immutable`;
     return { browser: immutable, edge: immutable };

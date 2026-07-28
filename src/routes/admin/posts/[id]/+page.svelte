@@ -160,9 +160,9 @@
   /></svelte:head
 >
 
-<main class="mx-auto w-[min(calc(100%-2rem),1440px)] pt-6 pb-20">
+<main class="mx-auto w-[min(calc(100%-2rem),1380px)] pt-4 pb-20">
   <header
-    class="sticky top-0 z-10 -mx-[0.6rem] flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--color-background)_92%,transparent)] px-[0.6rem] py-[0.8rem] backdrop-blur-xl max-sm:flex-col max-sm:items-start"
+    class="admin-card sticky top-3 z-10 flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] px-4 py-3 shadow-[0_12px_40px_rgb(0_0_0_/_0.28)] backdrop-blur-xl max-sm:flex-col max-sm:items-start"
   >
     <EditorBreadcrumbs />
     <div
@@ -186,29 +186,28 @@
   </header>
 
   {#if recoveryMessage}<p
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
+      class="mt-4 mb-0 rounded-xl bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
       role="status"
     >
       {recoveryMessage}
     </p>{/if}
   {#if saveState === "conflict"}<p
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 text-[#ffb4a9]"
+      class="mt-4 mb-0 rounded-xl bg-[#211310] px-4 py-3 text-[#ffb4a9]"
       role="alert"
     >
       This draft was changed elsewhere. Copy any unsaved text, then reload to resolve the conflict.
     </p>{/if}
   {#if form?.message}<p
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 text-[#ffb4a9]"
+      class="mt-4 mb-0 rounded-xl bg-[#211310] px-4 py-3 text-[#ffb4a9]"
       role="alert"
     >
       {form.message}
     </p>{/if}
   {#if job}
     <p
-      class:border-[#62332d]={job.status === "failed"}
       class:bg-[#211310]={job.status === "failed"}
       class:text-[#ffb4a9]={job.status === "failed"}
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-[0.9rem] py-[0.7rem] text-[#c8dcc9] capitalize"
+      class="mt-4 mb-0 rounded-xl bg-[#121a13] px-[0.9rem] py-[0.7rem] text-[#c8dcc9] capitalize"
       aria-live="polite"
     >
       {job.operation === "archive" ? "Archiving" : "Publishing"}: {job.status}{job.errorMessage
@@ -216,9 +215,7 @@
         : ""}
     </p>
   {/if}
-  {#if issues.length}<ul
-      class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
-    >
+  {#if issues.length}<ul class="mt-4 mb-0 rounded-xl bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]">
       {#each issues as issue}<li>{issue.message}</li>{/each}
     </ul>{/if}
 
@@ -226,10 +223,10 @@
     id="checkpoint-form"
     method="POST"
     action="?/checkpoint"
-    class="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(22rem,0.8fr)] gap-6 max-sm:grid-cols-1"
+    class="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(22rem,0.82fr)] gap-4 max-sm:grid-cols-1"
   >
     <input type="hidden" name="version" value={draft.version} />
-    <section class="grid gap-4" aria-label="Draft fields">
+    <section class="admin-card grid gap-4 p-5" aria-label="Draft fields">
       <SeriesPicker bind:value={draft.series} />
       <div class="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
         <label class="flex-1"
@@ -241,12 +238,8 @@
         >
       </div>
       <label>Title<input name="title" maxlength="180" bind:value={draft.title} /></label>
-      <details
-        class="grid gap-4 rounded-lg border border-border bg-surface open:pb-4 [&>:not(summary)]:mx-4"
-      >
-        <summary class="cursor-pointer px-4 py-[0.9rem] font-[650] text-muted">
-          Slug and summary
-        </summary>
+      <details class="admin-details grid gap-4 !bg-[#181818] open:pb-5 [&>:not(summary)]:mx-0">
+        <summary>Slug and summary</summary>
         <label
           >Slug<input
             name="slug"
@@ -339,12 +332,11 @@
     </section>
 
     <aside
-      class="sticky top-22 max-h-[calc(100vh-7rem)] min-h-140 self-start overflow-auto rounded-[0.6rem] border border-border bg-surface p-6 max-sm:static max-sm:max-h-none max-sm:min-h-0"
+      class="admin-card sticky top-24 max-h-[calc(100vh-7rem)] min-h-140 self-start overflow-auto p-6 max-sm:static max-sm:max-h-none max-sm:min-h-0"
       aria-label="Live Markdown preview"
     >
-      <p class="eyebrow">Live preview</p>
       <article>
-        <h1 class="text-[clamp(2rem,5vw,3rem)]">{draft.title || "Untitled"}</h1>
+        <h1 class="font-serif text-[clamp(2rem,5vw,3rem)]">{draft.title || "Untitled"}</h1>
         {#if draft.summary}<p class="text-[1.1rem] text-muted">{draft.summary}</p>{/if}
         {#if draft.format === "link" && draft.sourceUrl}<p>
             <a href={draft.sourceUrl}>{draft.sourceTitle || draft.sourceUrl} ↗</a>
@@ -359,9 +351,14 @@
   </form>
   <form id="archive-form" method="POST" action="?/archive"></form>
 
-  <section class="mt-6 grid grid-cols-2 gap-6 max-sm:grid-cols-1">
-    <div class="rounded-[0.6rem] border border-border bg-surface p-5" id="images">
-      <h2>Images</h2>
+  <section class="mt-4 grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+    <div class="admin-card p-5" id="images">
+      <h2
+        class="admin-heading mb-5 text-[1.45rem] tracking-[-0.02em] text-text normal-case"
+        data-accent="violet"
+      >
+        Images
+      </h2>
       <form method="POST" action="?/upload" enctype="multipart/form-data" class="grid gap-[0.9rem]">
         <label
           >Image<input
@@ -388,7 +385,7 @@
             <form
               method="POST"
               action="?/asset"
-              class="grid gap-[0.9rem] border-t border-border pt-4"
+              class="grid gap-[0.9rem] rounded-xl bg-[#181818] p-4"
             >
               <img
                 class="block h-auto max-h-112 w-full rounded-[0.35rem] bg-[#080808] object-contain"
@@ -410,12 +407,17 @@
       {/if}
     </div>
 
-    <div class="rounded-[0.6rem] border border-border bg-surface p-5">
-      <h2>Revision history</h2>
+    <div class="admin-card p-5">
+      <h2
+        class="admin-heading mb-5 text-[1.45rem] tracking-[-0.02em] text-text normal-case"
+        data-accent="blue"
+      >
+        Revision history
+      </h2>
       {#if data.revisions.length === 0}<p>Create a save point to begin revision history.</p>{:else}
         <ol class="m-0 list-none p-0">
           {#each data.revisions as revision}<li
-              class="flex items-center justify-between gap-4 border-b border-border py-[0.8rem]"
+              class="mb-2 flex items-center justify-between gap-4 rounded-lg bg-[#181818] p-3 last:mb-0"
             >
               <div>
                 <strong>{revision.title || "Untitled"}</strong><small class="block"
