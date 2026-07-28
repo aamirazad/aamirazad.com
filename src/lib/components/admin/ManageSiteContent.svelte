@@ -162,14 +162,18 @@
   <title>Manage site content · Aamir Azad</title>
 </svelte:head>
 
-<header class="mt-12 mb-8 border-b border-border pb-7">
-  <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">Manage links</h1>
+<header class="mt-2 mb-8">
+  <h1 class="admin-heading m-0 text-[clamp(2rem,5vw,3.2rem)]" data-accent="violet">Manage site</h1>
 </header>
 
-<div class="mb-8 flex gap-6 border-b border-border" role="tablist" aria-label="Content section">
+<div
+  class="mb-8 flex w-fit gap-1 rounded-full bg-surface p-1"
+  role="tablist"
+  aria-label="Content section"
+>
   {#each sections as section}
     <button
-      class="relative cursor-pointer border-0 bg-transparent px-0 pb-3 text-sm font-semibold text-soft after:absolute after:right-0 after:bottom-[-1px] after:left-0 after:h-0.5 after:scale-x-0 after:bg-text after:content-[''] aria-selected:text-text aria-selected:after:scale-x-100"
+      class="cursor-pointer rounded-full border-0 bg-transparent px-3 py-1.5 text-sm font-semibold text-soft transition-colors hover:text-text aria-selected:bg-[#222] aria-selected:text-text"
       type="button"
       role="tab"
       aria-selected={selectedKind === section.kind}
@@ -184,14 +188,14 @@
     {visibleItems.length === 1 ? activeSection.singular : `${activeSection.singular}s`}
   </p>
   <button class="secondary-button" type="button" onclick={startCreate}>
-    Add {activeSection.singular}
+    <span class="mr-1 text-violet" aria-hidden="true">＋</span>Add {activeSection.singular}
   </button>
 </div>
 
 {#if message}
   <p
     class:text-[#ffb4a9]={isError}
-    class="mb-6 border-l-2 border-border pl-3 text-sm"
+    class="mb-6 rounded-xl bg-surface px-4 py-3 text-sm"
     role={isError ? "alert" : "status"}
   >
     {message}
@@ -199,8 +203,8 @@
 {/if}
 
 {#if creating}
-  <form class="mb-8 grid gap-4 border-y border-border py-6" onsubmit={createItem}>
-    <h2 class="m-0 text-sm tracking-normal text-text normal-case">
+  <form class="admin-card mb-8 grid gap-4 p-5" onsubmit={createItem}>
+    <h2 class="m-0 font-serif text-[1.3rem] tracking-normal text-text normal-case">
       New {activeSection.singular}
     </h2>
     {@render itemFields(createDraft, selectedKind)}
@@ -212,11 +216,14 @@
 {/if}
 
 {#if visibleItems.length === 0 && !creating}
-  <p class="border-y border-dashed border-border py-7">No {activeSection.singular}s yet.</p>
+  <p class="admin-card px-5 py-7">No {activeSection.singular}s yet.</p>
 {:else}
-  <ol class="m-0 list-none p-0">
+  <ol
+    class:grid-cols-2={selectedKind !== "project"}
+    class="m-0 grid list-none gap-3 p-0 max-sm:grid-cols-1"
+  >
     {#each visibleItems as item}
-      <li class="border-b border-border py-5 first:border-t">
+      <li class="admin-card p-5 transition-colors duration-160 hover:bg-[#151515]">
         {#if editingId === item.id && editDraft}
           <form class="grid gap-4" onsubmit={(event) => saveItem(event, item.id)}>
             {@render itemFields(editDraft, item.kind)}
@@ -235,7 +242,7 @@
         {:else}
           <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-5 max-sm:grid-cols-1">
             <div class="min-w-0">
-              <strong>{item.name}</strong>
+              <strong class="font-serif text-[1.1rem]">{item.name}</strong>
               {#if item.description}<p class="mt-1 mb-0 text-sm">{item.description}</p>{/if}
               {#if item.href}<small class="mt-1 block truncate">{item.href}</small>{/if}
               {#if item.kind === "project"}

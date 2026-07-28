@@ -355,39 +355,49 @@
 </svelte:head>
 
 <main
-  class="mx-auto grid w-[min(calc(100%-2.5rem),1160px)] grid-cols-[10.5rem_minmax(0,820px)] justify-center gap-[clamp(2.5rem,6vw,5.5rem)] py-10 pb-24 max-md:grid-cols-1 max-md:gap-8 max-sm:w-[min(calc(100%-2rem),1160px)]"
+  class="mx-auto grid w-[min(calc(100%-2.5rem),1180px)] grid-cols-[11.5rem_minmax(0,860px)] justify-center gap-[clamp(2.5rem,6vw,5rem)] py-8 pb-24 max-md:grid-cols-1 max-md:gap-7 max-sm:w-[min(calc(100%-2rem),1180px)]"
 >
   <aside
-    class="sticky top-8 z-20 self-start max-md:top-0 max-md:-mx-4 max-md:bg-[color-mix(in_srgb,var(--color-background)_94%,transparent)] max-md:px-4 max-md:py-3 max-md:backdrop-blur-xl"
+    class="admin-card sticky top-8 z-20 self-start p-2 max-md:top-2 max-md:-mx-1 max-md:bg-[color-mix(in_srgb,var(--color-surface)_94%,transparent)] max-md:p-1 max-md:backdrop-blur-xl"
     aria-label="Admin tools"
   >
     <nav class="grid gap-1 max-md:grid-cols-3">
       <button
-        class="cursor-pointer border-0 border-l-2 border-transparent bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft hover:text-text aria-pressed:border-text aria-pressed:text-text max-md:border-b-2 max-md:border-l-0 max-md:px-1 max-md:text-center"
+        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
         type="button"
         aria-pressed={activeView === "create"}
-        onclick={() => selectView("create")}>Create Post</button
+        onclick={() => selectView("create")}
+        ><span class="size-1.5 shrink-0 rounded-full bg-amber" aria-hidden="true"
+        ></span>Create</button
       >
       <button
-        class="cursor-pointer border-0 border-l-2 border-transparent bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft hover:text-text aria-pressed:border-text aria-pressed:text-text max-md:border-b-2 max-md:border-l-0 max-md:px-1 max-md:text-center"
+        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
         type="button"
         aria-pressed={activeView === "posts"}
-        onclick={() => selectView("posts")}>Manage Posts</button
+        onclick={() => selectView("posts")}
+        ><span class="size-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true"
+        ></span>Posts</button
       >
       <button
-        class="cursor-pointer border-0 border-l-2 border-transparent bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft hover:text-text aria-pressed:border-text aria-pressed:text-text max-md:border-b-2 max-md:border-l-0 max-md:px-1 max-md:text-center"
+        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
         type="button"
         aria-pressed={activeView === "links"}
-        onclick={() => selectView("links")}>Manage Links</button
+        onclick={() => selectView("links")}
+        ><span class="size-1.5 shrink-0 rounded-full bg-violet" aria-hidden="true"
+        ></span>Site</button
       >
     </nav>
-    <form method="POST" action="/auth/logout" class="mt-8 pl-3 max-md:hidden">
+    <form
+      method="POST"
+      action="/auth/logout"
+      class="mt-3 border-t border-[#242424] px-2 pt-3 max-md:hidden"
+    >
       <button class="button-link text-sm" type="submit">Log out</button>
     </form>
   </aside>
 
   <section class="min-w-0">
-    <header class="site-nav !items-start md:min-h-10">
+    <header class="site-nav !mb-10 !items-start md:min-h-10">
       <EditorBreadcrumbs />
       {#if activeView === "create"}
         <div
@@ -412,21 +422,22 @@
     </header>
 
     {#if activeView === "create"}
-      <header class="mt-12 mb-8 border-b border-border pb-7">
-        <h1 class="m-0 text-[clamp(1.7rem,5vw,2.7rem)]">What do you want to say?</h1>
+      <header class="mt-2 mb-8">
+        <h1 class="admin-heading m-0 text-[clamp(2rem,5vw,3.2rem)]" data-accent="amber">
+          What do you want to say?
+        </h1>
       </header>
 
       {#if message}<p
-          class:border-[#62332d]={saveState === "conflict"}
           class:bg-[#211310]={saveState === "conflict"}
           class:text-[#ffb4a9]={saveState === "conflict"}
-          class="mt-4 mb-0 rounded-[0.4rem] border border-[#384b39] bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
+          class="mt-4 mb-0 rounded-xl bg-[#121a13] px-4 py-3 text-[#c8dcc9]"
           role={saveState === "conflict" ? "alert" : "status"}
         >
           {message}
         </p>{/if}
       {#if issues.length}<ul
-          class="mt-4 mb-0 rounded-[0.4rem] border border-[#62332d] bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
+          class="mt-4 mb-0 rounded-xl bg-[#211310] px-4 py-3 pl-8 text-[#ffb4a9]"
           aria-label="Publishing issues"
           role="alert"
         >
@@ -440,10 +451,10 @@
             >Title</span
           >
           <span
-            class="flex items-baseline border-b border-border font-serif text-[clamp(1.65rem,5vw,2.5rem)] text-text"
+            class="admin-card flex items-baseline px-4 font-serif text-[clamp(1.65rem,5vw,2.5rem)] text-text"
             ><strong class="flex-none font-normal" aria-hidden="true">{titlePrefix(series)}</strong
             ><input
-              class="min-h-14 min-w-0 border-0 bg-transparent px-[0.15em] [font:inherit]"
+              class="min-h-16 min-w-0 !border-0 !bg-transparent px-[0.15em] !shadow-none [font:inherit]"
               aria-label={`Title after the ${titlePrefix(series).trim()} prefix`}
               maxlength={180 - titlePrefix(series).length}
               bind:value={headline}
@@ -471,10 +482,11 @@
             >Markdown</span
           >
           <textarea
-            class:border-text={draggingImage}
+            class:ring-1={draggingImage}
+            class:ring-text={draggingImage}
             class:bg-[#181818]={draggingImage}
             class:bg-surface={!draggingImage}
-            class="min-h-[45vh] border-border p-4 text-base"
+            class="min-h-[45vh] !border-0 p-5 text-base !shadow-none"
             rows="18"
             maxlength="250000"
             spellcheck="true"
@@ -503,19 +515,16 @@
           <small>or drop an image into the editor</small>
         </div>
 
-        <details class="grid gap-4 border-y border-border open:pb-5 [&>:not(summary)]:mx-0">
-          <summary class="cursor-pointer py-[0.9rem] font-[650] text-muted">
-            Format and details
-          </summary>
-          <fieldset class="border-0 p-0">
+        <details class="admin-details grid gap-4 open:pb-5 [&>:not(summary)]:mx-0">
+          <summary>Format and details</summary>
+          <fieldset class="!bg-transparent !p-0">
             <legend>Format</legend>
             <div class="grid grid-cols-5 gap-[0.45rem] max-sm:grid-cols-2">
               {#each FORMATS as choice}
                 <label
-                  class="relative grid min-h-11 cursor-pointer place-items-center rounded-[0.4rem] border border-border bg-surface has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus"
-                  class:border-text={format === choice}
-                  class:bg-text={format === choice}
-                  class:text-background={format === choice}
+                  class="relative grid min-h-11 cursor-pointer place-items-center rounded-lg border-0 bg-[#181818] has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus"
+                  class:bg-[#292929]={format === choice}
+                  class:text-text={format === choice}
                   class:text-muted={format !== choice}
                 >
                   <input
@@ -566,8 +575,8 @@
         </details>
       </form>
 
-      <details class="mt-10 border-y border-border open:pb-5">
-        <summary class="cursor-pointer py-[0.9rem] font-[650] text-muted"> Recovery tools </summary>
+      <details class="admin-details mt-10 open:pb-5">
+        <summary>Recovery tools</summary>
         <div
           class="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start [&_:is(h2,p)]:my-0"
         >

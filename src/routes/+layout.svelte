@@ -88,8 +88,4 @@
   :global(.site-nav ul) {
     @apply m-0 flex list-none flex-wrap gap-[0.85rem] p-0 text-sm text-soft;
   }
-
-  :global(.eyebrow) {
-    @apply mb-[0.35rem] text-xs tracking-[0.16em] text-soft uppercase;
-  }
 </style>
