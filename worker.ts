@@ -9,12 +9,19 @@ import { PublishWorkflow } from "./src/lib/server/content/publish-workflow";
 
 export { PublishWorkflow };
 
+const IMMUTABLE_ASSET_PREFIX = "/_app/immutable/";
+const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+const MISSING_ASSET_CACHE_CONTROL = "no-store";
+
 export default class PublicWorker extends WorkerEntrypoint<Env> {
   async fetch(request: Request): Promise<Response> {
     const env = this.env;
     const ctx = this.ctx;
     const applicationRequest = normalizeWorkersDevRequestProtocol(request);
     const incomingUrl = new URL(applicationRequest.url);
+    if (incomingUrl.pathname.startsWith(IMMUTABLE_ASSET_PREFIX)) {
+      return immutableAssetResponse(await env.ASSETS.fetch(applicationRequest));
+    }
     const canonicalOrigin = new URL(env.APP_ORIGIN);
     if (
       incomingUrl.hostname === "www.aamirazad.com" &&
@@ -52,4 +59,13 @@ function isPrivatePath(pathname: string): boolean {
   return ["/admin", "/api", "/auth", "/preview"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
+}
+
+function immutableAssetResponse(asset: Response): Response {
+  const response = new Response(asset.body, asset);
+  const found = asset.status === 200 || asset.status === 206 || asset.status === 304;
+  const cacheControl = found ? IMMUTABLE_CACHE_CONTROL : MISSING_ASSET_CACHE_CONTROL;
+  response.headers.set("cache-control", cacheControl);
+  response.headers.set("cloudflare-cdn-cache-control", cacheControl);
+  return response;
 }

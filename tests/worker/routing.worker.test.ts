@@ -27,4 +27,29 @@ describe("production host routing", () => {
     expect(response.headers.get("location")).toBe("https://aamirazad.com/admin?from=www");
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
+
+  it("caches only immutable assets that actually exist", async () => {
+    const page = await SELF.fetch("https://aamirazad.com/");
+    const html = await page.text();
+    const entrypoint = html.match(
+      /import\("(\.\/_app\/immutable\/entry\/start\.[^"]+\.js)"\)/,
+    )?.[1];
+
+    expect(entrypoint).toBeTruthy();
+
+    const [existing, missing] = await Promise.all([
+      SELF.fetch(new URL(entrypoint!, "https://aamirazad.com/")),
+      SELF.fetch("https://aamirazad.com/_app/immutable/entry/missing.js"),
+    ]);
+
+    expect(existing.status).toBe(200);
+    expect(existing.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(existing.headers.get("cloudflare-cdn-cache-control")).toBe(
+      "public, max-age=31536000, immutable",
+    );
+
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get("cache-control")).toBe("no-store");
+    expect(missing.headers.get("cloudflare-cdn-cache-control")).toBe("no-store");
+  });
 });
