@@ -94,7 +94,9 @@
             href={`/admin/posts/${post.id}`}>{post.title.trim() || "Untitled"}</a
           >
           <p class="mt-1 mb-0 text-sm text-soft">
-            <span class="capitalize">{post.series}</span> · {post.format} · updated
+            <span class="capitalize">{post.series}</span> · {post.format}{post.isListed
+              ? ""
+              : " · unlisted"} · updated
             {new Date(post.updatedAt).toLocaleDateString()}
           </p>
         </div>

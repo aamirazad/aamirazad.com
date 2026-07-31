@@ -18,6 +18,7 @@ type PostRow = {
   source_description: string | null;
   quote_text: string | null;
   quote_attribution: string | null;
+  is_listed: number;
   version: number;
   current_revision_id: string | null;
   published_revision_id: string | null;
@@ -43,7 +44,7 @@ export type RevisionSummary = { id: string; reason: string; createdAt: string; t
 
 const POST_SELECT = `SELECT id, series, format, status, title, slug, canonical_path, summary,
   body_markdown, source_url, source_title, source_description, quote_text, quote_attribution,
-  version, current_revision_id, published_revision_id, created_at, updated_at, published_at
+  is_listed, version, current_revision_id, published_revision_id, created_at, updated_at, published_at
   FROM posts`;
 
 export async function listPosts(env: RuntimeEnv): Promise<EditablePost[]> {
@@ -119,8 +120,8 @@ export async function createMeaningfulDraft(
   await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO posts (id, series, format, title, slug, summary, body_markdown,
-      source_url, source_title, source_description, quote_text, quote_attribution,
-      created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      source_url, source_title, source_description, quote_text, quote_attribution, is_listed,
+      created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       id,
       input.series,
@@ -134,6 +135,7 @@ export async function createMeaningfulDraft(
       nullable(input.sourceDescription),
       nullable(input.quoteText),
       nullable(input.quoteAttribution),
+      input.isListed ? 1 : 0,
       now,
       now,
     ),
@@ -168,7 +170,7 @@ export async function updateDraft(
   const result = await env.DB.prepare(
     `UPDATE posts SET series = ?, format = ?, title = ?, slug = ?,
     summary = ?, body_markdown = ?, source_url = ?, source_title = ?, source_description = ?,
-    quote_text = ?, quote_attribution = ?, version = version + 1, updated_at = ?
+    quote_text = ?, quote_attribution = ?, is_listed = ?, version = version + 1, updated_at = ?
     WHERE id = ? AND version = ? AND deleted_at IS NULL`,
   )
     .bind(
@@ -183,6 +185,7 @@ export async function updateDraft(
       nullable(input.sourceDescription),
       nullable(input.quoteText),
       nullable(input.quoteAttribution),
+      input.isListed ? 1 : 0,
       now,
       id,
       input.version,
@@ -220,8 +223,8 @@ export async function createRevision(
     env.DB.prepare(
       `INSERT INTO post_revisions (id, post_id, series, format, title, slug,
       canonical_path, summary, body_markdown, source_url, source_title, source_description,
-      quote_text, quote_attribution, content_hash, reason, created_at, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      quote_text, quote_attribution, is_listed, content_hash, reason, created_at, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       revisionId,
       id,
@@ -237,6 +240,7 @@ export async function createRevision(
       nullable(post.sourceDescription),
       nullable(post.quoteText),
       nullable(post.quoteAttribution),
+      post.isListed ? 1 : 0,
       hash,
       reason,
       now,
@@ -278,7 +282,7 @@ export async function restoreRevision(
 ): Promise<string> {
   const revision = await env.DB.prepare(
     `SELECT series, format, title, slug, summary, body_markdown,
-    source_url, source_title, source_description, quote_text, quote_attribution
+    source_url, source_title, source_description, quote_text, quote_attribution, is_listed
     FROM post_revisions WHERE id = ? AND post_id = ? LIMIT 1`,
   )
     .bind(revisionId, postId)
@@ -294,13 +298,14 @@ export async function restoreRevision(
       source_description: string | null;
       quote_text: string | null;
       quote_attribution: string | null;
+      is_listed: number;
     }>();
   if (!revision) throw new Error("Revision not found");
   const now = new Date().toISOString();
   await env.DB.prepare(
     `UPDATE posts SET series = ?, format = ?, title = ?, slug = ?, summary = ?,
     body_markdown = ?, source_url = ?, source_title = ?, source_description = ?, quote_text = ?,
-    quote_attribution = ?, version = version + 1, updated_at = ? WHERE id = ?`,
+    quote_attribution = ?, is_listed = ?, version = version + 1, updated_at = ? WHERE id = ?`,
   )
     .bind(
       revision.series,
@@ -314,6 +319,7 @@ export async function restoreRevision(
       revision.source_description,
       revision.quote_text,
       revision.quote_attribution,
+      revision.is_listed,
       now,
       postId,
     )
@@ -360,6 +366,7 @@ function mapPost(row: PostRow): EditablePost {
     sourceDescription: row.source_description ?? "",
     quoteText: row.quote_text ?? "",
     quoteAttribution: row.quote_attribution ?? "",
+    isListed: row.is_listed !== 0,
     version: row.version,
     currentRevisionId: row.current_revision_id,
     publishedRevisionId: row.published_revision_id,
@@ -384,6 +391,7 @@ async function contentHash(post: EditablePost): Promise<string> {
       sourceDescription: post.sourceDescription,
       quoteText: post.quoteText,
       quoteAttribution: post.quoteAttribution,
+      isListed: post.isListed,
     }),
   );
 }

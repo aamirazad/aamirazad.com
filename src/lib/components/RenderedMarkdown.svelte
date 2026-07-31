@@ -167,13 +167,15 @@
   }
 
   .rendered-markdown :global(table) {
-    @apply block max-w-full overflow-x-auto rounded-lg border border-border text-[0.92rem];
+    @apply w-full max-w-full rounded-lg border border-border text-[0.92rem];
     border-collapse: separate;
     border-spacing: 0;
+    table-layout: auto;
   }
 
   .rendered-markdown :global(:is(th, td)) {
     @apply border-r border-b border-border px-3.5 py-2.5 text-left align-top;
+    overflow-wrap: anywhere;
   }
 
   .rendered-markdown :global(th) {

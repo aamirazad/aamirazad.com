@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FORMATS, slugify, titlePrefix, validateDraft } from "./content";
+import { FORMATS, parseDraftInput, slugify, titlePrefix, validateDraft } from "./content";
 
 const baseDraft = {
   series: "on" as const,
@@ -14,6 +14,7 @@ const baseDraft = {
   sourceDescription: "",
   quoteText: "",
   quoteAttribution: "",
+  isListed: true,
 };
 
 describe("content model", () => {
@@ -72,5 +73,11 @@ describe("content model", () => {
           : [];
       expect(validateDraft(complete[format], { forPublication: true, assets })).toEqual([]);
     }
+  });
+
+  it("parses listed and unlisted draft visibility", () => {
+    expect(parseDraftInput({ ...baseDraft, isListed: false, version: 1 })?.isListed).toBe(false);
+    expect(parseDraftInput({ ...baseDraft, isListed: "false", version: 1 })?.isListed).toBe(false);
+    expect(parseDraftInput({ ...baseDraft, version: 1 })?.isListed).toBe(true);
   });
 });

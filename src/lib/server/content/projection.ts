@@ -2,6 +2,7 @@ import type { PostFormat, Series } from "$lib/content";
 import {
   CURRENT_PROJECTION_KEY,
   cacheTagForPath,
+  isPublishedPostListed,
   projectionKey,
   revisionKey,
   type ProjectionManifest,
@@ -33,6 +34,7 @@ type RevisionRow = {
   source_description: string | null;
   quote_text: string | null;
   quote_attribution: string | null;
+  is_listed: number;
   revision_created_at: string;
   job_created_at: string;
   published_at: string | null;
@@ -88,6 +90,7 @@ export async function prepareProjection(
       sourceDescription: row.source_description ?? "",
       quoteText: row.quote_text ?? "",
       quoteAttribution: row.quote_attribution ?? "",
+      isListed: row.is_listed !== 0,
       bodyMarkdown: row.body_markdown,
       html: await renderMarkdown(row.body_markdown),
       assets,
@@ -263,6 +266,7 @@ async function loadRevision(env: RuntimeEnv, jobId: string): Promise<RevisionRow
     `SELECT j.id AS job_id, j.operation, j.post_id, j.revision_id, j.created_at AS job_created_at,
     r.content_hash, r.series, r.format, r.title, r.slug, r.canonical_path, r.summary, r.body_markdown,
     r.source_url, r.source_title, r.source_description, r.quote_text, r.quote_attribution,
+    r.is_listed,
     r.created_at AS revision_created_at, p.published_at FROM publish_jobs j
     JOIN post_revisions r ON r.id = j.revision_id JOIN posts p ON p.id = j.post_id
     WHERE j.id = ? LIMIT 1`,
@@ -309,7 +313,8 @@ async function writeIndexesAndFeeds(
   generation: string,
   snapshots: PublishedPost[],
 ): Promise<void> {
-  const cards = snapshots.map(toCard);
+  const listedSnapshots = snapshots.filter(isPublishedPostListed);
+  const cards = listedSnapshots.map(toCard);
   await putIndex(env, generation, "home", "Latest", cards.slice(0, 12), 1, 1);
   await putPagedIndexes(env, generation, "archive", "Archive", cards, 50);
   for (const series of ["on", "today", "built", "found"] as const) {
@@ -322,7 +327,7 @@ async function writeIndexesAndFeeds(
       25,
     );
   }
-  const recent = snapshots.slice(0, 20);
+  const recent = listedSnapshots.slice(0, 20);
   await env.CONTENT.put(
     projectionKey(generation, "feeds/feed.xml"),
     atomFeed(env.APP_ORIGIN, recent),
@@ -335,7 +340,7 @@ async function writeIndexesAndFeeds(
   );
   await env.CONTENT.put(
     projectionKey(generation, "sitemap.xml"),
-    sitemap(env.APP_ORIGIN, snapshots),
+    sitemap(env.APP_ORIGIN, listedSnapshots),
     { httpMetadata: { contentType: "application/xml; charset=utf-8" } },
   );
 }

@@ -39,6 +39,7 @@ describe("atomic publishing projection", () => {
       sourceDescription: "",
       quoteText: "",
       quoteAttribution: "",
+      isListed: true,
       version: post.version,
     });
     if (!saved || saved === "conflict") throw new Error("Could not save fixture");
@@ -75,6 +76,63 @@ describe("atomic publishing projection", () => {
       status: "published",
       publishedRevisionId: revisionId,
     });
+  });
+
+  it("keeps unlisted posts reachable by URL while excluding them from discovery surfaces", async () => {
+    const post = await createPost(env, "today", "article", "owner");
+    const saved = await updateDraft(env, post.id, {
+      series: "today",
+      format: "article",
+      title: "Today private link",
+      slug: "private-link",
+      summary: "Shared directly.",
+      bodyMarkdown: "This post is unlisted.",
+      sourceUrl: "",
+      sourceTitle: "",
+      sourceDescription: "",
+      quoteText: "",
+      quoteAttribution: "",
+      isListed: false,
+      version: post.version,
+    });
+    if (!saved || saved === "conflict") throw new Error("Could not save unlisted fixture");
+    await env.DB.prepare(
+      "UPDATE posts SET canonical_path = '/today/private-link', status = 'publishing' WHERE id = ?",
+    )
+      .bind(post.id)
+      .run();
+    const revisionId = await createRevision(env, post.id, "owner", "publish");
+    const jobId = uuidV7();
+    await env.DB.prepare(
+      `INSERT INTO publish_jobs (id, post_id, revision_id, correlation_id,
+      operation, status, created_at) VALUES (?, ?, ?, ?, 'publish', 'queued', ?)`,
+    )
+      .bind(jobId, post.id, revisionId, uuidV7(), new Date().toISOString())
+      .run();
+
+    const prepared = await prepareProjection(env, jobId);
+    await writeProjection(env, prepared);
+    await completeProjection(env, prepared);
+
+    const direct = await readPublishedPost(env, "/today/private-link");
+    expect(direct && "post" in direct ? direct.post : null).toMatchObject({
+      id: post.id,
+      isListed: false,
+    });
+    for (const indexName of ["home", "archive", "series/today"]) {
+      const index = await readPublishedIndex(env, indexName);
+      expect(index.items).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: post.id })]),
+      );
+    }
+    const [atom, json, sitemap] = await Promise.all([
+      readGeneratedObject(env, "feeds/feed.xml").then((object) => object?.text()),
+      readGeneratedObject(env, "feeds/feed.json").then((object) => object?.text()),
+      readGeneratedObject(env, "sitemap.xml").then((object) => object?.text()),
+    ]);
+    expect(atom).not.toContain("Today private link");
+    expect(json).not.toContain("Today private link");
+    expect(sitemap).not.toContain("/today/private-link");
   });
 
   it("does not switch the current manifest when projection preparation fails", async () => {

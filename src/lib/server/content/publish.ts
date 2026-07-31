@@ -62,8 +62,8 @@ export async function enqueuePublication(
       env.DB.prepare(
         `INSERT INTO post_revisions (id, post_id, series, format, title, slug, canonical_path,
         summary, body_markdown, source_url, source_title, source_description, quote_text,
-        quote_attribution, content_hash, reason, created_at, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'publish', ?, ?)`,
+        quote_attribution, is_listed, content_hash, reason, created_at, created_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'publish', ?, ?)`,
       ).bind(
         revisionId,
         postId,
@@ -79,6 +79,7 @@ export async function enqueuePublication(
         nullable(post.sourceDescription),
         nullable(post.quoteText),
         nullable(post.quoteAttribution),
+        post.isListed ? 1 : 0,
         hash,
         now,
         actor,
@@ -202,6 +203,7 @@ async function publishableHash(
       sourceDescription: post.sourceDescription,
       quoteText: post.quoteText,
       quoteAttribution: post.quoteAttribution,
+      isListed: post.isListed,
       assets: assets.map(({ id, altText, caption, position }) => ({
         id,
         altText,
