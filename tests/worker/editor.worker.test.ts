@@ -48,6 +48,33 @@ describe("draft editor storage", () => {
     expect(created).toMatchObject({ title: "On quiet interfaces", version: 1 });
   });
 
+  it("keeps the title independent from the selected series", async () => {
+    const created = await createMeaningfulDraft(
+      env,
+      {
+        series: "on",
+        format: "article",
+        title: "A title without the conventional prefix",
+        slug: "",
+        summary: "",
+        bodyMarkdown: "Still filed in the On series.",
+        sourceUrl: "",
+        sourceTitle: "",
+        sourceDescription: "",
+        quoteText: "",
+        quoteAttribution: "",
+        version: 0,
+      },
+      "owner",
+    );
+
+    expect(created).toMatchObject({
+      series: "on",
+      title: "A title without the conventional prefix",
+      slug: "a-title-without-the-conventional-prefix",
+    });
+  });
+
   it("autosaves with optimistic concurrency and restores immutable revisions", async () => {
     const created = await createPost(env, "on", "article", "owner");
     const first = await updateDraft(env, created.id, {
