@@ -21,7 +21,7 @@
   let activeView = $state<AdminView>("create");
   let series = $state<Series>("on");
   let format = $state<PostFormat>("article");
-  let headline = $state("");
+  let title = $state("");
   let slug = $state("");
   let summary = $state("");
   let bodyMarkdown = $state("");
@@ -56,10 +56,20 @@
     const recovered = localStorage.getItem(recoveryKey);
     if (recovered) {
       try {
-        const value = JSON.parse(recovered) as ReturnType<typeof recoverySnapshot>;
+        const value = JSON.parse(recovered) as Omit<
+          ReturnType<typeof recoverySnapshot>,
+          "title"
+        > & {
+          title?: string;
+          headline?: string;
+        };
         series = value.series;
         format = value.format;
-        headline = value.headline;
+        title =
+          value.title ??
+          (value.headline?.trim()
+            ? `${titlePrefix(value.series)}${value.headline.trimStart()}`.trimEnd()
+            : "");
         slug = value.slug;
         summary = value.summary;
         bodyMarkdown = value.bodyMarkdown;
@@ -88,17 +98,9 @@
     timer = setTimeout(() => void persistUntilCurrent(), 850);
   });
 
-  function fullTitle(): string {
-    return `${titlePrefix(series)}${headline.trimStart()}`.trimEnd();
-  }
-
   function meaningful(): boolean {
     return Boolean(
-      headline.trim() ||
-      bodyMarkdown.trim() ||
-      summary.trim() ||
-      sourceUrl.trim() ||
-      quoteText.trim(),
+      title.trim() || bodyMarkdown.trim() || summary.trim() || sourceUrl.trim() || quoteText.trim(),
     );
   }
 
@@ -106,7 +108,7 @@
     return {
       series,
       format,
-      title: fullTitle(),
+      title: title.trim(),
       slug,
       summary,
       bodyMarkdown,
@@ -176,7 +178,7 @@
       message = "Start with a title or some writing before publishing.";
       return;
     }
-    if (!headline.trim()) {
+    if (!title.trim()) {
       message = "Finish the title before publishing.";
       return;
     }
@@ -264,7 +266,7 @@
     return {
       series,
       format,
-      headline,
+      title,
       slug,
       summary,
       bodyMarkdown,
@@ -452,14 +454,13 @@
           >
           <span
             class="admin-card flex items-baseline px-4 font-serif text-[clamp(1.65rem,5vw,2.5rem)] text-text"
-            ><strong class="flex-none font-normal" aria-hidden="true">{titlePrefix(series)}</strong
             ><input
               class="min-h-16 min-w-0 !border-0 !bg-transparent px-[0.15em] !shadow-none [font:inherit]"
-              aria-label={`Title after the ${titlePrefix(series).trim()} prefix`}
-              maxlength={180 - titlePrefix(series).length}
-              bind:value={headline}
+              aria-label="Post title"
+              maxlength="180"
+              bind:value={title}
               bind:this={titleInput}
-              placeholder="your subject"
+              placeholder={`${titlePrefix(series)}your subject`}
             /></span
           >
         </label>
@@ -569,7 +570,7 @@
             >Slug<input
               maxlength="96"
               bind:value={slug}
-              placeholder={slugify(headline) || "generated-from-title"}
+              placeholder={slugify(title) || "generated-from-title"}
             /></label
           >
         </details>
