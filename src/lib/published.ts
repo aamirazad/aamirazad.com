@@ -41,6 +41,10 @@ export type PublishedPost = {
   sourceDescription: string;
   quoteText: string;
   quoteAttribution: string;
+  /**
+   * Older immutable snapshots predate this flag and are public by default.
+   */
+  isListed?: boolean;
   bodyMarkdown: string;
   html: string;
   assets: PublishedAsset[];
@@ -118,4 +122,8 @@ export function publishedPostWasEdited(
   post: Pick<PublishedPost, "publishedAt" | "modifiedAt">,
 ): boolean {
   return Date.parse(post.modifiedAt) > Date.parse(post.publishedAt);
+}
+
+export function isPublishedPostListed(post: Pick<PublishedPost, "isListed">): boolean {
+  return post.isListed !== false;
 }

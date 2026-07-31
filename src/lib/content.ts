@@ -19,6 +19,7 @@ export type EditablePost = {
   sourceDescription: string;
   quoteText: string;
   quoteAttribution: string;
+  isListed: boolean;
   version: number;
   currentRevisionId: string | null;
   publishedRevisionId: string | null;
@@ -53,6 +54,7 @@ export type DraftInput = Pick<
   | "sourceDescription"
   | "quoteText"
   | "quoteAttribution"
+  | "isListed"
   | "version"
 >;
 
@@ -196,6 +198,8 @@ export function parseDraftInput(value: unknown): DraftInput | null {
     "quoteAttribution",
   ] as const;
   if (fields.some((field) => typeof input[field] !== "string")) return null;
+  const isListed = parseBoolean(input.isListed, true);
+  if (isListed === null) return null;
   return {
     series: input.series,
     format: input.format,
@@ -208,6 +212,14 @@ export function parseDraftInput(value: unknown): DraftInput | null {
     sourceDescription: String(input.sourceDescription).slice(0, 2_000),
     quoteText: String(input.quoteText).slice(0, 10_000),
     quoteAttribution: String(input.quoteAttribution).slice(0, 500),
+    isListed,
     version: Number(input.version),
   };
+}
+
+function parseBoolean(value: unknown, fallback: boolean): boolean | null {
+  if (value === undefined) return fallback;
+  if (value === true || value === "true" || value === 1 || value === "1") return true;
+  if (value === false || value === "false" || value === 0 || value === "0") return false;
+  return null;
 }

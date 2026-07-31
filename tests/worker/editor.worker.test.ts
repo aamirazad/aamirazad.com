@@ -33,6 +33,7 @@ describe("draft editor storage", () => {
       sourceDescription: "",
       quoteText: "",
       quoteAttribution: "",
+      isListed: true,
       version: 0,
     };
     await expect(createMeaningfulDraft(env, empty, "owner")).rejects.toThrow("Add something");
@@ -63,6 +64,7 @@ describe("draft editor storage", () => {
         sourceDescription: "",
         quoteText: "",
         quoteAttribution: "",
+        isListed: true,
         version: 0,
       },
       "owner",
@@ -89,6 +91,7 @@ describe("draft editor storage", () => {
       sourceDescription: "",
       quoteText: "",
       quoteAttribution: "",
+      isListed: true,
       version: created.version,
     });
     expect(first).not.toBe("conflict");

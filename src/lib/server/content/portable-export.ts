@@ -21,6 +21,7 @@ type PostRow = {
   source_description: string | null;
   quote_text: string | null;
   quote_attribution: string | null;
+  is_listed: number;
   current_revision_id: string | null;
   published_revision_id: string | null;
   created_at: string;
@@ -128,14 +129,14 @@ export async function createPortableExport(
       env,
       `SELECT id, series, format, status, title, slug, canonical_path, summary,
       body_markdown, source_url, source_title, source_description, quote_text, quote_attribution,
-      current_revision_id, published_revision_id, created_at, updated_at, published_at
+      is_listed, current_revision_id, published_revision_id, created_at, updated_at, published_at
       FROM posts WHERE deleted_at IS NULL ORDER BY created_at, id`,
     ),
     all<RevisionRow>(
       env,
       `SELECT r.id, r.post_id, r.series, r.format, r.title, r.slug,
       r.canonical_path, r.summary, r.body_markdown, r.source_url, r.source_title,
-      r.source_description, r.quote_text, r.quote_attribution, r.content_hash, r.reason,
+      r.source_description, r.quote_text, r.quote_attribution, r.is_listed, r.content_hash, r.reason,
       r.created_at FROM post_revisions r JOIN posts p ON p.id = r.post_id
       WHERE p.deleted_at IS NULL ORDER BY r.post_id, r.created_at, r.id`,
     ),
@@ -362,6 +363,7 @@ function postMetadata(post: PostRow): Record<string, unknown> {
     sourceDescription: post.source_description,
     quoteText: post.quote_text,
     quoteAttribution: post.quote_attribution,
+    isListed: post.is_listed !== 0,
     currentRevisionId: post.current_revision_id,
     publishedRevisionId: post.published_revision_id,
     createdAt: post.created_at,
@@ -385,6 +387,7 @@ function revisionMetadata(revision: RevisionRow): Record<string, unknown> {
     sourceDescription: revision.source_description,
     quoteText: revision.quote_text,
     quoteAttribution: revision.quote_attribution,
+    isListed: revision.is_listed !== 0,
     contentHash: revision.content_hash,
     reason: revision.reason,
     createdAt: revision.created_at,

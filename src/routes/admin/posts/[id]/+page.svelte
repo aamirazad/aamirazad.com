@@ -18,6 +18,7 @@
   let ready = false;
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let previewTimer: ReturnType<typeof setTimeout> | undefined;
+  let savePromise: Promise<void> | null = null;
   // svelte-ignore state_referenced_locally -- baseline is intentionally captured before editing starts
   let lastSaved = contentSnapshot(draft);
   // svelte-ignore state_referenced_locally -- the post ID cannot change during this page instance
@@ -29,7 +30,12 @@
       try {
         const entry = JSON.parse(recovered) as { savedAt: string; draft: typeof draft };
         if (entry.savedAt > data.post.updatedAt && contentSnapshot(entry.draft) !== lastSaved) {
-          draft = { ...entry.draft, version: data.post.version, updatedAt: data.post.updatedAt };
+          draft = {
+            ...entry.draft,
+            isListed: entry.draft.isListed ?? data.post.isListed,
+            version: data.post.version,
+            updatedAt: data.post.updatedAt,
+          };
           recoveryMessage = "Recovered unsent changes from this browser.";
         }
       } catch {
@@ -38,6 +44,13 @@
     }
     ready = true;
     if (job && job.status !== "complete" && job.status !== "failed") void pollJob(job.id);
+    const retry = () => void persistUntilCurrent();
+    window.addEventListener("online", retry);
+    return () => {
+      window.removeEventListener("online", retry);
+      clearTimeout(saveTimer);
+      clearTimeout(previewTimer);
+    };
   });
 
   $effect(() => {
@@ -45,7 +58,7 @@
     if (!ready || snapshot === lastSaved) return;
     localStorage.setItem(recoveryKey, JSON.stringify({ savedAt: new Date().toISOString(), draft }));
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => void saveDraft(snapshot), 850);
+    saveTimer = setTimeout(() => void persistUntilCurrent(), 850);
   });
 
   $effect(() => {
@@ -55,33 +68,50 @@
     previewTimer = setTimeout(() => void refreshPreview(markdown), 350);
   });
 
-  async function saveDraft(expectedSnapshot = contentSnapshot(draft)) {
-    saveState = "saving";
+  async function persistUntilCurrent(): Promise<void> {
+    if (saveState === "conflict") return;
+    if (savePromise) return savePromise;
+    savePromise = persistLoop();
     try {
-      const response = await fetch(`/api/posts/${draft.id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(draft),
-      });
+      await savePromise;
+    } finally {
+      savePromise = null;
+    }
+  }
+
+  async function persistLoop(): Promise<void> {
+    while (contentSnapshot(draft) !== lastSaved) {
+      const input = { ...draft };
+      saveState = "saving";
+      let response: Response;
+      try {
+        response = await fetch(`/api/posts/${draft.id}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(input),
+        });
+      } catch {
+        saveState = "offline";
+        return;
+      }
       if (response.status === 409) {
         saveState = "conflict";
         return;
       }
-      if (!response.ok) throw new Error("Autosave failed");
-      const result = (await response.json()) as { post: typeof draft; issues: typeof issues };
-      if (contentSnapshot(draft) === expectedSnapshot) {
-        draft.version = result.post.version;
-        draft.updatedAt = result.post.updatedAt;
-        draft.slug = result.post.slug;
-        lastSaved = contentSnapshot(draft);
-        issues = result.issues;
-        localStorage.removeItem(recoveryKey);
-        saveState = "saved";
-        recoveryMessage = "";
+      if (!response.ok) {
+        saveState = "offline";
+        return;
       }
-    } catch {
-      saveState = "offline";
+      const result = (await response.json()) as { post: typeof draft; issues: typeof issues };
+      draft.version = result.post.version;
+      draft.updatedAt = result.post.updatedAt;
+      if (draft.slug === input.slug) draft.slug = result.post.slug;
+      lastSaved = contentSnapshot(result.post);
+      issues = result.issues;
     }
+    localStorage.removeItem(recoveryKey);
+    saveState = "saved";
+    recoveryMessage = "";
   }
 
   async function refreshPreview(markdown: string) {
@@ -149,6 +179,7 @@
       sourceDescription: value.sourceDescription,
       quoteText: value.quoteText,
       quoteAttribution: value.quoteAttribution,
+      isListed: value.isListed,
     });
   }
 </script>
@@ -175,9 +206,18 @@
         aria-live="polite">{saveState}</span
       >
       <a class="secondary-button" href={`/preview/${draft.id}`} target="_blank">Full preview</a>
-      <button class="secondary-button" type="submit" form="checkpoint-form">Save revision</button>
-      <button class="primary-button" type="submit" form="checkpoint-form" formaction="?/publish"
-        >Publish</button
+      <button
+        class="secondary-button"
+        type="submit"
+        form="checkpoint-form"
+        disabled={saveState === "saving"}>Save revision</button
+      >
+      <button
+        class="primary-button"
+        type="submit"
+        form="checkpoint-form"
+        formaction="?/publish"
+        disabled={saveState === "saving"}>Publish</button
       >
       {#if draft.status === "published"}
         <button class="secondary-button" type="submit" form="archive-form">Archive</button>
@@ -252,6 +292,22 @@
           >Summary<textarea name="summary" rows="3" maxlength="500" bind:value={draft.summary}
           ></textarea></label
         >
+        <input type="hidden" name="isListed" value="false" />
+        <label class="flex items-start gap-3 rounded-lg bg-[#181818] p-3">
+          <input
+            class="mt-0.5 size-4 min-h-0 w-4 shrink-0 p-0"
+            name="isListed"
+            type="checkbox"
+            value="true"
+            bind:checked={draft.isListed}
+          />
+          <span>
+            <strong class="block text-sm text-text">Show in public lists</strong>
+            <small class="text-soft">
+              Turn this off for an unlisted post that is only discoverable by its direct link.
+            </small>
+          </span>
+        </label>
       </details>
       {#if draft.format === "link"}
         <fieldset>

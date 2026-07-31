@@ -35,6 +35,7 @@ describe("portable content recovery", () => {
       sourceDescription: "",
       quoteText: "",
       quoteAttribution: "",
+      isListed: true,
       version: post.version,
     });
     if (!saved || saved === "conflict") throw new Error("Could not save export fixture");

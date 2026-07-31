@@ -22,7 +22,10 @@
   <meta property="article:published_time" content={post.publishedAt} /><meta
     property="article:modified_time"
     content={post.modifiedAt}
-  /><meta name="twitter:card" content="summary" />
+  /><meta name="twitter:card" content="summary" />{#if post.isListed === false}<meta
+      name="robots"
+      content="noindex, nofollow"
+    />{/if}
 </svelte:head>
 <main class="shell w-[min(calc(100%-2.5rem),780px)]">
   <nav class="site-nav">

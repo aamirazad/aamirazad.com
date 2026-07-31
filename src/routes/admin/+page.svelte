@@ -30,6 +30,7 @@
   let sourceDescription = $state("");
   let quoteText = $state("");
   let quoteAttribution = $state("");
+  let isListed = $state(true);
   let postId = $state<string | null>(null);
   let durablePost = $state<EditablePost | null>(null);
   let version = $state(0);
@@ -78,6 +79,7 @@
         sourceDescription = value.sourceDescription;
         quoteText = value.quoteText;
         quoteAttribution = value.quoteAttribution;
+        isListed = value.isListed ?? true;
         message = "Recovered unsent writing from this browser.";
       } catch {
         localStorage.removeItem(recoveryKey);
@@ -117,6 +119,7 @@
       sourceDescription,
       quoteText,
       quoteAttribution,
+      isListed,
       version,
     };
   }
@@ -275,6 +278,7 @@
       sourceDescription,
       quoteText,
       quoteAttribution,
+      isListed,
       savedAt: updatedAt || new Date().toISOString(),
     };
   }
@@ -573,6 +577,19 @@
               placeholder={slugify(title) || "generated-from-title"}
             /></label
           >
+          <label class="flex items-start gap-3 rounded-lg bg-[#181818] p-3">
+            <input
+              class="mt-0.5 size-4 min-h-0 w-4 shrink-0 p-0"
+              type="checkbox"
+              bind:checked={isListed}
+            />
+            <span>
+              <strong class="block text-sm text-text">Show in public lists</strong>
+              <small class="text-soft">
+                Turn this off for an unlisted post that is only discoverable by its direct link.
+              </small>
+            </span>
+          </label>
         </details>
       </form>
 
