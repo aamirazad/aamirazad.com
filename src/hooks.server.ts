@@ -44,6 +44,19 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
 
+  if (
+    event.url.pathname === "/admin" &&
+    (event.request.method === "GET" || event.request.method === "HEAD")
+  ) {
+    return new Response(null, {
+      status: 307,
+      headers: {
+        "cache-control": "private, no-store",
+        location: new URL("/admin/create", event.url).href,
+      },
+    });
+  }
+
   if (STATE_CHANGING_METHODS.has(event.request.method)) {
     const origin = event.request.headers.get("origin");
     if (origin !== event.url.origin) {

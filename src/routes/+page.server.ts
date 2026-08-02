@@ -1,6 +1,7 @@
 import { readPublishedIndexResult } from "$lib/server/public-content";
 import { listSiteItems } from "$lib/server/content/site-items";
 import { requireRuntimeEnv } from "$lib/server/env";
+import { publicPageEtag } from "$lib/server/page-cache";
 
 import type { PageServerLoad } from "./$types";
 
@@ -19,7 +20,9 @@ export const load: PageServerLoad = async ({ platform, setHeaders }) => {
   );
   const updatedAt = siteContentUpdatedAt > all.updatedAt ? siteContentUpdatedAt : all.updatedAt;
   setHeaders({
-    etag: `"${all.generation}-home-${siteItems.length}-${Date.parse(siteContentUpdatedAt)}"`,
+    etag: publicPageEtag(
+      `${all.generation}-home-${siteItems.length}-${Date.parse(siteContentUpdatedAt)}`,
+    ),
     "last-modified": new Date(updatedAt).toUTCString(),
   });
   return {

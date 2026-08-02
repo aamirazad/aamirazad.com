@@ -3,6 +3,7 @@ import { error } from "@sveltejs/kit";
 import { isSeries } from "$lib/content";
 import { readPublishedIndexResult } from "$lib/server/public-content";
 import { requireRuntimeEnv } from "$lib/server/env";
+import { publicPageEtag } from "$lib/server/page-cache";
 
 import type { PageServerLoad } from "./$types";
 
@@ -15,7 +16,7 @@ export const load: PageServerLoad = async ({ params, platform, setHeaders, url }
     page,
   );
   setHeaders({
-    etag: `"${result.generation}-${params.series}-${page}"`,
+    etag: publicPageEtag(`${result.generation}-${params.series}-${page}`),
     "last-modified": new Date(result.updatedAt).toUTCString(),
   });
   return {

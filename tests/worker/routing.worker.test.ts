@@ -1,6 +1,9 @@
 import { applyD1Migrations, env, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 
+import { sessionCookieName } from "$lib/server/auth/constants";
+import { createSession } from "$lib/server/auth/sessions";
+
 beforeEach(async () => {
   await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
 });
@@ -26,6 +29,33 @@ describe("production host routing", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("https://aamirazad.com/admin?from=www");
     expect(response.headers.get("cache-control")).toBe("private, no-store");
+  });
+
+  it("gives each admin section its own URL and matching breadcrumb", async () => {
+    const { token } = await createSession(env, "https://issuer.example", "owner");
+    const origin = new URL("https://aamirazad.com");
+    const headers = { cookie: `${sessionCookieName(origin)}=${token}` };
+    const root = await SELF.fetch("https://aamirazad.com/admin", {
+      headers,
+      redirect: "manual",
+    });
+
+    expect(root.status).toBe(307);
+    expect(root.headers.get("location")).toBe("https://aamirazad.com/admin/create");
+
+    for (const section of ["create", "posts", "site"] as const) {
+      const response = await SELF.fetch(`https://aamirazad.com/admin/${section}`, { headers });
+      const html = await response.text();
+      const label = section.charAt(0).toUpperCase() + section.slice(1);
+
+      expect(response.status).toBe(200);
+      expect(html).toContain(`href="/admin/${section}" aria-current="page"`);
+      expect(html).toMatch(
+        new RegExp(
+          `aria-label="Breadcrumb"[\\s\\S]*href="/admin/${section}"[\\s\\S]*>\\s*${label}</a>`,
+        ),
+      );
+    }
   });
 
   it("caches only immutable assets that actually exist", async () => {
