@@ -195,7 +195,7 @@
   <header
     class="admin-card sticky top-3 z-10 flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] px-4 py-3 shadow-[0_12px_40px_rgb(0_0_0_/_0.28)] backdrop-blur-xl max-sm:flex-col max-sm:items-start"
   >
-    <EditorBreadcrumbs />
+    <EditorBreadcrumbs label="Posts" href="/admin/posts" accent="blue" />
     <div
       class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"
     >

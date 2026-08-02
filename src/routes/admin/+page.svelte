@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { replaceState } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import ManagePosts from "$lib/components/admin/ManagePosts.svelte";
   import ManageSiteContent from "$lib/components/admin/ManageSiteContent.svelte";
   import EditorBreadcrumbs from "$lib/components/EditorBreadcrumbs.svelte";
@@ -14,11 +14,15 @@
     type Series,
     type ValidationIssue,
   } from "$lib/content";
+  import type { SiteItem } from "$lib/site-content";
   import { onMount } from "svelte";
 
-  let { data } = $props();
   type AdminView = "create" | "posts" | "links";
-  let activeView = $state<AdminView>("create");
+  let {
+    data,
+    view = "create",
+  }: { data: { posts: EditablePost[]; siteItems: SiteItem[] }; view?: AdminView } = $props();
+  const activeView = $derived(view);
   let series = $state<Series>("on");
   let format = $state<PostFormat>("article");
   let title = $state("");
@@ -167,7 +171,7 @@
         message = "";
         localStorage.removeItem(currentRecoveryKey());
         localStorage.removeItem(recoveryKey);
-        replaceState(`/admin/posts/${postId}`, {});
+        await goto(`/admin/posts/${postId}`, { replaceState: true });
       } catch {
         saveState = "offline";
         message = "Writing is safe in this browser. Autosave will retry when you are online.";
@@ -348,11 +352,6 @@
       bodyInput.setSelectionRange(cursor, cursor);
     });
   }
-
-  function selectView(view: AdminView) {
-    activeView = view;
-    if (view === "create") requestAnimationFrame(() => titleInput?.focus());
-  }
 </script>
 
 <svelte:head>
@@ -368,29 +367,23 @@
     aria-label="Admin tools"
   >
     <nav class="grid gap-1 max-md:grid-cols-3">
-      <button
-        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
-        type="button"
-        aria-pressed={activeView === "create"}
-        onclick={() => selectView("create")}
-        ><span class="size-1.5 shrink-0 rounded-full bg-amber" aria-hidden="true"
-        ></span>Create</button
+      <a
+        class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-soft no-underline transition-colors hover:text-text aria-current:bg-[#222] aria-current:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        href="/admin/create"
+        aria-current={activeView === "create" ? "page" : undefined}
+        ><span class="size-1.5 shrink-0 rounded-full bg-amber" aria-hidden="true"></span>Create</a
       >
-      <button
-        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
-        type="button"
-        aria-pressed={activeView === "posts"}
-        onclick={() => selectView("posts")}
-        ><span class="size-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true"
-        ></span>Posts</button
+      <a
+        class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-soft no-underline transition-colors hover:text-text aria-current:bg-[#222] aria-current:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        href="/admin/posts"
+        aria-current={activeView === "posts" ? "page" : undefined}
+        ><span class="size-1.5 shrink-0 rounded-full bg-blue" aria-hidden="true"></span>Posts</a
       >
-      <button
-        class="flex cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left text-sm font-semibold text-soft transition-colors hover:text-text aria-pressed:bg-[#222] aria-pressed:text-text max-md:justify-center max-md:px-1 max-md:text-center"
-        type="button"
-        aria-pressed={activeView === "links"}
-        onclick={() => selectView("links")}
-        ><span class="size-1.5 shrink-0 rounded-full bg-violet" aria-hidden="true"
-        ></span>Site</button
+      <a
+        class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-soft no-underline transition-colors hover:text-text aria-current:bg-[#222] aria-current:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        href="/admin/site"
+        aria-current={activeView === "links" ? "page" : undefined}
+        ><span class="size-1.5 shrink-0 rounded-full bg-violet" aria-hidden="true"></span>Site</a
       >
     </nav>
     <form
@@ -404,7 +397,15 @@
 
   <section class="min-w-0">
     <header class="site-nav !mb-10 !items-start md:min-h-10">
-      <EditorBreadcrumbs />
+      <EditorBreadcrumbs
+        label={activeView === "create" ? "Create" : activeView === "posts" ? "Posts" : "Site"}
+        href={activeView === "create"
+          ? "/admin/create"
+          : activeView === "posts"
+            ? "/admin/posts"
+            : "/admin/site"}
+        accent={activeView === "create" ? "amber" : activeView === "posts" ? "blue" : "violet"}
+      />
       {#if activeView === "create"}
         <div
           class="flex items-center justify-between gap-4 max-sm:w-full max-sm:flex-wrap max-sm:justify-start"

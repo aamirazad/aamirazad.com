@@ -60,7 +60,7 @@
 {#if !page.url.pathname.startsWith("/admin")}
   <a
     class="fixed top-[0.65rem] right-[0.65rem] z-30 grid size-11 place-items-center rounded-full border border-transparent text-[1.1rem] text-soft opacity-28 no-underline hover:border-border hover:bg-surface hover:opacity-100 focus-visible:border-border focus-visible:bg-surface focus-visible:opacity-100"
-    href="/admin"
+    href="/admin/create"
     aria-label="Open the admin interface"
     data-sveltekit-reload
   >
