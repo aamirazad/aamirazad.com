@@ -87,7 +87,7 @@
   </nav>
 
   <header
-    class="relative isolate mb-10 min-h-60 overflow-hidden py-[clamp(2rem,5vw,3.75rem)] max-sm:min-h-56 max-sm:px-[1.15rem] max-sm:py-8"
+    class="relative isolate mb-10 min-h-60 py-[clamp(2rem,5vw,3.75rem)] max-sm:min-h-56 max-sm:px-[1.15rem] max-sm:py-8"
   >
     <h1
       class="relative z-0 mb-4 inline-block font-serif text-[clamp(3rem,8vw,5.75rem)] leading-[0.95] font-normal before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:-z-1 before:h-[260%] before:w-[145%] before:-translate-x-1/2 before:-translate-y-1/2 before:-rotate-8 before:bg-[radial-gradient(ellipse_at_center,rgb(222_111_45_/_20%),transparent_70%)] before:content-[''] max-sm:text-[clamp(2.75rem,11vw,4rem)]"
