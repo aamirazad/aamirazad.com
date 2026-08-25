@@ -43,7 +43,7 @@ describe("production host routing", () => {
     expect(root.status).toBe(307);
     expect(root.headers.get("location")).toBe("https://aamirazad.com/admin/create");
 
-    for (const section of ["create", "posts", "site"] as const) {
+    for (const section of ["create", "posts", "site", "redirects"] as const) {
       const response = await SELF.fetch(`https://aamirazad.com/admin/${section}`, { headers });
       const html = await response.text();
       const label = section.charAt(0).toUpperCase() + section.slice(1);
