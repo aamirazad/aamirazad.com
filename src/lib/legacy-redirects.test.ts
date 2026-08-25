@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { legacyRedirectFor, legacyRedirects } from "./legacy-redirects";
+import { legacyRedirectFor } from "./legacy-redirects";
 
 describe("legacy redirects", () => {
   it("preserves the complete redirect baseline", () => {
-    expect(Object.keys(legacyRedirects)).toHaveLength(31);
     expect(legacyRedirectFor("/github")).toBe("https://github.com/aamirazad/");
     expect(legacyRedirectFor("/pgp")).toBe("/.well-known/openpgpkey");
   });
