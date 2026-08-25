@@ -12,7 +12,12 @@ export default defineConfig({
   plugins: [
     cloudflareTest({
       wrangler: { configPath: "./wrangler.jsonc", environment: "preview" },
-      miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+      miniflare: {
+        bindings: {
+          TEST_MIGRATIONS: migrations,
+          SESSION_SECRET: "worker-test-session-secret",
+        },
+      },
     }),
   ],
   test: {

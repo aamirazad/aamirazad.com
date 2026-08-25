@@ -14,7 +14,7 @@
     "preview": "pnpm build && pnpm exec wrangler dev",
     "rebuild:export": "node scripts/rebuild-portable-export.mjs",
     "test": "vitest run",
-    "test:worker": "vitest run --config vitest.worker.config.ts",
+    "test:worker": "pnpm build && vitest run --config vitest.worker.config.ts",
     "test:watch": "vitest",
     "types": "pnpm exec wrangler types worker-configuration.d.ts --env-file .env.example && node scripts/normalize-worker-types.mjs",
     "deploy:preview": "pnpm build && pnpm exec wrangler versions upload --env preview",

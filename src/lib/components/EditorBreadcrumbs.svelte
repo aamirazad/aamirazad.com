@@ -3,7 +3,7 @@
     label,
     href,
     accent = "amber",
-  }: { label: string; href: string; accent?: "amber" | "blue" | "violet" } = $props();
+  }: { label: string; href: string; accent?: "amber" | "blue" | "violet" | "mint" } = $props();
 </script>
 
 <nav aria-label="Breadcrumb">
@@ -19,6 +19,7 @@
           class:bg-amber={accent === "amber"}
           class:bg-blue={accent === "blue"}
           class:bg-violet={accent === "violet"}
+          class:bg-mint={accent === "mint"}
           class="size-1.5 rounded-full"
           aria-hidden="true"
         ></span>

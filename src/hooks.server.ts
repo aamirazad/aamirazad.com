@@ -2,6 +2,7 @@ import type { Handle } from "@sveltejs/kit";
 
 import { legacyRedirectFor } from "$lib/legacy-redirects";
 import { readSession } from "$lib/server/auth/sessions";
+import { resolveRedirectLink } from "$lib/server/content/redirect-links";
 import { requireRuntimeEnv } from "$lib/server/env";
 
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -24,6 +25,23 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
 
   const privatePath = isPrivatePath(event.url.pathname);
+  if (
+    !privatePath &&
+    !event.url.pathname.startsWith("/auth/") &&
+    (event.request.method === "GET" || event.request.method === "HEAD")
+  ) {
+    const target = await resolveRedirectLink(
+      requireRuntimeEnv(event.platform),
+      event.url.pathname,
+      event.request.method === "GET",
+    );
+    if (target) {
+      return new Response(null, {
+        status: 302,
+        headers: { location: target, "cache-control": "no-store" },
+      });
+    }
+  }
   const sessionRequired = privatePath || event.url.pathname === "/auth/logout";
   if (sessionRequired) {
     const env = requireRuntimeEnv(event.platform);
@@ -77,6 +95,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   if (privatePath || event.url.pathname.startsWith("/auth/")) {
     response.headers.set("cache-control", "private, no-store");
+  } else if (response.status >= 300 && response.status < 400) {
+    // Redirect destinations are editable and every GET is a tracked click.
+    response.headers.delete("x-public-cache");
+    response.headers.set("cache-control", "no-store");
   } else if (event.request.method === "GET" || event.request.method === "HEAD") {
     // The adapter's legacy Cache API layer must not retain dynamic HTML. The outer Worker
     // replaces this with the public policy used by Workers Cache after SvelteKit returns.

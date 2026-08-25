@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import ManagePosts from "$lib/components/admin/ManagePosts.svelte";
   import ManageSiteContent from "$lib/components/admin/ManageSiteContent.svelte";
+  import ManageRedirectLinks from "$lib/components/admin/ManageRedirectLinks.svelte";
   import EditorBreadcrumbs from "$lib/components/EditorBreadcrumbs.svelte";
   import SeriesPicker from "$lib/components/SeriesPicker.svelte";
   import {
@@ -14,14 +15,18 @@
     type Series,
     type ValidationIssue,
   } from "$lib/content";
+  import type { RedirectLink } from "$lib/redirect-links";
   import type { SiteItem } from "$lib/site-content";
   import { onMount } from "svelte";
 
-  type AdminView = "create" | "posts" | "links";
+  type AdminView = "create" | "posts" | "links" | "redirects";
   let {
     data,
     view = "create",
-  }: { data: { posts: EditablePost[]; siteItems: SiteItem[] }; view?: AdminView } = $props();
+  }: {
+    data: { posts: EditablePost[]; siteItems: SiteItem[]; redirectLinks: RedirectLink[] };
+    view?: AdminView;
+  } = $props();
   const activeView = $derived(view);
   let series = $state<Series>("on");
   let format = $state<PostFormat>("article");
@@ -366,7 +371,7 @@
     class="admin-card sticky top-8 z-20 self-start p-2 max-md:top-2 max-md:-mx-1 max-md:bg-[color-mix(in_srgb,var(--color-surface)_94%,transparent)] max-md:p-1 max-md:backdrop-blur-xl"
     aria-label="Admin tools"
   >
-    <nav class="grid gap-1 max-md:grid-cols-3">
+    <nav class="grid gap-1 max-md:grid-cols-4">
       <a
         class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-soft no-underline transition-colors hover:text-text aria-current:bg-[#222] aria-current:text-text max-md:justify-center max-md:px-1 max-md:text-center"
         href="/admin/create"
@@ -385,6 +390,12 @@
         aria-current={activeView === "links" ? "page" : undefined}
         ><span class="size-1.5 shrink-0 rounded-full bg-violet" aria-hidden="true"></span>Site</a
       >
+      <a
+        class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-soft no-underline transition-colors hover:text-text aria-current:bg-[#222] aria-current:text-text max-md:justify-center max-md:px-1 max-md:text-center"
+        href="/admin/redirects"
+        aria-current={activeView === "redirects" ? "page" : undefined}
+        ><span class="size-1.5 shrink-0 rounded-full bg-mint" aria-hidden="true"></span>Redirects</a
+      >
     </nav>
     <form
       method="POST"
@@ -398,13 +409,27 @@
   <section class="min-w-0">
     <header class="site-nav !mb-10 !items-start md:min-h-10">
       <EditorBreadcrumbs
-        label={activeView === "create" ? "Create" : activeView === "posts" ? "Posts" : "Site"}
+        label={activeView === "create"
+          ? "Create"
+          : activeView === "posts"
+            ? "Posts"
+            : activeView === "links"
+              ? "Site"
+              : "Redirects"}
         href={activeView === "create"
           ? "/admin/create"
           : activeView === "posts"
             ? "/admin/posts"
-            : "/admin/site"}
-        accent={activeView === "create" ? "amber" : activeView === "posts" ? "blue" : "violet"}
+            : activeView === "links"
+              ? "/admin/site"
+              : "/admin/redirects"}
+        accent={activeView === "create"
+          ? "amber"
+          : activeView === "posts"
+            ? "blue"
+            : activeView === "links"
+              ? "violet"
+              : "mint"}
       />
       {#if activeView === "create"}
         <div
@@ -609,8 +634,10 @@
       </details>
     {:else if activeView === "posts"}
       <ManagePosts initialPosts={data.posts} />
-    {:else}
+    {:else if activeView === "links"}
       <ManageSiteContent initialItems={data.siteItems} />
+    {:else}
+      <ManageRedirectLinks initialLinks={data.redirectLinks} />
     {/if}
 
     <form method="POST" action="/auth/logout" class="mt-12 hidden max-md:block">

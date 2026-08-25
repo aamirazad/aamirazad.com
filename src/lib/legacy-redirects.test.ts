@@ -4,7 +4,7 @@ import { legacyRedirectFor, legacyRedirects } from "./legacy-redirects";
 
 describe("legacy redirects", () => {
   it("preserves the complete redirect baseline", () => {
-    expect(Object.keys(legacyRedirects)).toHaveLength(30);
+    expect(Object.keys(legacyRedirects)).toHaveLength(31);
     expect(legacyRedirectFor("/github")).toBe("https://github.com/aamirazad/");
     expect(legacyRedirectFor("/pgp")).toBe("/.well-known/openpgpkey");
   });
