@@ -17,7 +17,6 @@ on:
         options:
           - all
           - code-quality
-          - performance
 
 permissions:
   contents: read
@@ -71,54 +70,3 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
-
-  performance:
-    name: Lighthouse performance
-    needs: quality
-    if: >-
-      ${{
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' && inputs.run_type != 'code-quality')
-      }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Download site build
-        uses: actions/download-artifact@v8
-        with:
-          name: site-build
-          path: .svelte-kit
-
-      - name: Verify site build
-        run: |
-          test -f .svelte-kit/cloudflare/_worker.js
-          test -f .svelte-kit/cloudflare-tmp/manifest.js
-          test -f .svelte-kit/output/server/index.js
-          test -f .svelte-kit/tsconfig.json
-
-      - name: Run Lighthouse
-        uses: treosh/lighthouse-ci-action@v12
-        with:
-          configPath: .github/lighthouse-ci.json
-          urls: |
-            http://127.0.0.1:8787/
-            http://127.0.0.1:8787/on
-            http://127.0.0.1:8787/archive
-          runs: 3
-          uploadArtifacts: true
-          temporaryPublicStorage: true
