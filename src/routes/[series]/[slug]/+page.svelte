@@ -48,35 +48,6 @@
         <p>{post.quoteText}</p>
         {#if post.quoteAttribution}<footer>— {post.quoteAttribution}</footer>{/if}
       </blockquote>{/if}
-    {#if post.assets.length}<div class="my-8 grid gap-6">
-        {#each post.assets as asset}{@const variants = asset.variants ?? []}
-          {@const webp = variants.filter((variant) => variant.mimeType === "image/webp")}
-          {@const fallback = variants.find((variant) => variant.name === "fallback")}
-          <figure class="m-0">
-            <picture>
-              {#if webp.length}<source
-                  type="image/webp"
-                  srcset={webp
-                    .map(
-                      (variant) =>
-                        `/media/${asset.id}/${variant.contentHash}/${variant.name} ${variant.width}w`,
-                    )
-                    .join(", ")}
-                  sizes="(max-width: 800px) calc(100vw - 2.5rem), 760px"
-                />{/if}<img
-                class="block h-auto w-full rounded-[0.45rem] bg-surface"
-                src={fallback
-                  ? `/media/${asset.id}/${fallback.contentHash}/${fallback.name}`
-                  : `/media/${asset.id}/original`}
-                alt={asset.altText}
-                width={fallback?.width ?? asset.width ?? undefined}
-                height={fallback?.height ?? asset.height ?? undefined}
-                loading="lazy"
-                decoding="async"
-              />
-            </picture>{#if asset.caption}<figcaption>{asset.caption}</figcaption>{/if}
-          </figure>{/each}
-      </div>{/if}
     <RenderedMarkdown html={post.html} />
   </article>
 </main>

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { atomFeed, jsonFeed, sitemap } from "./projection";
+import { atomFeed, jsonFeed, sitemap } from "./feeds";
 
-describe("empty public projection documents", () => {
+describe("empty feeds", () => {
   it("keeps feeds and the base sitemap valid before the first publication", () => {
     const origin = "https://aamirazad.com";
     expect(atomFeed(origin, [])).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');

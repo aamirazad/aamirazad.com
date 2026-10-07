@@ -1,6 +1,6 @@
 import { error } from "@sveltejs/kit";
 
-import { uploadPostAssetForMarkdown } from "$lib/server/content/assets";
+import { uploadPostImage } from "$lib/server/content/assets";
 import { requireRuntimeEnv } from "$lib/server/env";
 
 import type { RequestHandler } from "./$types";
@@ -11,7 +11,7 @@ export const POST: RequestHandler = async ({ request, params, platform, locals }
   const image = data.get("image");
   if (!(image instanceof File)) error(400, "Choose an image.");
   try {
-    const result = await uploadPostAssetForMarkdown(
+    const result = await uploadPostImage(
       requireRuntimeEnv(platform),
       params.id,
       image,

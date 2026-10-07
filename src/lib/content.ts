@@ -91,7 +91,7 @@ export function slugify(value: string): string {
 
 export function validateDraft(
   post: Omit<DraftInput, "version">,
-  options: { forPublication?: boolean; assets?: PostAsset[] } = {},
+  options: { forPublication?: boolean } = {},
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const required = options.forPublication === true;
@@ -130,18 +130,8 @@ export function validateDraft(
   if (post.format === "quote" && required && !post.quoteText.trim()) {
     issues.push({ field: "quoteText", message: "Add the quoted text." });
   }
-  if (post.format === "photo" && required) {
-    const assets = options.assets ?? [];
-    if (assets.length === 0)
-      issues.push({ field: "assets", message: "Upload at least one photo." });
-    for (const asset of assets) {
-      if (!asset.altText.trim()) {
-        issues.push({
-          field: `asset-${asset.id}`,
-          message: `${asset.originalFilename} needs alt text.`,
-        });
-      }
-    }
+  if (post.format === "photo" && required && !/!\[[^\]]*\]\([^)]+\)/u.test(post.bodyMarkdown)) {
+    issues.push({ field: "bodyMarkdown", message: "Add at least one photo." });
   }
   return issues;
 }
