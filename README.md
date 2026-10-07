@@ -1,6 +1,6 @@
 # aamirazad.com
 
-The source for [aamirazad.com](https://aamirazad.com): a SvelteKit publishing application deployed to Cloudflare Workers with Static Assets, D1, R2, and Workflows.
+The source for [aamirazad.com](https://aamirazad.com): a SvelteKit publishing application deployed to Cloudflare Workers with Static Assets, D1, and R2.
 
 The previous Astro implementation is retained locally in `old-site/` only as a style and content reference. It is not part of the workspace or production build.
 
