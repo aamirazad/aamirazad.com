@@ -8,7 +8,7 @@ beforeEach(async () => {
 });
 
 describe("D1 publishing schema", () => {
-  it("creates the editorial, authentication, and job tables", async () => {
+  it("creates the editorial and authentication tables", async () => {
     const result = await env.DB.prepare(
       "SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name",
     ).all<{ name: string }>();
@@ -18,11 +18,11 @@ describe("D1 publishing schema", () => {
     expect(names).toContain("post_revisions");
     expect(names).toContain("assets");
     expect(names).toContain("sessions");
-    expect(names).toContain("publish_jobs");
     expect(names).toContain("site_items");
     expect(names).toContain("redirect_links");
     expect(names).toContain("redirect_link_clicks");
     expect(names).not.toContain("backup_jobs");
+    expect(names).not.toContain("publish_jobs");
   });
 
   it("enforces immutable editorial revisions", async () => {
