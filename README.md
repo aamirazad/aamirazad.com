@@ -1,6 +1,6 @@
 # aamirazad.com
 
-The source for [aamirazad.com](https://aamirazad.com): a SvelteKit publishing application deployed to Cloudflare Workers with Static Assets, D1, R2, and Workflows.
+The source for [aamirazad.com](https://aamirazad.com): a SvelteKit publishing application deployed to Cloudflare Workers with Static Assets, D1, and R2.
 
 The previous Astro implementation is retained locally in `old-site/` only as a style and content reference. It is not part of the workspace or production build.
 
@@ -18,7 +18,13 @@ cp .env.example .env
 pnpm dev
 ```
 
-The ignored `.env` contains only local Pocket ID configuration. Cloudflare storage is accessed through bindings, not credentials in `.env`.
+`pnpm dev` applies the D1 migrations to the local database (`.wrangler/state`) before starting
+Vite, and D1, R2, and Images bindings are simulated locally. Set `DEV_AUTH_BYPASS=true` in the ignored
+`.env` to use the admin without OIDC: every `localhost` request is treated as the owner. The flag
+is ignored unless Wrangler is running the local environment, so preview and production always
+require a real session.
+
+`pnpm preview` builds the production bundle and serves it with `wrangler dev` on the same port.
 
 ## Quality checks
 

@@ -1,32 +1,6 @@
 import type { PostFormat, Series } from "$lib/content";
 
-export type PublishedAsset = {
-  id: string;
-  originalKey: string;
-  originalFilename: string;
-  mimeType: string;
-  byteSize: number;
-  width: number | null;
-  height: number | null;
-  altText: string;
-  caption: string;
-  position: number;
-  sha256: string;
-  variants: PublishedAssetVariant[];
-};
-
-export type PublishedAssetVariant = {
-  name: string;
-  r2Key: string;
-  contentHash: string;
-  width: number;
-  height: number;
-  mimeType: string;
-  byteSize: number;
-};
-
 export type PublishedPost = {
-  schemaVersion: 1;
   id: string;
   revisionId: string;
   contentHash: string;
@@ -41,13 +15,8 @@ export type PublishedPost = {
   sourceDescription: string;
   quoteText: string;
   quoteAttribution: string;
-  /**
-   * Older immutable snapshots predate this flag and are public by default.
-   */
-  isListed?: boolean;
-  bodyMarkdown: string;
+  isListed: boolean;
   html: string;
-  assets: PublishedAsset[];
   publishedAt: string;
   modifiedAt: string;
 };
@@ -57,51 +26,11 @@ export type PublishedCard = Pick<
   "id" | "series" | "format" | "title" | "canonicalPath" | "summary" | "publishedAt" | "modifiedAt"
 >;
 
-export type ProjectionManifest = {
-  schemaVersion: 1;
-  generation: string;
-  updatedAt: string;
-  paths: Record<string, string>;
-  aliases: Record<string, string>;
-  media: Record<
-    string,
-    {
-      originalKey: string;
-      mimeType: string;
-      originalFilename: string;
-      sha256: string;
-      variants: Record<
-        string,
-        {
-          r2Key: string;
-          contentHash: string;
-          width: number;
-          height: number;
-          mimeType: string;
-          byteSize: number;
-        }
-      >;
-    }
-  >;
-};
-
 export type PublishedIndex = {
-  schemaVersion: 1;
-  title: string;
   page: number;
   totalPages: number;
   items: PublishedCard[];
 };
-
-export const CURRENT_PROJECTION_KEY = "published/current.json";
-
-export function revisionKey(postId: string, revisionId: string): string {
-  return `published/revisions/${postId}/${revisionId}.json`;
-}
-
-export function projectionKey(generation: string, path: string): string {
-  return `published/projections/${generation}/${path}`;
-}
 
 export function cacheTagForPath(path: string): string {
   return `path-${encodeURIComponent(path).slice(0, 900)}`;
@@ -118,12 +47,23 @@ export function cacheTagsForPath(path: string): string[] {
   return tags;
 }
 
+/** Tags for every public response that can show a post at one of `paths`. */
+export function cacheTagsForPostPaths(paths: string[]): string[] {
+  const series = paths.map((path) => path.split("/").filter(Boolean)[0]).filter(Boolean);
+  return [
+    ...new Set([
+      ...paths.map(cacheTagForPath),
+      ...series.map((name) => `series-${name}`),
+      "home",
+      "archive",
+      "feeds",
+      "sitemap",
+    ]),
+  ];
+}
+
 export function publishedPostWasEdited(
   post: Pick<PublishedPost, "publishedAt" | "modifiedAt">,
 ): boolean {
   return Date.parse(post.modifiedAt) > Date.parse(post.publishedAt);
-}
-
-export function isPublishedPostListed(post: Pick<PublishedPost, "isListed">): boolean {
-  return post.isListed !== false;
 }

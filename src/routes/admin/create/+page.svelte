@@ -1,7 +1,5 @@
 <script lang="ts">
-  import AdminPage from "../+page.svelte";
-
-  let { data } = $props();
+  import PostEditor from "$lib/components/admin/PostEditor.svelte";
 </script>
 
-<AdminPage {data} view="create" />
+<PostEditor post={null} />
