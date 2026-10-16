@@ -1,5 +1,8 @@
-import { loadAdminData } from "$lib/server/admin-data";
+import { listSiteItems } from "$lib/server/content/site-items";
+import { requireRuntimeEnv } from "$lib/server/env";
 
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ platform }) => loadAdminData(platform);
+export const load: PageServerLoad = async ({ platform }) => ({
+  siteItems: await listSiteItems(requireRuntimeEnv(platform)),
+});

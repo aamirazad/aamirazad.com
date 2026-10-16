@@ -26,7 +26,7 @@ describe("redirect links", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("https://example.com/signup");
 
-    const [tracked] = await listRedirectLinks(env);
+    const tracked = (await listRedirectLinks(env)).find((link) => link.id === created.id);
     expect(tracked).toMatchObject({ id: created.id, allTimeClicks: 1, last24HoursClicks: 1 });
 
     const updated = await updateRedirectLink(
@@ -37,7 +37,7 @@ describe("redirect links", () => {
     );
     expect(updated).toMatchObject({ targetUrl: "https://example.com/new", version: 2 });
     await expect(deleteRedirectLink(env, created.id, "owner")).resolves.toBe(true);
-    await expect(listRedirectLinks(env)).resolves.toEqual([]);
+    expect((await listRedirectLinks(env)).map((link) => link.id)).not.toContain(created.id);
   });
 
   it("does not allow two live redirects to claim the same path", async () => {

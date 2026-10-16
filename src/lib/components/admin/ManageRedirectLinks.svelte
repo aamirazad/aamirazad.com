@@ -227,7 +227,7 @@
       type="url"
       maxlength="2048"
       bind:value={draft.targetUrl}
-      placeholder="https://example.com"
+      placeholder="https://example.com or /path"
     /></label
   >
   <label

@@ -17,15 +17,10 @@
       return;
     }
     deletingId = post.id;
-    message = post.status === "published" ? "Removing the published post…" : "Deleting post…";
+    message = "Deleting post…";
     isError = false;
     try {
-      let response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
-      if (response.status === 202) {
-        const result = (await response.json()) as { jobId: string };
-        await waitForArchive(result.jobId);
-        response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
-      }
+      const response = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
       if (!response.ok) {
         const result = (await response.json().catch(() => ({}))) as { message?: string };
         throw new Error(result.message ?? "The post could not be deleted.");
@@ -38,20 +33,6 @@
     } finally {
       deletingId = null;
     }
-  }
-
-  async function waitForArchive(jobId: string) {
-    for (let attempt = 0; attempt < 90; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1_000));
-      const response = await fetch(`/api/publish-jobs/${jobId}`);
-      if (!response.ok) throw new Error("The archive status could not be read.");
-      const job = (await response.json()) as { status: string; errorMessage: string | null };
-      if (job.status === "complete") return;
-      if (job.status === "failed") {
-        throw new Error(job.errorMessage ?? "The published post could not be removed.");
-      }
-    }
-    throw new Error("The post is still being removed. Try deleting it again in a moment.");
   }
 </script>
 
@@ -87,7 +68,7 @@
             data-status={post.status}
           >
             <span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>
-            {post.status}
+            {post.status === "archived" ? "unpublished" : post.status}
           </span>
           <a
             class="block font-serif text-[1.25rem] font-semibold text-text no-underline hover:underline"
@@ -128,11 +109,7 @@
     @apply text-blue;
   }
 
-  .post-status[data-status="publishing"] {
+  .post-status[data-status="archived"] {
     @apply text-amber;
-  }
-
-  .post-status[data-status="failed"] {
-    @apply text-[#e9a39a];
   }
 </style>

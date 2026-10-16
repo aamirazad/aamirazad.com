@@ -43,7 +43,7 @@ rather than an HTTP hostname redirect. The final application deployment is versi
 
 - Homepage returns `200` from the Worker on the apex.
 - `www` serves the same page with apex canonical metadata and does not contaminate the apex cache.
-- Every legacy redirect in `src/lib/legacy-redirects.ts` still passes the automated baseline.
+- Every legacy redirect (now rows in `redirect_links`) still resolves.
 - `/feed.xml`, `/feed.json`, `/sitemap.xml`, `/robots.txt`, `/favicon.svg`, and `/ssh` respond with expected types.
 - `/admin` redirects through the production Pocket ID client with `returnTo=/admin` and `private, no-store`.
 

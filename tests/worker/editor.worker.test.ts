@@ -1,19 +1,38 @@
 import { applyD1Migrations, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { uploadPostAsset, uploadPostAssetForMarkdown } from "../../src/lib/server/content/assets";
-import { ensureImageVariants } from "../../src/lib/server/content/image-variants";
+import type { DraftInput, PostFormat, Series } from "../../src/lib/content";
+import { uploadPostImage } from "../../src/lib/server/content/assets";
 import {
   createMeaningfulDraft,
-  createPost,
-  createRevision,
   deletePost,
   getPost,
-  listPostAssets,
-  listRevisions,
-  restoreRevision,
   updateDraft,
 } from "../../src/lib/server/content/posts";
+import { publishPost, unpublishPost } from "../../src/lib/server/content/publish";
+import { listPublished, readPublishedPost } from "../../src/lib/server/public-content";
+
+function draft(series: Series, format: PostFormat, overrides: Partial<DraftInput> = {}) {
+  return {
+    series,
+    format,
+    title: "On something",
+    slug: "",
+    summary: "",
+    bodyMarkdown: "Body",
+    sourceUrl: "",
+    sourceTitle: "",
+    sourceDescription: "",
+    quoteText: "",
+    quoteAttribution: "",
+    isListed: true,
+    version: 0,
+    ...overrides,
+  };
+}
+
+const createPost = (series: Series, format: PostFormat) =>
+  createMeaningfulDraft(env, draft(series, format), "owner");
 
 beforeEach(async () => {
   await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
@@ -77,111 +96,78 @@ describe("draft editor storage", () => {
     });
   });
 
-  it("autosaves with optimistic concurrency and restores immutable revisions", async () => {
-    const created = await createPost(env, "on", "article", "owner");
-    const first = await updateDraft(env, created.id, {
-      series: "on",
-      format: "article",
-      title: "On first",
-      slug: "first",
-      summary: "",
-      bodyMarkdown: "First body",
-      sourceUrl: "",
-      sourceTitle: "",
-      sourceDescription: "",
-      quoteText: "",
-      quoteAttribution: "",
-      isListed: true,
-      version: created.version,
-    });
-    expect(first).not.toBe("conflict");
-    if (!first || first === "conflict") throw new Error("Draft update failed");
-    const revision = await createRevision(env, created.id, "owner");
-    const second = await updateDraft(env, created.id, {
-      ...first,
-      title: "On second",
-      bodyMarkdown: "Second body",
-    });
-    expect(second).not.toBe("conflict");
-    await expect(updateDraft(env, created.id, { ...first, title: "Stale" })).resolves.toBe(
-      "conflict",
+  it("saves drafts with optimistic concurrency", async () => {
+    const created = await createPost("on", "article");
+    const first = await updateDraft(env, created.id, draft("on", "article", { title: "On first" }));
+    expect(first).toBe("conflict");
+    const saved = await updateDraft(
+      env,
+      created.id,
+      draft("on", "article", { title: "On first", version: created.version }),
     );
-    await restoreRevision(env, created.id, revision, "owner");
-    const restored = await getPost(env, created.id);
-    expect(restored?.title).toBe("On first");
-    await expect(listRevisions(env, created.id)).resolves.toHaveLength(2);
+    if (!saved || saved === "conflict") throw new Error("Draft update failed");
+    expect(saved).toMatchObject({ title: "On first", slug: "first", version: 2 });
   });
 
-  it("soft-deletes drafts from the editor", async () => {
-    const created = await createPost(env, "on", "article", "owner");
-    await expect(deletePost(env, created.id, "owner")).resolves.toBe("deleted");
+  it("publishes, updates, and unpublishes a post synchronously", async () => {
+    const created = await createPost("on", "article");
+    const published = await publishPost(env, created.id, "owner");
+    expect(published).toMatchObject({ ok: true, purgePaths: ["/on/something"] });
+    const read = await readPublishedPost(env, "/on/something");
+    expect(read).toMatchObject({ post: { title: "On something", html: "<p>Body</p>" } });
+    await expect(listPublished(env)).resolves.toMatchObject({ items: [{ id: created.id }] });
+
+    const current = await getPost(env, created.id);
+    await updateDraft(
+      env,
+      created.id,
+      draft("on", "article", { slug: "renamed", version: current!.version }),
+    );
+    await expect(readPublishedPost(env, "/on/something")).resolves.toMatchObject({
+      post: { canonicalPath: "/on/something" },
+    });
+    await publishPost(env, created.id, "owner");
+    await expect(readPublishedPost(env, "/on/something")).resolves.toEqual({
+      redirect: "/on/renamed",
+    });
+
+    await unpublishPost(env, created.id, "owner");
+    await expect(readPublishedPost(env, "/on/renamed")).resolves.toBeNull();
+    await expect(listPublished(env)).resolves.toMatchObject({ items: [] });
+  });
+
+  it("rejects publication that is incomplete or reuses another post's path", async () => {
+    const photo = await createPost("today", "photo");
+    await expect(publishPost(env, photo.id, "owner")).resolves.toMatchObject({ ok: false });
+    const first = await createPost("on", "article");
+    const second = await createPost("on", "article");
+    await publishPost(env, first.id, "owner");
+    await expect(publishPost(env, second.id, "owner")).resolves.toMatchObject({
+      ok: false,
+      issues: [{ field: "slug" }],
+    });
+  });
+
+  it("soft-deletes posts, including published ones", async () => {
+    const created = await createPost("on", "article");
+    await publishPost(env, created.id, "owner");
+    await expect(deletePost(env, created.id, "owner")).resolves.toEqual({
+      purgePaths: ["/on/something"],
+    });
     await expect(getPost(env, created.id)).resolves.toBeNull();
+    await expect(readPublishedPost(env, "/on/something")).resolves.toBeNull();
     await expect(deletePost(env, created.id, "owner")).resolves.toBeNull();
   });
 
-  it("requires published posts to be archived before deletion", async () => {
-    const created = await createPost(env, "on", "article", "owner");
-    const revisionId = await createRevision(env, created.id, "owner");
-    await env.DB.prepare(
-      "UPDATE posts SET status = 'published', published_revision_id = ? WHERE id = ?",
-    )
-      .bind(revisionId, created.id)
-      .run();
-    await expect(deletePost(env, created.id, "owner")).resolves.toBe("must-archive");
-    await env.DB.prepare("UPDATE posts SET status = 'archived' WHERE id = ?")
-      .bind(created.id)
-      .run();
-    await expect(deletePost(env, created.id, "owner")).resolves.toBe("deleted");
-  });
-
-  it("stores an original image in R2 and links its metadata", async () => {
-    const post = await createPost(env, "today", "photo", "owner");
-    const png = Uint8Array.from(
-      atob(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-      ),
-      (character) => character.charCodeAt(0),
-    );
-    const asset = await uploadPostAsset(
-      env,
-      post.id,
-      new File([png], "pixel.png", { type: "image/png" }),
-      "A pixel",
-      "Tiny",
-      "owner",
-    );
-    expect(asset).toMatchObject({ width: 1, height: 1, altText: "A pixel" });
-    await expect(env.MEDIA.get(`media/originals/${asset.id}/pixel.png`)).resolves.not.toBeNull();
-    await expect(listPostAssets(env, post.id)).resolves.toHaveLength(1);
-
-    const variants = await ensureImageVariants(env, {
-      id: asset.id,
-      originalKey: `media/originals/${asset.id}/pixel.png`,
-      mimeType: "image/png",
-      width: asset.width,
-      height: asset.height,
-    });
-    expect(variants).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: "1w-webp", width: 1, height: 1, mimeType: "image/webp" }),
-        expect.objectContaining({ name: "fallback", width: 1, height: 1, mimeType: "image/png" }),
-      ]),
-    );
-    for (const variant of variants) {
-      expect(variant.r2Key).toContain(variant.contentHash);
-      await expect(env.MEDIA.get(variant.r2Key)).resolves.not.toBeNull();
-    }
-  });
-
   it("compresses composer uploads to WebP and returns insertable Markdown", async () => {
-    const post = await createPost(env, "on", "article", "owner");
+    const post = await createPost("on", "article");
     const png = Uint8Array.from(
       atob(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       ),
       (character) => character.charCodeAt(0),
     );
-    const result = await uploadPostAssetForMarkdown(
+    const result = await uploadPostImage(
       env,
       post.id,
       new File([png], "Tiny [Pixel].png", { type: "image/png" }),

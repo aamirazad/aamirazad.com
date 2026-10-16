@@ -5,9 +5,6 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 import { cacheTagsForPath } from "./src/lib/published";
 import { publicCachePolicy } from "./src/lib/server/cache-policy";
 import { normalizeWorkersDevRequestProtocol } from "./src/lib/server/cloudflare-request";
-import { PublishWorkflow } from "./src/lib/server/content/publish-workflow";
-
-export { PublishWorkflow };
 
 const IMMUTABLE_ASSET_PREFIX = "/_app/immutable/";
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -47,11 +44,6 @@ export default class PublicWorker extends WorkerEntrypoint<Env> {
       response.headers.set("cache-tag", cacheTagsForPath(pathname).join(","));
     }
     return response;
-  }
-
-  async purgePublicCache(options: CachePurgeOptions): Promise<CachePurgeResult> {
-    if (!this.ctx.cache) throw new Error("Workers cache purge context is unavailable");
-    return this.ctx.cache.purge(options);
   }
 }
 

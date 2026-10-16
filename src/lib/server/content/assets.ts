@@ -13,20 +13,16 @@ const ALLOWED_IMAGE_TYPES = new Map([
   ["image/gif", "gif"],
 ]);
 
-export async function uploadPostAsset(
+async function storeImage(
   env: RuntimeEnv,
   postId: string,
   file: File,
-  altText: string,
-  caption: string,
   actor: string,
 ): Promise<PostAsset> {
   const extension = ALLOWED_IMAGE_TYPES.get(file.type);
   if (!extension) throw new Error("Upload a JPEG, PNG, WebP, or GIF image.");
   if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES)
     throw new Error("Images must be 12 MB or smaller.");
-  if (altText.length > 1_000 || caption.length > 2_000)
-    throw new Error("Image metadata is too long.");
 
   const post = await env.DB.prepare(
     "SELECT id FROM posts WHERE id = ? AND deleted_at IS NULL LIMIT 1",
@@ -76,14 +72,14 @@ export async function uploadPostAsset(
         file.size,
         dimensions.width ?? null,
         dimensions.height ?? null,
-        altText.trim(),
+        "",
         now,
         actor,
       ),
       env.DB.prepare(
         `INSERT INTO post_assets (post_id, asset_id, role, position, caption)
-        VALUES (?, ?, 'gallery', ?, ?)`,
-      ).bind(postId, assetId, position, caption.trim() || null),
+        VALUES (?, ?, 'inline', ?, NULL)`,
+      ).bind(postId, assetId, position),
       env.DB.prepare(
         `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
         VALUES (?, ?, 'asset.uploaded', ?, ?)`,
@@ -101,20 +97,21 @@ export async function uploadPostAsset(
     byteSize: file.size,
     width: dimensions.width ?? null,
     height: dimensions.height ?? null,
-    altText: altText.trim(),
-    role: "gallery",
+    altText: "",
+    role: "inline",
     position,
-    caption: caption.trim(),
+    caption: "",
   };
 }
 
-export async function uploadPostAssetForMarkdown(
+/** Store an uploaded image, generate its responsive variants, and return Markdown that embeds it. */
+export async function uploadPostImage(
   env: RuntimeEnv,
   postId: string,
   file: File,
   actor: string,
 ): Promise<{ asset: PostAsset; markdown: string }> {
-  const asset = await uploadPostAsset(env, postId, file, "", "", actor);
+  const asset = await storeImage(env, postId, file, actor);
   const postAsset = await env.DB.prepare(
     `SELECT id, original_key AS originalKey, mime_type AS mimeType,
     width, height FROM assets WHERE id = ? LIMIT 1`,
@@ -134,49 +131,6 @@ export async function uploadPostAssetForMarkdown(
   const alt = markdownText(asset.originalFilename.replace(/\.[^.]+$/u, ""));
   const url = `/media/${encodeURIComponent(asset.id)}/${encodeURIComponent(webp.contentHash)}/${encodeURIComponent(webp.name)}`;
   return { asset, markdown: `![${alt}](${url})` };
-}
-
-export async function updateAssetMetadata(
-  env: RuntimeEnv,
-  postId: string,
-  assetId: string,
-  altText: string,
-  caption: string,
-  actor: string,
-): Promise<boolean> {
-  if (altText.length > 1_000 || caption.length > 2_000) return false;
-  const linked = await env.DB.prepare(
-    "SELECT 1 AS linked FROM post_assets WHERE post_id = ? AND asset_id = ?",
-  )
-    .bind(postId, assetId)
-    .first<{ linked: number }>();
-  if (!linked) return false;
-  const now = new Date().toISOString();
-  await env.DB.batch([
-    env.DB.prepare("UPDATE assets SET alt_text = ? WHERE id = ?").bind(altText.trim(), assetId),
-    env.DB.prepare("UPDATE post_assets SET caption = ? WHERE post_id = ? AND asset_id = ?").bind(
-      caption.trim() || null,
-      postId,
-      assetId,
-    ),
-    env.DB.prepare(
-      `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-      VALUES (?, ?, 'asset.metadata_updated', ?, ?)`,
-    ).bind(uuidV7(), actor, assetId, now),
-  ]);
-  return true;
-}
-
-export async function getAssetObject(
-  env: RuntimeEnv,
-  assetId: string,
-): Promise<R2ObjectBody | null> {
-  const row = await env.DB.prepare(
-    "SELECT original_key FROM assets WHERE id = ? AND deleted_at IS NULL LIMIT 1",
-  )
-    .bind(assetId)
-    .first<{ original_key: string }>();
-  return row ? env.MEDIA.get(row.original_key) : null;
 }
 
 function safeFilename(input: string, extension: string): string {

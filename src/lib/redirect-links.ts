@@ -60,19 +60,20 @@ export function validateRedirectLinkInput(input: RedirectLinkInput): string | nu
     /[?#\s]/u.test(input.path) ||
     RESERVED_PATHS.some(
       (reserved) => input.path === reserved || input.path.startsWith(`${reserved}/`),
-    ) ||
-    legacyRedirectFor(input.path)
+    )
   ) {
     return "Use an unused public path without spaces, query parameters, or fragments.";
+  }
+  if (input.targetUrl.startsWith("/") && !input.targetUrl.startsWith("//")) {
+    return input.targetUrl === input.path ? "A redirect cannot point to itself." : null;
   }
   try {
     const url = new URL(input.targetUrl);
     if (!/^https?:$/u.test(url.protocol) || url.username || url.password) {
-      return "The destination must be a public HTTP or HTTPS URL.";
+      return "The destination must be a path on this site or a public HTTP or HTTPS URL.";
     }
   } catch {
-    return "The destination must be a public HTTP or HTTPS URL.";
+    return "The destination must be a path on this site or a public HTTP or HTTPS URL.";
   }
   return null;
 }
-import { legacyRedirectFor } from "$lib/legacy-redirects";

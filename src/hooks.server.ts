@@ -1,6 +1,6 @@
 import type { Handle } from "@sveltejs/kit";
 
-import { legacyRedirectFor } from "$lib/legacy-redirects";
+import { devBypassOwner } from "$lib/server/auth/dev-bypass";
 import { readSession } from "$lib/server/auth/sessions";
 import { resolveRedirectLink } from "$lib/server/content/redirect-links";
 import { requireRuntimeEnv } from "$lib/server/env";
@@ -16,14 +16,6 @@ function isPrivatePath(pathname: string): boolean {
 
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.owner = null;
-  const destination = legacyRedirectFor(event.url.pathname);
-  if (destination && (event.request.method === "GET" || event.request.method === "HEAD")) {
-    return new Response(null, {
-      status: 308,
-      headers: { location: new URL(destination, event.url).href },
-    });
-  }
-
   const privatePath = isPrivatePath(event.url.pathname);
   if (
     !privatePath &&
@@ -38,14 +30,15 @@ export const handle: Handle = async ({ event, resolve }) => {
     if (target) {
       return new Response(null, {
         status: 302,
-        headers: { location: target, "cache-control": "no-store" },
+        headers: { location: new URL(target, event.url).href, "cache-control": "no-store" },
       });
     }
   }
   const sessionRequired = privatePath || event.url.pathname === "/auth/logout";
   if (sessionRequired) {
     const env = requireRuntimeEnv(event.platform);
-    event.locals.owner = await readSession(env, event.cookies, event.url);
+    event.locals.owner =
+      devBypassOwner(env, event.url) ?? (await readSession(env, event.cookies, event.url));
     if (!event.locals.owner) {
       if (event.url.pathname.startsWith("/api/")) {
         return Response.json(

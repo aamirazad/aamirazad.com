@@ -32,17 +32,7 @@
       "migrations_dir": "migrations",
     },
   ],
-  "r2_buckets": [
-    { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
-    { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
-  ],
-  "workflows": [
-    {
-      "binding": "PUBLISH_WORKFLOW",
-      "name": "personal-site-publish-local",
-      "class_name": "PublishWorkflow",
-    },
-  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "personal-site-preview" }],
   "env": {
     "preview": {
       // Upload a preview version of the production Worker without promoting it or
@@ -63,17 +53,7 @@
           "migrations_dir": "migrations",
         },
       ],
-      "r2_buckets": [
-        { "binding": "CONTENT", "bucket_name": "personal-site-preview" },
-        { "binding": "MEDIA", "bucket_name": "personal-site-preview" },
-      ],
-      "workflows": [
-        {
-          "binding": "PUBLISH_WORKFLOW",
-          "name": "personal-site-publish-preview",
-          "class_name": "PublishWorkflow",
-        },
-      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "personal-site-preview" }],
     },
     "production": {
       "name": "aamirazad-com",
@@ -96,17 +76,7 @@
           "migrations_dir": "migrations",
         },
       ],
-      "r2_buckets": [
-        { "binding": "CONTENT", "bucket_name": "personal-site" },
-        { "binding": "MEDIA", "bucket_name": "personal-site" },
-      ],
-      "workflows": [
-        {
-          "binding": "PUBLISH_WORKFLOW",
-          "name": "personal-site-publish-production",
-          "class_name": "PublishWorkflow",
-        },
-      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "personal-site" }],
     },
   },
 }

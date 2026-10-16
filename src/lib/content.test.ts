@@ -31,9 +31,9 @@ describe("content model", () => {
         { forPublication: true },
       ),
     ).toEqual(expect.arrayContaining([expect.objectContaining({ field: "sourceUrl" })]));
-    expect(
-      validateDraft({ ...baseDraft, format: "photo" }, { forPublication: true, assets: [] }),
-    ).toEqual(expect.arrayContaining([expect.objectContaining({ field: "assets" })]));
+    expect(validateDraft({ ...baseDraft, format: "photo" }, { forPublication: true })).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: "bodyMarkdown" })]),
+    );
   });
 
   it("accepts a complete draft for every presentation format", () => {
@@ -51,27 +51,14 @@ describe("content model", () => {
         quoteText: "A useful quotation.",
         quoteAttribution: "Someone",
       },
-      photo: { ...baseDraft, format: "photo" as const },
+      photo: {
+        ...baseDraft,
+        format: "photo" as const,
+        bodyMarkdown: "![A described photo](/media/asset/hash/960w-webp)",
+      },
     };
     for (const format of FORMATS) {
-      const assets =
-        format === "photo"
-          ? [
-              {
-                id: "asset",
-                originalFilename: "photo.jpg",
-                mimeType: "image/jpeg",
-                byteSize: 1,
-                width: 1,
-                height: 1,
-                altText: "A described photo",
-                role: "gallery" as const,
-                position: 0,
-                caption: "",
-              },
-            ]
-          : [];
-      expect(validateDraft(complete[format], { forPublication: true, assets })).toEqual([]);
+      expect(validateDraft(complete[format], { forPublication: true })).toEqual([]);
     }
   });
 

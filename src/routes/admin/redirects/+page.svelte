@@ -1,7 +1,12 @@
 <script lang="ts">
-  import AdminPage from "../+page.svelte";
+  import ManageRedirectLinks from "$lib/components/admin/ManageRedirectLinks.svelte";
+  import EditorBreadcrumbs from "$lib/components/EditorBreadcrumbs.svelte";
 
   let { data } = $props();
 </script>
 
-<AdminPage {data} view="redirects" />
+<header class="site-nav !mb-10 !items-start md:min-h-10">
+  <EditorBreadcrumbs label="Redirects" href="/admin/redirects" accent="mint" />
+</header>
+
+<ManageRedirectLinks initialLinks={data.redirectLinks} />
