@@ -405,7 +405,6 @@
     @apply rounded-[16px] p-2;
     max-width: 23rem;
     will-change: transform;
-    animation: arrive 1.1s 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
   .hero-card-list {
@@ -463,20 +462,6 @@
     @apply inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[#f2e8df] no-underline;
   }
 
-  .hero-scroll span {
-    animation: nudge 2.4s ease-in-out infinite;
-  }
-
-  @keyframes nudge {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(3px);
-    }
-  }
-
   /* Medium screens: the trees would hide most of the card, so let it float in front. */
   @media (max-width: 72rem) {
     .hero-stage {
@@ -503,35 +488,6 @@
 
     .hero-nav {
       @apply justify-end;
-    }
-  }
-
-  /* Fade in each piece itself: an ancestor with opacity < 1 would cut glass off from the scene. */
-  .hero-intro,
-  .hero-credit,
-  .hero-scroll {
-    animation: arrive 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  }
-
-  .hero-credit,
-  .hero-scroll {
-    animation-delay: 420ms;
-  }
-
-  @keyframes arrive {
-    from {
-      opacity: 0;
-      translate: 0 14px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-intro,
-    .hero-card,
-    .hero-credit,
-    .hero-scroll,
-    .hero-scroll span {
-      animation: none;
     }
   }
 
