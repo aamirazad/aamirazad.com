@@ -142,7 +142,7 @@
     class="panel glass"
     id="projects"
     aria-labelledby="projects-heading"
-    use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+    use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6, touch: false }}
   >
     <header class="panel-head">
       <h2 class="section-title section-title-projects" id="projects-heading">Projects</h2>
@@ -173,7 +173,7 @@
       class="panel glass"
       id="links"
       aria-labelledby="links-heading"
-      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6, touch: false }}
     >
       <header class="panel-head">
         <h2 class="section-title section-title-links" id="links-heading">Links</h2>
@@ -217,7 +217,7 @@
       class="panel glass"
       id="homelab"
       aria-labelledby="homelab-heading"
-      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6, touch: false }}
     >
       <header class="panel-head">
         <h2 class="section-title section-title-homelab" id="homelab-heading">Homelab</h2>
@@ -286,7 +286,7 @@
       class="panel glass"
       id="writing"
       aria-labelledby="writing-heading"
-      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6, touch: false }}
     >
       <header class="panel-head panel-head-row">
         <h2 class="section-title section-title-writing" id="writing-heading">Writing</h2>
