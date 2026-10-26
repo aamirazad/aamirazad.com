@@ -16,6 +16,7 @@
   // "backdrop" (reading pages) holds that calmer, dimmed state from the start and needs no script.
   let { variant = "hero" }: { variant?: "hero" | "backdrop" } = $props();
 
+  let sceneBack: HTMLDivElement;
   let back: HTMLDivElement;
   let front: HTMLDivElement;
   let duskBack: HTMLDivElement;
@@ -37,14 +38,16 @@
       x += (targetX - x) * 0.07;
       y += (targetY - y) * 0.07;
       const hero = variant === "hero";
-      const progress = hero ? Math.min(Math.max(window.scrollY / window.innerHeight, 0), 1) : 1;
+      // The scene's own height is stable on mobile (see .scene), unlike window.innerHeight.
+      const stage = sceneBack.offsetHeight || window.innerHeight;
+      const progress = hero ? Math.min(Math.max(window.scrollY / stage, 0), 1) : 1;
       const lift = hero && !reducedMotion.matches ? progress : 0;
 
       back.style.transform =
         `translate3d(${x * 12}px, ${y * 8 - lift * 24}px, 0) ` +
         `rotateX(${-y * 0.8}deg) rotateY(${x * 1.2}deg) scale(${1 + lift * 0.04})`;
       front.style.transform =
-        `translate3d(${-x * 22}px, ${-y * 12 + lift * window.innerHeight * 0.3}px, 0) ` +
+        `translate3d(${-x * 22}px, ${-y * 12 + lift * stage * 0.3}px, 0) ` +
         `rotateX(${-y * 1.4}deg) rotateY(${x * 2.2}deg) scale(${1 + lift * 0.18})`;
       duskBack.style.opacity = duskFront.style.opacity = String(progress);
       for (const element of tilted) {
@@ -94,7 +97,12 @@
 
 <!-- The shade lives inside each layer (masked to the trees on the front one) so both layers are
      darkened identically and the cut-out never shows a seam. -->
-<div class="scene scene-back" class:backdrop={variant === "backdrop"} aria-hidden="true">
+<div
+  class="scene scene-back"
+  class:backdrop={variant === "backdrop"}
+  aria-hidden="true"
+  bind:this={sceneBack}
+>
   <div class="layer" bind:this={back}>
     <img srcset={backSrcset} sizes="110vw" src={back1920} alt="" fetchpriority="high" />
     <div class="shade">
@@ -115,9 +123,15 @@
 </div>
 
 <style>
+  /* Sized to the *largest* viewport (mobile toolbars hidden) rather than the visible one, so the
+     painting keeps one fixed size and never re-crops or jumps as the address bar slides away. */
   .scene {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh;
     overflow: hidden;
     perspective: 1400px;
     pointer-events: none;
@@ -138,6 +152,7 @@
   .layer {
     position: absolute;
     inset: -3.5vmax;
+    inset: -3.5lvmax;
     will-change: transform;
   }
 
