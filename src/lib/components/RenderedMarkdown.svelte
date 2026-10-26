@@ -2,13 +2,13 @@
   let { html }: { html: string } = $props();
 </script>
 
-<div class="rendered-markdown text-muted">{@html html}</div>
+<div class="rendered-markdown">{@html html}</div>
 
 <style lang="postcss">
   @reference "../../app.css";
 
   .rendered-markdown {
-    @apply min-w-0 text-[1rem] leading-[1.75] text-muted;
+    @apply min-w-0 text-[1.03rem] leading-[1.75] text-[#dcd2c9];
   }
 
   .rendered-markdown :global(:is(p, ul, ol, blockquote, pre, table, figure)) {
@@ -132,7 +132,7 @@
   }
 
   .rendered-markdown :global(blockquote) {
-    @apply rounded-r-lg border-l-blue bg-surface px-5 py-3;
+    @apply rounded-r-lg border-l-blue bg-[rgb(255_248_242_/_5%)] px-5 py-3;
   }
 
   .rendered-markdown :global(blockquote > :first-child) {
@@ -144,11 +144,11 @@
   }
 
   .rendered-markdown :global(hr) {
-    @apply my-10 border-0 border-t border-border;
+    @apply my-10 border-0 border-t border-[rgb(255_240_230_/_10%)];
   }
 
   .rendered-markdown :global(pre) {
-    @apply overflow-x-auto rounded-lg border border-border bg-[#090909] p-4 text-[0.9rem] leading-[1.65] text-[#dedede];
+    @apply overflow-x-auto rounded-lg bg-[rgb(6_4_4_/_45%)] p-4 text-[0.9rem] leading-[1.65] text-[#dedede];
     tab-size: 2;
   }
 
@@ -162,28 +162,28 @@
   }
 
   .rendered-markdown :global(:not(pre) > code) {
-    @apply rounded-sm border border-[#303030] bg-[#202020] px-[0.35rem] py-[0.12rem] text-[0.88em] text-amber;
+    @apply rounded-sm bg-[rgb(255_248_242_/_8%)] px-[0.35rem] py-[0.12rem] text-[0.88em] text-amber;
     overflow-wrap: anywhere;
   }
 
   .rendered-markdown :global(table) {
-    @apply w-full max-w-full rounded-lg border border-border text-[0.92rem];
+    @apply w-full max-w-full rounded-lg border border-[rgb(255_240_230_/_10%)] text-[0.92rem];
     border-collapse: separate;
     border-spacing: 0;
     table-layout: auto;
   }
 
   .rendered-markdown :global(:is(th, td)) {
-    @apply border-r border-b border-border px-3.5 py-2.5 text-left align-top;
+    @apply border-r border-b border-[rgb(255_240_230_/_10%)] px-3.5 py-2.5 text-left align-top;
     overflow-wrap: anywhere;
   }
 
   .rendered-markdown :global(th) {
-    @apply bg-[#1a1a1a] font-semibold text-text;
+    @apply bg-[rgb(255_248_242_/_7%)] font-semibold text-text;
   }
 
   .rendered-markdown :global(tr:nth-child(even) td) {
-    @apply bg-surface;
+    @apply bg-[rgb(255_248_242_/_3%)];
   }
 
   .rendered-markdown :global(:is(th, td):last-child) {
@@ -195,7 +195,7 @@
   }
 
   .rendered-markdown :global(img) {
-    @apply block h-auto max-w-full rounded-lg border border-border bg-surface;
+    @apply block h-auto max-w-full rounded-lg bg-[rgb(255_248_242_/_5%)];
   }
 
   .rendered-markdown :global(sup) {
@@ -203,7 +203,7 @@
   }
 
   .rendered-markdown :global(.footnotes) {
-    @apply mt-12 border-t border-border pt-5 text-[0.9rem];
+    @apply mt-12 border-t border-[rgb(255_240_230_/_10%)] pt-5 text-[0.9rem];
   }
 
   .rendered-markdown :global(.footnotes ol) {

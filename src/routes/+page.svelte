@@ -1,6 +1,8 @@
 <script lang="ts">
   import PublishedDate from "$lib/components/PublishedDate.svelte";
   import ProjectItem from "$lib/components/ProjectItem.svelte";
+  import TwilightScene from "$lib/components/TwilightScene.svelte";
+  import { liquidGlass } from "$lib/liquid-glass";
   import { SITE_DESCRIPTION, SITE_NAME, SITE_ORIGIN } from "$lib/site";
 
   let { data } = $props();
@@ -23,6 +25,8 @@
   );
   const visibleHomelab = publicHomelab.slice(0, 6);
   const moreHomelab = publicHomelab.slice(6);
+  // svelte-ignore state_referenced_locally -- page data is fixed for this public page instance
+  const latestPost = data.writing[0];
 </script>
 
 <svelte:head>
@@ -37,89 +41,150 @@
   <meta name="twitter:card" content="summary" />
 </svelte:head>
 
-<main class="shell home-shell relative">
-  <nav class="absolute top-[1.15rem] right-16 flex gap-[0.45rem]" aria-label="Contact">
-    <a
-      class="grid size-8 place-items-center rounded-full text-muted no-underline hover:bg-surface hover:text-text focus-visible:bg-surface focus-visible:text-text"
-      href="/github"
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="GitHub"
-    >
-      <img class="size-4 opacity-84 invert" src="/icons/github.svg" alt="" />
-    </a>
-    <a
-      class="grid size-8 place-items-center rounded-full text-muted no-underline hover:bg-surface hover:text-text focus-visible:bg-surface focus-visible:text-text"
-      href="mailto:aamirmazad@gmail.com"
-      aria-label="Email Aamir Azad"
-    >
-      <img class="size-4 opacity-84 invert" src="/icons/mail.svg" alt="" />
-    </a>
+<TwilightScene />
+
+<header class="hero">
+  <nav class="hero-nav" aria-label="Site">
+    <ul class="hero-sections">
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#links">Links</a></li>
+      <li><a href="#homelab">Homelab</a></li>
+      {#if data.writing.length}<li><a href="#writing">Writing</a></li>{/if}
+    </ul>
+    <ul class="hero-contact">
+      <li>
+        <a href="/github" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+          <img src="/icons/github.svg" alt="" />
+        </a>
+      </li>
+      <li>
+        <a href="mailto:aamirmazad@gmail.com" aria-label="Email Aamir Azad">
+          <img src="/icons/mail.svg" alt="" />
+        </a>
+      </li>
+    </ul>
   </nav>
 
-  <header
-    class="relative isolate mb-6 py-[clamp(2rem,5vw,3.75rem)] max-sm:px-[1.15rem] max-sm:py-8"
-  >
-    <h1
-      class="relative z-0 mb-4 inline-block font-serif text-[clamp(3rem,8vw,5.75rem)] leading-[0.95] font-normal before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:-z-1 before:h-[260%] before:w-[145%] before:-translate-x-1/2 before:-translate-y-1/2 before:-rotate-8 before:bg-[radial-gradient(ellipse_at_center,rgb(222_111_45_/_20%),transparent_70%)] before:content-[''] max-sm:text-[clamp(2.75rem,11vw,4rem)]"
-    >
-      {SITE_NAME}
-    </h1>
-    <p class="mb-0 max-w-[49ch] pb-[1em] text-[clamp(1rem,2vw,1.16rem)]">
-      {SITE_DESCRIPTION}
+  <div class="hero-body">
+    <div class="hero-intro">
+      <h1 class="hero-title">{SITE_NAME}</h1>
+      <p class="hero-lede">{SITE_DESCRIPTION}</p>
+    </div>
+
+    <div class="hero-stage">
+      <div class="hero-card glass" data-tilt use:liquidGlass={{ radius: 16 }}>
+        <ol class="hero-card-list">
+          <li>
+            <a href="#projects">
+              <span class="hero-card-dot text-amber" aria-hidden="true"></span>
+              <span class="hero-card-text">
+                <span class="hero-card-name">Projects</span>
+                <span class="hero-card-hint">{projects.length} things I've built</span>
+              </span>
+              <span class="hero-card-arrow" aria-hidden="true">↓</span>
+            </a>
+          </li>
+          <li>
+            <a href="#links">
+              <span class="hero-card-dot text-mint" aria-hidden="true"></span>
+              <span class="hero-card-text">
+                <span class="hero-card-name">Links</span>
+                <span class="hero-card-hint">Code, contact, and elsewhere</span>
+              </span>
+              <span class="hero-card-arrow" aria-hidden="true">↓</span>
+            </a>
+          </li>
+          <li>
+            <a href="#homelab">
+              <span class="hero-card-dot text-ember" aria-hidden="true"></span>
+              <span class="hero-card-text">
+                <span class="hero-card-name">Homelab</span>
+                <span class="hero-card-hint">{homelab.length} services I run</span>
+              </span>
+              <span class="hero-card-arrow" aria-hidden="true">↓</span>
+            </a>
+          </li>
+          {#if latestPost}
+            <li>
+              <a href={latestPost.canonicalPath}>
+                <span class="hero-card-dot text-violet" aria-hidden="true"></span>
+                <span class="hero-card-text">
+                  <span class="hero-card-name">Latest writing</span>
+                  <span class="hero-card-hint truncate">{latestPost.title}</span>
+                </span>
+                <span class="hero-card-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          {/if}
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-foot">
+    <p class="hero-credit">
+      Painting:
+      <a href="https://www.clevelandart.org/art/1965.233" target="_blank" rel="noopener noreferrer"
+        ><cite>Twilight in the Wilderness</cite></a
+      >, Frederic Edwin Church, 1860
     </p>
-  </header>
+    <a
+      class="hero-scroll glass"
+      href="#projects"
+      use:liquidGlass={{ radius: 18, bezel: 14, refraction: 22, blur: 2 }}
+      >Scroll <span aria-hidden="true">↓</span></a
+    >
+  </div>
+</header>
 
-  <div class="grid grid-cols-2 gap-x-[clamp(2.5rem,6vw,5rem)] gap-y-14 max-sm:grid-cols-1">
-    <section class="col-span-full mt-0 max-sm:col-auto">
-      <div class="mb-4">
-        <h2
-          class="section-title section-title-projects mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
-        >
-          Projects
-        </h2>
-      </div>
-      <p class="max-w-[62ch] pb-[1em]">
-        Things I build to learn, solve a problem, or see how far an idea can go.
-      </p>
-      <ul class="m-0 grid list-none grid-cols-3 gap-3 p-0 max-md:grid-cols-1">
-        {#each visibleProjects as project}
-          <li class="min-w-0"><ProjectItem {project} /></li>
-        {/each}
-      </ul>
-      {#if moreProjects.length}
-        <details class="section-expand">
-          <summary>
-            <span class="when-closed">Show {moreProjects.length} more projects</span>
-            <span class="when-open">Show fewer projects</span>
-          </summary>
-          <ul class="m-0 grid list-none grid-cols-3 gap-3 p-0 pt-0 max-md:grid-cols-1">
-            {#each moreProjects as project}
-              <li class="min-w-0"><ProjectItem {project} /></li>
-            {/each}
-          </ul>
-        </details>
-      {/if}
-    </section>
+<main class="home">
+  <section
+    class="panel glass"
+    id="projects"
+    aria-labelledby="projects-heading"
+    use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+  >
+    <header class="panel-head">
+      <h2 class="section-title section-title-projects" id="projects-heading">Projects</h2>
+      <p>Things I build to learn, solve a problem, or see how far an idea can go.</p>
+    </header>
+    <ul class="m-0 grid list-none grid-cols-3 gap-3 p-0 max-md:grid-cols-1">
+      {#each visibleProjects as project}
+        <li class="min-w-0"><ProjectItem {project} /></li>
+      {/each}
+    </ul>
+    {#if moreProjects.length}
+      <details class="section-expand">
+        <summary>
+          <span class="when-closed">Show {moreProjects.length} more projects</span>
+          <span class="when-open">Show fewer projects</span>
+        </summary>
+        <ul class="m-0 grid list-none grid-cols-3 gap-3 p-0 pt-0 max-md:grid-cols-1">
+          {#each moreProjects as project}
+            <li class="min-w-0"><ProjectItem {project} /></li>
+          {/each}
+        </ul>
+      </details>
+    {/if}
+  </section>
 
-    <section class="mt-0">
-      <div class="mb-4">
-        <h2
-          class="section-title section-title-links mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
-        >
-          Links
-        </h2>
-      </div>
-      <p class="max-w-[62ch] pb-[1em]">Code, contact details, and a few other places to find me.</p>
+  <div class="grid grid-cols-2 gap-6 max-md:grid-cols-1">
+    <section
+      class="panel glass"
+      id="links"
+      aria-labelledby="links-heading"
+      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+    >
+      <header class="panel-head">
+        <h2 class="section-title section-title-links" id="links-heading">Links</h2>
+        <p>Code, contact details, and a few other places to find me.</p>
+      </header>
       <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0 max-sm:grid-cols-1">
         {#each visibleLinks as link}
           <li>
-            <a
-              class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.88rem] text-muted no-underline hover:text-text"
-              href={link.href}
-              rel="me"
+            <a class="tile group" href={link.href} rel="me"
               >{link.name}<span
-                class="text-blue transition-transform duration-160 group-hover:translate-x-0.5"
+                class="text-mint transition-transform duration-160 group-hover:translate-x-0.5"
                 aria-hidden="true">→</span
               ></a
             >
@@ -135,12 +200,9 @@
           <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0 pt-0 max-sm:grid-cols-1">
             {#each moreLinks as link}
               <li>
-                <a
-                  class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.88rem] text-muted no-underline hover:text-text"
-                  href={link.href}
-                  rel="me"
+                <a class="tile group" href={link.href} rel="me"
                   >{link.name}<span
-                    class="text-blue transition-transform duration-160 group-hover:translate-x-0.5"
+                    class="text-mint transition-transform duration-160 group-hover:translate-x-0.5"
                     aria-hidden="true">→</span
                   ></a
                 >
@@ -151,27 +213,24 @@
       {/if}
     </section>
 
-    <section class="mt-0">
-      <div class="mb-4">
-        <h2
-          class="section-title section-title-homelab mt-[0.1rem] mb-0 font-serif text-[clamp(1.8rem,5vw,2.6rem)] tracking-[-0.03em] text-text normal-case"
-        >
-          Homelab
-        </h2>
-      </div>
-      <p class="max-w-[62ch] pb-[1em]">The services and systems I run, maintain, and learn from.</p>
+    <section
+      class="panel glass"
+      id="homelab"
+      aria-labelledby="homelab-heading"
+      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+    >
+      <header class="panel-head">
+        <h2 class="section-title section-title-homelab" id="homelab-heading">Homelab</h2>
+        <p>The services and systems I run, maintain, and learn from.</p>
+      </header>
 
-      <h3 class="mb-2 text-xs font-semibold tracking-[0.08em] text-soft uppercase">
-        Public services
-      </h3>
+      <h3 class="sr-only">Public services</h3>
       <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0">
         {#each visibleHomelab as item}
           <li>
-            <a
-              class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.84rem] text-muted no-underline hover:text-text"
-              href={item.href}
+            <a class="tile group text-[0.84rem]" href={item.href}
               >{item.name}<span
-                class="text-violet transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
+                class="text-ember transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
                 aria-hidden="true">↗</span
               ></a
             >
@@ -187,11 +246,9 @@
           <ul class="m-0 grid list-none grid-cols-2 gap-2 p-0 pt-0">
             {#each moreHomelab as item}
               <li>
-                <a
-                  class="group flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2 text-[0.84rem] text-muted no-underline hover:text-text"
-                  href={item.href}
+                <a class="tile group text-[0.84rem]" href={item.href}
                   >{item.name}<span
-                    class="text-violet transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
+                    class="text-ember transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
                     aria-hidden="true">↗</span
                   ></a
                 >
@@ -203,15 +260,11 @@
 
       {#if privateHomelab.length}
         <div class="mt-5">
-          <h3 class="mb-2 text-xs font-semibold tracking-[0.08em] text-soft uppercase">
-            Private services
-          </h3>
+          <h3 class="sr-only">Private services</h3>
           <ul class="m-0 flex list-none flex-wrap gap-2 p-0">
             {#each privateHomelab as item}
-              <li
-                class="inline-flex items-center gap-1.5 rounded-full bg-[#101010] px-3 py-1.5 text-[0.78rem] text-soft"
-              >
-                <svg class="size-3 text-[#666]" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <li class="private-chip">
+                <svg class="size-3 text-soft" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <rect x="3" y="7" width="10" height="7" rx="2" fill="currentColor" />
                   <path
                     d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2"
@@ -229,23 +282,23 @@
   </div>
 
   {#if data.writing.length}
-    <section class="mt-14" id="writing" aria-labelledby="writing-heading">
-      <div class="mb-4 flex items-baseline justify-between gap-4">
-        <h2
-          class="section-title section-title-writing m-0 font-serif text-[clamp(1.5rem,4vw,2rem)] tracking-[-0.03em] text-text normal-case"
-          id="writing-heading"
+    <section
+      class="panel glass"
+      id="writing"
+      aria-labelledby="writing-heading"
+      use:liquidGlass={{ radius: 18, bezel: 44, refraction: 120, blur: 6 }}
+    >
+      <header class="panel-head panel-head-row">
+        <h2 class="section-title section-title-writing" id="writing-heading">Writing</h2>
+        <a class="text-[0.86rem] font-[650] text-muted no-underline hover:text-text" href="/archive"
+          >All writing <span class="ml-[0.35rem] text-amber">→</span></a
         >
-          Writing
-        </h2>
-        <a class="text-[0.86rem] font-[650] text-muted" href="/archive"
-          >All writing <span class="ml-[0.35rem] text-blue">→</span></a
-        >
-      </div>
+      </header>
       <ol class="m-0 grid list-none gap-2 p-0">
         {#each data.writing as post}
           <li>
             <a
-              class="writing-row group flex items-center gap-3 rounded-lg bg-surface px-3 py-2 text-[0.92rem] text-muted no-underline hover:text-text max-sm:flex-wrap"
+              class="writing-row tile group gap-3 text-[0.92rem] max-sm:flex-wrap"
               href={post.canonicalPath}
               data-series={post.series}
             >
@@ -267,41 +320,289 @@
       </ol>
     </section>
   {/if}
+
+  <footer class="home-footer">
+    <span>© {SITE_NAME}</span>
+    <a href="#top" class="no-underline hover:text-text">Back to the top ↑</a>
+  </footer>
 </main>
 
 <style lang="postcss">
   @reference "../app.css";
 
-  .home-shell {
-    width: min(calc(100% - 2.5rem), 1040px);
+  :global(html) {
+    scroll-behavior: smooth;
+    scroll-padding-top: 1.5rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(html) {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* ---------- Hero: sits between the painted sky and the near trees ---------- */
+
+  .hero {
+    @apply relative mx-auto flex min-h-svh flex-col;
+    width: min(calc(100% - 2.5rem), 1280px);
+  }
+
+  .hero-nav {
+    @apply relative z-30 flex items-center justify-between gap-4 pt-5 pr-14 text-sm;
+  }
+
+  .hero-sections {
+    @apply m-0 flex list-none flex-wrap gap-x-5 gap-y-1 p-0;
+  }
+
+  .hero-sections a {
+    @apply font-medium text-[#eadfd6] no-underline opacity-80 hover:opacity-100;
+    text-shadow: 0 1px 12px rgb(0 0 0 / 60%);
+  }
+
+  .hero-contact {
+    @apply m-0 flex list-none gap-1 p-0;
+  }
+
+  .hero-contact a {
+    @apply grid size-9 place-items-center rounded-full no-underline hover:bg-white/10 focus-visible:bg-white/10;
+  }
+
+  .hero-contact img {
+    @apply size-4 opacity-85 invert;
+  }
+
+  .hero-body {
+    @apply grid flex-1 grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] items-center gap-x-10 gap-y-10 py-10;
+  }
+
+  .hero-intro {
+    @apply relative z-30 self-center pb-[6vh];
+  }
+
+  .hero-title {
+    @apply mb-5 font-serif font-normal text-[#fbf3ea];
+    font-size: clamp(3.4rem, 9vw, 8.25rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    text-shadow:
+      0 2px 30px rgb(30 10 5 / 65%),
+      0 0 80px rgb(255 140 70 / 18%);
+  }
+
+  .hero-lede {
+    @apply m-0 max-w-[34ch] text-[clamp(1.05rem,1.7vw,1.3rem)] leading-[1.55] text-[#efe3d8];
+    text-shadow: 0 1px 18px rgb(0 0 0 / 75%);
+  }
+
+  .hero-stage {
+    @apply relative z-10 self-center;
+    perspective: 1100px;
+  }
+
+  .hero-card {
+    @apply rounded-[16px] p-2;
+    max-width: 23rem;
+    will-change: transform;
+    animation: arrive 1.1s 180ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .hero-card-list {
+    @apply m-0 grid list-none gap-1 p-0;
+  }
+
+  .hero-card-list a {
+    @apply flex items-center gap-3 rounded-[10px] px-3.5 py-2.5 no-underline transition-colors duration-160 hover:bg-white/8 focus-visible:bg-white/8;
+  }
+
+  .hero-card-dot {
+    @apply size-2 shrink-0 rounded-full bg-current;
+    box-shadow: 0 0 12px currentColor;
+  }
+
+  .hero-card-text {
+    @apply grid min-w-0 flex-1;
+  }
+
+  .hero-card-name {
+    @apply text-[0.95rem] font-semibold text-text;
+  }
+
+  .hero-card-name,
+  .hero-card-hint {
+    text-shadow: 0 1px 8px rgb(0 0 0 / 45%);
+  }
+
+  .hero-card-hint {
+    @apply text-[0.8rem] text-[#c9bcb2];
+  }
+
+  .hero-card-arrow {
+    @apply text-[#c9bcb2] transition-transform duration-160;
+  }
+
+  .hero-card-list a:hover .hero-card-arrow {
+    @apply translate-x-0.5 text-text;
+  }
+
+  .hero-foot {
+    @apply relative z-30 flex items-end justify-between gap-4 pb-5 text-[0.8rem] text-[#d9cabd];
+  }
+
+  .hero-credit {
+    @apply m-0 text-inherit opacity-75;
+    text-shadow: 0 1px 10px rgb(0 0 0 / 80%);
+  }
+
+  .hero-credit a {
+    @apply underline decoration-white/30 hover:decoration-white;
+  }
+
+  .hero-scroll {
+    @apply inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[#f2e8df] no-underline;
+  }
+
+  .hero-scroll span {
+    animation: nudge 2.4s ease-in-out infinite;
+  }
+
+  @keyframes nudge {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+
+  /* Medium screens: the trees would hide most of the card, so let it float in front. */
+  @media (max-width: 72rem) {
+    .hero-stage {
+      @apply z-30;
+    }
+  }
+
+  @media (max-width: 52rem) {
+    .hero-body {
+      @apply grid-cols-1 content-center gap-y-8;
+    }
+
+    .hero-intro {
+      @apply pb-0;
+    }
+
+    .hero-card {
+      @apply mx-0 max-w-none;
+    }
+
+    .hero-sections {
+      @apply hidden;
+    }
+
+    .hero-nav {
+      @apply justify-end;
+    }
+  }
+
+  /* Fade in each piece itself: an ancestor with opacity < 1 would cut glass off from the scene. */
+  .hero-intro,
+  .hero-credit,
+  .hero-scroll {
+    animation: arrive 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .hero-credit,
+  .hero-scroll {
+    animation-delay: 420ms;
+  }
+
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      translate: 0 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-intro,
+    .hero-card,
+    .hero-credit,
+    .hero-scroll,
+    .hero-scroll span {
+      animation: none;
+    }
+  }
+
+  /* ---------- Content panels: glass over the sky, in front of the trees ---------- */
+
+  .home {
+    @apply relative z-25 mx-auto grid gap-6 pt-[8vh] pb-10;
+    width: min(calc(100% - 2.5rem), 1120px);
+  }
+
+  .panel {
+    @apply rounded-[18px] p-[clamp(1.25rem,3vw,2.25rem)];
+    /* Lifts type off the brighter parts of the sky (the horizon glow) seen through the glass. */
+    text-shadow: 0 1px 10px rgb(0 0 0 / 35%);
+  }
+
+  .panel-head {
+    @apply mb-5;
+  }
+
+  .panel-head p {
+    @apply mt-2 mb-0 max-w-[62ch] text-[#d8ccc2];
+  }
+
+  .panel-head-row {
+    @apply flex items-baseline justify-between gap-4;
   }
 
   .section-title {
-    @apply flex items-center gap-3;
+    @apply m-0 flex items-center gap-3 font-serif text-[clamp(1.7rem,4vw,2.35rem)] tracking-[-0.03em] text-text normal-case;
   }
 
   .section-title::before {
-    @apply h-7 w-1 rounded-full bg-current content-[''];
-  }
-
-  .section-title-writing::before {
-    @apply text-amber;
+    @apply h-6 w-1 rounded-full bg-current content-[''];
+    box-shadow: 0 0 14px currentColor;
   }
 
   .section-title-projects::before {
-    @apply text-mint;
+    @apply text-amber;
   }
 
   .section-title-links::before {
-    @apply text-blue;
+    @apply text-mint;
   }
 
   .section-title-homelab::before {
+    @apply text-ember;
+  }
+
+  .section-title-writing::before {
     @apply text-violet;
   }
 
-  .writing-row:hover {
-    background: #161616;
+  /* Inner pieces are slightly lighter panes resting on the glass. */
+  .tile {
+    @apply flex items-center justify-between gap-2 rounded-[10px] px-3.5 py-2 text-[0.88rem] text-[#e4d9d0] no-underline transition-colors duration-160 hover:text-text;
+    background: rgb(255 248 242 / 6%);
+  }
+
+  .tile:hover,
+  .tile:focus-visible {
+    background: rgb(255 248 242 / 11%);
+  }
+
+  .private-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.78rem] text-[#c9bcb2];
+    background: rgb(10 6 6 / 22%);
+  }
+
+  .writing-row {
+    @apply justify-start;
   }
 
   .writing-series {
@@ -348,7 +649,8 @@
   }
 
   .section-expand > summary {
-    @apply inline-flex cursor-pointer list-none items-center gap-3 rounded-full bg-surface px-3 py-2 text-[0.8rem] font-[650] text-muted hover:text-text;
+    @apply inline-flex cursor-pointer list-none items-center gap-3 rounded-full px-3.5 py-2 text-[0.8rem] font-[650] text-[#e4d9d0] hover:text-text;
+    background: rgb(255 248 242 / 6%);
   }
 
   .section-expand > summary::-webkit-details-marker {
@@ -375,9 +677,14 @@
     @apply hidden;
   }
 
+  .home-footer {
+    @apply flex justify-between gap-4 px-2 pt-4 text-[0.8rem] text-soft;
+  }
+
   @media (max-width: 40rem) {
-    .home-shell {
-      width: min(calc(100% - 2rem), 1040px);
+    .hero,
+    .home {
+      width: min(calc(100% - 2rem), 1120px);
     }
   }
 </style>

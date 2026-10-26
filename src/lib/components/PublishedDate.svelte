@@ -20,8 +20,7 @@
 </script>
 
 <span class="whitespace-nowrap text-[0.8rem] text-soft">
-  {#if showLabel}Published
-  {:else}<span class="sr-only">Published </span>{/if}<time
+  {#if showLabel}{"Published "}{:else}<span class="sr-only">Published </span>{/if}<time
     class:text-[0.85rem]={emphasized}
     datetime={publishedAt}
     title={`Published ${formatDate(publishedAt)}`}>{formatDate(publishedAt)}</time
