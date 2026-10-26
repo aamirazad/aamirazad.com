@@ -4,7 +4,9 @@
   let { project }: { project: SiteItem } = $props();
 </script>
 
-<article class="flex h-full flex-col rounded-xl bg-surface p-5">
+<article
+  class="flex h-full flex-col rounded-[12px] bg-[rgb(255_248_242_/_6%)] p-5 transition-colors duration-160 hover:bg-[rgb(255_248_242_/_9%)]"
+>
   <div class="flex flex-wrap items-center gap-x-2.5 gap-y-2 font-[600]">
     {#if project.href}
       <a
@@ -16,7 +18,7 @@
           class="truncate text-current underline decoration-1 underline-offset-[0.22em] transition-colors duration-160 group-hover:text-muted"
           >{project.name}</span
         ><span
-          class="text-blue no-underline transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
+          class="text-amber no-underline transition-transform duration-160 group-hover:-translate-y-px group-hover:translate-x-px"
           aria-hidden="true">↗</span
         ></a
       >
@@ -26,7 +28,7 @@
 
     {#if project.isWip}
       <span
-        class="inline-grid size-[1.15rem] shrink-0 place-items-center text-amber"
+        class="inline-grid size-[1.15rem] shrink-0 place-items-center text-ember"
         role="img"
         aria-label="Work in progress"
         title="Work in progress"
@@ -64,7 +66,7 @@
     {/if}
   </div>
 
-  <p class="mt-2 mb-4 text-[0.92rem] leading-[1.55]">{project.description}</p>
+  <p class="mt-2 mb-4 text-[0.92rem] leading-[1.55] text-[#d8ccc2]">{project.description}</p>
 
   {#if project.github || project.codeUrl}
     <div class="mt-auto flex flex-wrap gap-3 text-xs text-soft">
@@ -73,7 +75,7 @@
           class="no-underline hover:text-text"
           href={`https://github.com/${project.github}`}
           target="_blank"
-          rel="noopener noreferrer">GitHub <span class="text-blue" aria-hidden="true">↗</span></a
+          rel="noopener noreferrer">GitHub <span class="text-amber" aria-hidden="true">↗</span></a
         >
       {/if}
       {#if project.codeUrl}
@@ -81,7 +83,7 @@
           class="no-underline hover:text-text"
           href={project.codeUrl}
           target="_blank"
-          rel="noopener noreferrer">Code <span class="text-blue" aria-hidden="true">↗</span></a
+          rel="noopener noreferrer">Code <span class="text-amber" aria-hidden="true">↗</span></a
         >
       {/if}
     </div>
