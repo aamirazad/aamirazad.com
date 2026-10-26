@@ -69,12 +69,67 @@
       schedule();
     };
 
-    const recenter = () => {
-      targetX = 0;
-      targetY = 0;
+    // Touch screens have no cursor, so tilting the phone stands in for it. Readings are measured
+    // from however the phone is being held: the neutral pose snaps along when tilted past the
+    // range and drifts after the reading otherwise, so a new grip settles back to centre.
+    const TILT_RANGE = 18;
+    let neutral: { x: number; y: number } | null = null;
+
+    // Euler angles flip by 180° near the poles (e.g. an upright phone in landscape); folding the
+    // difference back into ±90° keeps the motion continuous across that seam.
+    const tiltDelta = (degrees: number) => ((((degrees + 90) % 180) + 180) % 180) - 90;
+
+    const settle = (axis: "x" | "y", reading: number) => {
+      const delta = tiltDelta(reading - neutral![axis]);
+      const clamped = Math.max(-TILT_RANGE, Math.min(TILT_RANGE, delta));
+      neutral![axis] += delta - clamped + clamped * 0.002;
+      return clamped / TILT_RANGE;
+    };
+
+    const onOrientation = (event: DeviceOrientationEvent) => {
+      const { beta, gamma } = event;
+      if (reducedMotion.matches || finePointer.matches || beta === null || gamma === null) return;
+      // gamma tips the device's right edge down and beta its bottom edge; turn those into screen
+      // axes so the motion follows the screen when the phone is held sideways.
+      const angle = screen.orientation?.angle ?? 0;
+      const [readingX, readingY] =
+        angle === 90
+          ? [beta, -gamma]
+          : angle === 180
+            ? [-gamma, -beta]
+            : angle === 270
+              ? [-beta, gamma]
+              : [gamma, beta];
+      neutral ??= { x: readingX, y: readingY };
+      targetX = settle("x", readingX);
+      targetY = settle("y", readingY);
       schedule();
     };
 
+    // iOS withholds orientation until the visitor allows it, and will only ask from inside a tap.
+    // A touch that turns out to be a scroll doesn't count, so keep offering until there's an answer.
+    const Orientation = window.DeviceOrientationEvent as unknown as
+      { requestPermission?: () => Promise<PermissionState> } | undefined;
+    const needsPermission = typeof Orientation?.requestPermission === "function";
+    const requestTilt = () => {
+      if (reducedMotion.matches) return;
+      Orientation!.requestPermission!().then(
+        () => window.removeEventListener("touchend", requestTilt),
+        () => {},
+      );
+    };
+
+    const recenter = () => {
+      targetX = 0;
+      targetY = 0;
+      neutral = null;
+      schedule();
+    };
+
+    window.addEventListener("deviceorientation", onOrientation);
+    if (needsPermission && !finePointer.matches) {
+      window.addEventListener("touchend", requestTilt, { passive: true });
+    }
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", recenter);
     window.addEventListener("blur", recenter);
@@ -85,6 +140,8 @@
 
     return () => {
       cancelAnimationFrame(frame);
+      window.removeEventListener("deviceorientation", onOrientation);
+      window.removeEventListener("touchend", requestTilt);
       window.removeEventListener("pointermove", onPointerMove);
       document.documentElement.removeEventListener("pointerleave", recenter);
       window.removeEventListener("blur", recenter);
@@ -201,11 +258,11 @@
 
   @media (max-aspect-ratio: 1/1) {
     .layer img {
-      object-position: 62% 50%;
+      object-position: 78% 50%;
     }
 
     .shade-front {
-      mask-position: 62% 50%;
+      mask-position: 78% 50%;
     }
   }
 </style>
