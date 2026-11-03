@@ -1,5 +1,6 @@
-import { applyD1Migrations, env } from "cloudflare:test";
+import type { RuntimeEnv } from "../../src/lib/server/env";
 import { beforeEach, describe, expect, it } from "vitest";
+import { createTestEnv } from "./test-env";
 
 import {
   createSiteItem,
@@ -8,8 +9,10 @@ import {
   updateSiteItem,
 } from "../../src/lib/server/content/site-items";
 
+let env: RuntimeEnv;
+
 beforeEach(async () => {
-  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+  env = await createTestEnv();
 });
 
 describe("homepage content storage", () => {

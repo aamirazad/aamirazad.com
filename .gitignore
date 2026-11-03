@@ -9,14 +9,9 @@
 # testing
 /coverage
 
-# astro
-/dist/
-/.astro/
-
 # production
 /build
 /.svelte-kit
-/.wrangler
 
 # misc
 .DS_Store
@@ -41,3 +36,7 @@ worker-startup.cpuprofile
 next-env.d.ts
 
 old-site
+.env*.local
+
+# local embedded Postgres used by `pnpm dev`
+/.pglite

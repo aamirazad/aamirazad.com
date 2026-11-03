@@ -4,15 +4,15 @@ import { parseDraftInput } from "$lib/content";
 import { purgePostPaths } from "$lib/server/cache-purge";
 import { publishPost } from "$lib/server/content/publish";
 import { updateDraft } from "$lib/server/content/posts";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 
 import type { RequestHandler } from "./$types";
 
 /** Save the submitted draft and publish it in one request. */
-export const POST: RequestHandler = async ({ request, params, platform, locals }) => {
+export const POST: RequestHandler = async ({ request, params, locals }) => {
   const input = parseDraftInput(await request.json());
   if (!input || !locals.owner) error(400, "Invalid draft data");
-  const env = requireRuntimeEnv(platform);
+  const env = await runtimeEnv();
   const saved = await updateDraft(env, params.id, input);
   if (saved === "conflict") {
     return Response.json(
@@ -26,6 +26,6 @@ export const POST: RequestHandler = async ({ request, params, platform, locals }
   if (!result.ok) {
     return Response.json({ post: saved, issues: result.issues }, { status: 400 });
   }
-  await purgePostPaths(platform, result.purgePaths);
+  await purgePostPaths(result.purgePaths);
   return Response.json({ post: result.post });
 };

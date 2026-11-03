@@ -1,11 +1,11 @@
 import { atomFeed } from "$lib/server/content/feeds";
 import { listPublishedPosts } from "$lib/server/public-content";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ platform }) => {
-  const env = requireRuntimeEnv(platform);
+export const GET: RequestHandler = async () => {
+  const env = await runtimeEnv();
   return new Response(atomFeed(env.APP_ORIGIN, await listPublishedPosts(env, 20)), {
     headers: { "content-type": "application/atom+xml; charset=utf-8" },
   });

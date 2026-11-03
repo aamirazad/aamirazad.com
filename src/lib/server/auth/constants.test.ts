@@ -18,7 +18,7 @@ describe("authentication navigation", () => {
     expect(sessionCookieName(new URL("http://localhost"))).toBe("publish-session");
   });
 
-  it("keeps local and Worker preview callbacks on the origin being visited", () => {
+  it("keeps local and Vercel preview callbacks on the origin being visited", () => {
     const production = "https://aamirazad.com";
     expect(oidcRedirectOrigin(production, new URL("http://localhost:3000/admin"))).toBe(
       "http://localhost:3000",
@@ -29,9 +29,9 @@ describe("authentication navigation", () => {
     expect(
       oidcRedirectOrigin(
         production,
-        new URL("https://abc-aamirazad-com.example.workers.dev/admin"),
+        new URL("https://aamirazad-com-git-branch-aamira.vercel.app/admin"),
       ),
-    ).toBe("https://abc-aamirazad-com.example.workers.dev");
+    ).toBe("https://aamirazad-com-git-branch-aamira.vercel.app");
     expect(oidcRedirectOrigin(production, new URL("https://www.aamirazad.com/admin"))).toBe(
       production,
     );

@@ -1,6 +1,8 @@
 import type { EditablePost, ValidationIssue } from "$lib/content";
 import { validateDraft } from "$lib/content";
+import { auditEvent } from "$lib/server/audit";
 import { sha256Hex, uuidV7 } from "$lib/server/crypto";
+import { statement, type Statement } from "$lib/server/db";
 import type { RuntimeEnv } from "$lib/server/env";
 
 import { renderMarkdown } from "./markdown";
@@ -11,7 +13,7 @@ export type PublishResult =
 
 /**
  * Snapshot the saved draft as an immutable revision and make it the public version of the post.
- * Everything happens in one D1 batch, so the post is either fully published or untouched.
+ * Everything happens in one transaction, so the post is either fully published or untouched.
  */
 export async function publishPost(
   env: RuntimeEnv,
@@ -25,11 +27,12 @@ export async function publishPost(
   if (issues.length) return { ok: false, issues };
 
   const canonicalPath = `/${post.series}/${post.slug}`;
-  const taken = await env.DB.prepare(
-    "SELECT id FROM posts WHERE canonical_path = ? AND id != ? AND deleted_at IS NULL LIMIT 1",
-  )
-    .bind(canonicalPath, postId)
-    .first();
+  const taken = await env.DB.first(
+    `SELECT id FROM aamirazad_posts
+    WHERE canonical_path = $1 AND id != $2 AND deleted_at IS NULL LIMIT 1`,
+    canonicalPath,
+    postId,
+  );
   if (taken) {
     return {
       ok: false,
@@ -39,22 +42,23 @@ export async function publishPost(
 
   const now = new Date().toISOString();
   const hash = await publishableHash(post, canonicalPath);
-  const existing = await env.DB.prepare(
-    "SELECT id FROM post_revisions WHERE post_id = ? AND content_hash = ? AND reason = 'publish' LIMIT 1",
-  )
-    .bind(postId, hash)
-    .first<{ id: string }>();
+  const existing = await env.DB.first<{ id: string }>(
+    `SELECT id FROM aamirazad_post_revisions
+    WHERE post_id = $1 AND content_hash = $2 AND reason = 'publish' LIMIT 1`,
+    postId,
+    hash,
+  );
   const revisionId = existing?.id ?? uuidV7();
-  const statements: D1PreparedStatement[] = [];
+  const statements: Statement[] = [];
 
   if (!existing) {
     statements.push(
-      env.DB.prepare(
-        `INSERT INTO post_revisions (id, post_id, series, format, title, slug, canonical_path,
-        summary, body_markdown, html, source_url, source_title, source_description, quote_text,
-        quote_attribution, is_listed, content_hash, reason, created_at, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'publish', ?, ?)`,
-      ).bind(
+      statement(
+        `INSERT INTO aamirazad_post_revisions (id, post_id, series, format, title, slug,
+        canonical_path, summary, body_markdown, html, source_url, source_title, source_description,
+        quote_text, quote_attribution, is_listed, content_hash, reason, created_at, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+        'publish', $18, $19)`,
         revisionId,
         postId,
         post.series,
@@ -82,19 +86,28 @@ export async function publishPost(
     // Keep the old address working by redirecting it to the new one.
     purgePaths.push(post.canonicalPath);
     statements.push(
-      env.DB.prepare(
-        "INSERT OR IGNORE INTO slug_aliases (path, post_id, created_at) VALUES (?, ?, ?)",
-      ).bind(post.canonicalPath, postId, now),
+      statement(
+        `INSERT INTO aamirazad_slug_aliases (path, post_id, created_at) VALUES ($1, $2, $3)
+        ON CONFLICT (path) DO NOTHING`,
+        post.canonicalPath,
+        postId,
+        now,
+      ),
     );
   }
   statements.push(
-    env.DB.prepare("DELETE FROM slug_aliases WHERE path = ?").bind(canonicalPath),
-    env.DB.prepare(
-      `UPDATE posts SET status = 'published', canonical_path = ?, current_revision_id = ?,
-      published_revision_id = ?, published_at = COALESCE(published_at, ?), updated_at = ?
-      WHERE id = ?`,
-    ).bind(canonicalPath, revisionId, revisionId, now, now, postId),
-    auditEvent(env, actor, "post.published", postId, now),
+    statement("DELETE FROM aamirazad_slug_aliases WHERE path = $1", canonicalPath),
+    statement(
+      `UPDATE aamirazad_posts SET status = 'published', canonical_path = $1,
+      current_revision_id = $2, published_revision_id = $2,
+      published_at = COALESCE(published_at, $3), updated_at = $3
+      WHERE id = $4`,
+      canonicalPath,
+      revisionId,
+      now,
+      postId,
+    ),
+    auditEvent(actor, "post.published", postId, now),
   );
   await env.DB.batch(statements);
   const published = await getPost(env, postId);
@@ -113,11 +126,12 @@ export async function unpublishPost(
   const now = new Date().toISOString();
   if (post.status === "published") {
     await env.DB.batch([
-      env.DB.prepare("UPDATE posts SET status = 'archived', updated_at = ? WHERE id = ?").bind(
+      statement(
+        "UPDATE aamirazad_posts SET status = 'archived', updated_at = $1 WHERE id = $2",
         now,
         postId,
       ),
-      auditEvent(env, actor, "post.unpublished", postId, now),
+      auditEvent(actor, "post.unpublished", postId, now),
     ]);
   }
   const updated = await getPost(env, postId);
@@ -129,18 +143,12 @@ export async function unpublishPost(
 /** True when the saved draft differs from what is currently public. */
 export async function hasUnpublishedChanges(env: RuntimeEnv, post: EditablePost) {
   if (post.status !== "published" || !post.publishedRevisionId) return false;
-  const published = await env.DB.prepare("SELECT content_hash FROM post_revisions WHERE id = ?")
-    .bind(post.publishedRevisionId)
-    .first<{ content_hash: string }>();
+  const published = await env.DB.first<{ content_hash: string }>(
+    "SELECT content_hash FROM aamirazad_post_revisions WHERE id = $1",
+    post.publishedRevisionId,
+  );
   const canonicalPath = `/${post.series}/${post.slug}`;
   return published?.content_hash !== (await publishableHash(post, canonicalPath));
-}
-
-function auditEvent(env: RuntimeEnv, actor: string, type: string, target: string, now: string) {
-  return env.DB.prepare(
-    `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-    VALUES (?, ?, ?, ?, ?)`,
-  ).bind(uuidV7(), actor, type, target, now);
 }
 
 async function publishableHash(post: EditablePost, canonicalPath: string): Promise<string> {

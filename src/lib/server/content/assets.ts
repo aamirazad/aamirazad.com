@@ -1,7 +1,9 @@
 import { imageSize } from "image-size";
 
 import type { PostAsset } from "$lib/content";
+import { auditEvent } from "$lib/server/audit";
 import { sha256Hex, uuidV7 } from "$lib/server/crypto";
+import { statement } from "$lib/server/db";
 import type { RuntimeEnv } from "$lib/server/env";
 import { ensureImageVariants } from "$lib/server/content/image-variants";
 
@@ -24,11 +26,10 @@ async function storeImage(
   if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES)
     throw new Error("Images must be 12 MB or smaller.");
 
-  const post = await env.DB.prepare(
-    "SELECT id FROM posts WHERE id = ? AND deleted_at IS NULL LIMIT 1",
-  )
-    .bind(postId)
-    .first<{ id: string }>();
+  const post = await env.DB.first<{ id: string }>(
+    "SELECT id FROM aamirazad_posts WHERE id = $1 AND deleted_at IS NULL LIMIT 1",
+    postId,
+  );
   if (!post) throw new Error("Post not found");
 
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -43,26 +44,21 @@ async function storeImage(
   const originalKey = `media/originals/${assetId}/${filename}`;
   const digest = await sha256Hex(bytes);
   const now = new Date().toISOString();
-  const positionRow = await env.DB.prepare(
-    "SELECT COALESCE(MAX(position), -1) + 1 AS position FROM post_assets WHERE post_id = ?",
-  )
-    .bind(postId)
-    .first<{ position: number }>();
+  const positionRow = await env.DB.first<{ position: number }>(
+    `SELECT COALESCE(MAX(position), -1) + 1 AS position FROM aamirazad_post_assets
+    WHERE post_id = $1`,
+    postId,
+  );
   const position = positionRow?.position ?? 0;
 
-  const stored = await env.MEDIA.put(originalKey, bytes, {
-    httpMetadata: { contentType: file.type, cacheControl: "private, no-store" },
-    customMetadata: { sha256: digest, originalFilename: filename },
-  });
-  if (!stored) throw new Error("Image storage rejected the upload.");
+  await env.MEDIA.put(originalKey, bytes, { contentType: file.type });
 
   try {
     await env.DB.batch([
-      env.DB.prepare(
-        `INSERT INTO assets (id, original_key, sha256, original_filename, extension,
+      statement(
+        `INSERT INTO aamirazad_assets (id, original_key, sha256, original_filename, extension,
         mime_type, byte_size, width, height, alt_text, created_at, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).bind(
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
         assetId,
         originalKey,
         digest,
@@ -76,14 +72,14 @@ async function storeImage(
         now,
         actor,
       ),
-      env.DB.prepare(
-        `INSERT INTO post_assets (post_id, asset_id, role, position, caption)
-        VALUES (?, ?, 'inline', ?, NULL)`,
-      ).bind(postId, assetId, position),
-      env.DB.prepare(
-        `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-        VALUES (?, ?, 'asset.uploaded', ?, ?)`,
-      ).bind(uuidV7(), actor, assetId, now),
+      statement(
+        `INSERT INTO aamirazad_post_assets (post_id, asset_id, role, position, caption)
+        VALUES ($1, $2, 'inline', $3, NULL)`,
+        postId,
+        assetId,
+        position,
+      ),
+      auditEvent(actor, "asset.uploaded", assetId, now),
     ]);
   } catch (error) {
     await env.MEDIA.delete(originalKey);
@@ -112,18 +108,17 @@ export async function uploadPostImage(
   actor: string,
 ): Promise<{ asset: PostAsset; markdown: string }> {
   const asset = await storeImage(env, postId, file, actor);
-  const postAsset = await env.DB.prepare(
-    `SELECT id, original_key AS originalKey, mime_type AS mimeType,
-    width, height FROM assets WHERE id = ? LIMIT 1`,
-  )
-    .bind(asset.id)
-    .first<{
-      id: string;
-      originalKey: string;
-      mimeType: string;
-      width: number | null;
-      height: number | null;
-    }>();
+  const postAsset = await env.DB.first<{
+    id: string;
+    originalKey: string;
+    mimeType: string;
+    width: number | null;
+    height: number | null;
+  }>(
+    `SELECT id, original_key AS "originalKey", mime_type AS "mimeType",
+    width, height FROM aamirazad_assets WHERE id = $1 LIMIT 1`,
+    asset.id,
+  );
   if (!postAsset) throw new Error("Uploaded image metadata is unavailable.");
   const variants = await ensureImageVariants(env, postAsset);
   const webp = variants.filter((variant) => variant.mimeType === "image/webp").at(-1);

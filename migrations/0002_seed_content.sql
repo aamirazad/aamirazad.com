@@ -1,25 +1,6 @@
-CREATE TABLE site_items (
-  id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL CHECK (kind IN ('project', 'link', 'homelab')),
-  name TEXT NOT NULL,
-  description TEXT NOT NULL DEFAULT '',
-  href TEXT,
-  github TEXT,
-  code_url TEXT,
-  badge TEXT,
-  is_wip INTEGER NOT NULL DEFAULT 0 CHECK (is_wip IN (0, 1)),
-  position INTEGER NOT NULL DEFAULT 0,
-  version INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT
-);
-
-CREATE INDEX site_items_kind_position_idx
-  ON site_items(kind, position, created_at)
-  WHERE deleted_at IS NULL;
-
-INSERT INTO site_items
+-- Default homepage content and the legacy short links. Both inserts skip rows that already exist,
+-- so applying this to a database imported from D1 keeps the imported values.
+INSERT INTO aamirazad_site_items
   (id, kind, name, description, href, github, code_url, badge, is_wip, position, created_at, updated_at)
 VALUES
   ('project-terranaut', 'project', 'Terranaut', 'A open source social fitness app designed to motivate users to get outside and accomplish their fitness goals.', 'https://terranaut.aamirazad.com', 'aamirazad/terranaut', NULL, 'Featured', 1, 0, '2026-07-24T00:00:00.000Z', '2026-07-24T00:00:00.000Z'),
@@ -57,4 +38,41 @@ VALUES
   ('homelab-listmonk', 'homelab', 'Listmonk', '', NULL, NULL, NULL, NULL, 0, 9, '2026-07-24T00:00:00.000Z', '2026-07-24T00:00:00.000Z'),
   ('homelab-languagetool', 'homelab', 'LanguageTool', '', NULL, NULL, NULL, NULL, 0, 10, '2026-07-24T00:00:00.000Z', '2026-07-24T00:00:00.000Z'),
   ('homelab-linkding', 'homelab', 'Linkding', '', 'https://bookmarks.aamirazad.com/', NULL, NULL, NULL, 0, 11, '2026-07-24T00:00:00.000Z', '2026-07-24T00:00:00.000Z'),
-  ('homelab-actual', 'homelab', 'Actual', '', 'https://finance.aamirazad.com/', NULL, NULL, NULL, 0, 12, '2026-07-24T00:00:00.000Z', '2026-07-24T00:00:00.000Z');
+  ('homelab-actual', 'homelab', 'Actual', '', 'https://finance.aamirazad.com/', NULL, NULL, NULL, 0, 12, '2026-07-24T00:00:00.000Z', '2026-07-24T00:00:00.000Z')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO aamirazad_redirect_links (id, path, target_url, label, created_at, updated_at)
+SELECT legacy.* FROM (VALUES
+  ('legacy-american-citizenship-award', '/american-citizenship-award', 'https://papers.aamirazad.com/share/hWSsF4LSg5DJ4DaWQCoTi2a49X2pEodAeJSPqhHB5ER2NOA9qr', 'american-citizenship-award', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-aseprite', '/aseprite', 'https://files.aamirazad.com/inbox/aseprite-v1.3.14-beta1.zip', 'aseprite', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-backpack', '/backpack', 'https://www.change.org/p/end-the-backpack-ban-at-hasd-high-school?recruited_by_id=cee357a0-8114-11f0-9397-51d3dd62874f&utm_source=share_petition&utm_campaign=psf_combo_share_initial&utm_medium=copylink', 'backpack', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-bluesky', '/bluesky', 'https://bsky.app/profile/aamirazad.com', 'bluesky', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-bycda', '/bycda', 'https://hasd.dino.icu/category/5/bycda', 'bycda', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-chem-textbook', '/chem-textbook', 'https://cdn.aamirazad.com/Zumdahl%20Textbook.pdf', 'chem-textbook', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-code', '/code', 'https://code.aamirazad.com/aamir', 'code', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-codeberg', '/codeberg', 'https://codeberg.org/aamir', 'codeberg', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-cs50-cert', '/cs50-cert', 'https://courses.edx.org/certificates/0a9007180d26449b8593df3ef23a1400', 'cs50-cert', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-fbla-2024-gc-archive', '/fbla-2024-gc-archive', 'https://files.aamirazad.com/inbox/FBLA%202024-2025%20GC%20Stream.html', 'fbla-2024-gc-archive', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-fbla-game', '/fbla-game', 'https://connect.fbla.org/headquarters/files/High%20School%20Competitive%20Events%20Resources/Individual%20Guidelines/Presentation%20Events/Computer-Game-Simulation-Programming.pdf', 'fbla-game', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-fbla-zulip', '/fbla-zulip', 'https://hasd.zulipchat.com/join/ki2oh6q5q3mnr3td6r3fxplg/', 'fbla-zulip', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-github', '/github', 'https://github.com/aamirazad/', 'github', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-history-officer-zulip', '/history-officer-zulip', 'https://hasd.zulipchat.com/join/h3fovacw2avg7c52vrftxt4k/', 'history-officer-zulip', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-history-zulip', '/history-zulip', 'https://hasd.zulipchat.com/join/gk442fdoiubirhzpdytxvq5w/', 'history-zulip', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-mastodon', '/mastodon', 'https://mastodon.social/@aamira', 'mastodon', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-outstanding-academic', '/outstanding-academic', 'https://papers.aamirazad.com/share/wyABSOjNExeQi4nBVfS10rMH4LBkvc8ppvxZdoroEfNY7V9ECF', 'outstanding-academic', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-perfect-attendance-2023', '/perfect-attendance-2023', 'https://papers.aamirazad.com/share/PXPJTBMvauXaHVqwyqHtHhNF18n4ayakr8Uu0dUsOVmaArbyOd', 'perfect-attendance-2023', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-pgp', '/pgp', '/.well-known/openpgpkey', 'pgp', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-presidents-award', '/presidents-award', 'https://papers.aamirazad.com/share/hAZ5KImbXUlB3Ul03zV5YtSxY4Oo8XjGQNJk0b7SXvqLyt7yFj', 'presidents-award', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-principals-award', '/principals-award', 'https://papers.aamirazad.com/share/FFrlAJyx3DgTU7N3eFqW9mGKY1NukmXZNmQv4ztosV4Su7ZFhZ', 'principals-award', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-profile-picture', '/profile-picture', 'https://azadphotos.com/api/assets/83900471-95e1-4f33-a032-e41531e7455f/thumbnail?size=preview&key=6Cy6QJLTizf6dILKFfjfm9SJcfZjmR-Dzbk1yIHZFOQwSkAOYrk4QY7LKa0wxOSazU8&c=Y2WyiAHtxlI37LaS42gHmgXhpnI%3D', 'profile-picture', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-pronounce-godot', '/pronounce-godot', 'https://upload.wikimedia.org/wikipedia/commons/transcoded/e/ef/En-us-Godot.oga/En-us-Godot.oga.mp3', 'pronounce-godot', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-resume', '/resume', 'https://files.aamirazad.com/resume.pdf', 'resume', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-signal', '/signal', 'https://signal.me/#eu/gYSBVtWgFaykPtlA00TXJrO91sPmPjq_Si4wE8oYpd1E-llhxxVBtITfDB17DtDj', 'signal', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-telegram', '/telegram', 'https://t.me/aamirazad01', 'telegram', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-turkey-2025', '/turkey-2025', '/watch/AY4aAI7zzcaOE6Kd3202XudT7k4jIuglQSIBj3UoGu02U', 'turkey-2025', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z'),
+  ('legacy-zulip', '/zulip', 'https://hasd.zulipchat.com/join/6rwf4ado2v2erh3rowedivlr/', 'zulip', '2026-10-07T00:00:00.000Z', '2026-10-07T00:00:00.000Z')
+) AS legacy (id, path, target_url, label, created_at, updated_at)
+WHERE NOT EXISTS (
+  SELECT 1 FROM aamirazad_redirect_links r
+  WHERE r.id = legacy.id OR (r.path = legacy.path AND r.deleted_at IS NULL)
+);

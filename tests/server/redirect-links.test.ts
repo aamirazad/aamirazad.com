@@ -1,15 +1,19 @@
-import { applyD1Migrations, env, SELF } from "cloudflare:test";
+import type { RuntimeEnv } from "../../src/lib/server/env";
 import { beforeEach, describe, expect, it } from "vitest";
+import { createTestEnv } from "./test-env";
 
 import {
   createRedirectLink,
   deleteRedirectLink,
   listRedirectLinks,
+  resolveRedirectLink,
   updateRedirectLink,
 } from "$lib/server/content/redirect-links";
 
+let env: RuntimeEnv;
+
 beforeEach(async () => {
-  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+  env = await createTestEnv();
 });
 
 describe("redirect links", () => {
@@ -22,9 +26,13 @@ describe("redirect links", () => {
     expect(created).not.toBe("path_taken");
     if (created === "path_taken") throw new Error("unexpected duplicate");
 
-    const response = await SELF.fetch("https://aamirazad.com/newsletter", { redirect: "manual" });
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("https://example.com/signup");
+    await expect(resolveRedirectLink(env, "/newsletter")).resolves.toBe(
+      "https://example.com/signup",
+    );
+    // HEAD requests resolve without counting as a click.
+    await expect(resolveRedirectLink(env, "/newsletter", false)).resolves.toBe(
+      "https://example.com/signup",
+    );
 
     const tracked = (await listRedirectLinks(env)).find((link) => link.id === created.id);
     expect(tracked).toMatchObject({ id: created.id, allTimeClicks: 1, last24HoursClicks: 1 });

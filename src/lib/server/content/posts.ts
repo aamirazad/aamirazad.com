@@ -1,6 +1,8 @@
 import type { DraftInput, EditablePost, PostFormat, Series } from "$lib/content";
 import { slugify, titlePrefix } from "$lib/content";
+import { auditEvent } from "$lib/server/audit";
 import { uuidV7 } from "$lib/server/crypto";
+import { statement } from "$lib/server/db";
 import type { RuntimeEnv } from "$lib/server/env";
 
 type PostRow = {
@@ -30,19 +32,20 @@ type PostRow = {
 const POST_SELECT = `SELECT id, series, format, status, title, slug, canonical_path, summary,
   body_markdown, source_url, source_title, source_description, quote_text, quote_attribution,
   is_listed, version, current_revision_id, published_revision_id, created_at, updated_at, published_at
-  FROM posts`;
+  FROM aamirazad_posts`;
 
 export async function listPosts(env: RuntimeEnv): Promise<EditablePost[]> {
-  const result = await env.DB.prepare(
+  const rows = await env.DB.all<PostRow>(
     `${POST_SELECT} WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT 100`,
-  ).all<PostRow>();
-  return result.results.map(mapPost);
+  );
+  return rows.map(mapPost);
 }
 
 export async function getPost(env: RuntimeEnv, id: string): Promise<EditablePost | null> {
-  const row = await env.DB.prepare(`${POST_SELECT} WHERE id = ? AND deleted_at IS NULL LIMIT 1`)
-    .bind(id)
-    .first<PostRow>();
+  const row = await env.DB.first<PostRow>(
+    `${POST_SELECT} WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+    id,
+  );
   return row ? mapPost(row) : null;
 }
 
@@ -56,14 +59,13 @@ export async function deletePost(
   if (!post) return null;
   const now = new Date().toISOString();
   await env.DB.batch([
-    env.DB.prepare(
-      `UPDATE posts SET deleted_at = ?, updated_at = ?, version = version + 1
-      WHERE id = ? AND deleted_at IS NULL`,
-    ).bind(now, now, id),
-    env.DB.prepare(
-      `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-      VALUES (?, ?, 'post.deleted', ?, ?)`,
-    ).bind(uuidV7(), actor, id, now),
+    statement(
+      `UPDATE aamirazad_posts SET deleted_at = $1, updated_at = $1, version = version + 1
+      WHERE id = $2 AND deleted_at IS NULL`,
+      now,
+      id,
+    ),
+    auditEvent(actor, "post.deleted", id, now),
   ]);
   return {
     purgePaths: post.status === "published" && post.canonicalPath ? [post.canonicalPath] : [],
@@ -80,11 +82,11 @@ export async function createMeaningfulDraft(
   const now = new Date().toISOString();
   const slug = input.slug || slugify(input.title.replace(/^(On|Today|I Built|I Found)\s+/u, ""));
   await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO posts (id, series, format, title, slug, summary, body_markdown,
+    statement(
+      `INSERT INTO aamirazad_posts (id, series, format, title, slug, summary, body_markdown,
       source_url, source_title, source_description, quote_text, quote_attribution, is_listed,
-      created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(
+      created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       id,
       input.series,
       input.format,
@@ -101,10 +103,7 @@ export async function createMeaningfulDraft(
       now,
       now,
     ),
-    env.DB.prepare(
-      `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-      VALUES (?, ?, 'draft.created', ?, ?)`,
-    ).bind(uuidV7(), actor, id, now),
+    auditEvent(actor, "draft.created", id, now),
   ]);
   const post = await getPost(env, id);
   if (!post) throw new Error("Draft creation did not return a post");
@@ -129,31 +128,29 @@ export async function updateDraft(
 ): Promise<EditablePost | "conflict" | null> {
   const now = new Date().toISOString();
   const slug = input.slug || slugify(input.title.replace(/^(On|Today|I Built|I Found)\s+/u, ""));
-  const result = await env.DB.prepare(
-    `UPDATE posts SET series = ?, format = ?, title = ?, slug = ?,
-    summary = ?, body_markdown = ?, source_url = ?, source_title = ?, source_description = ?,
-    quote_text = ?, quote_attribution = ?, is_listed = ?, version = version + 1, updated_at = ?
-    WHERE id = ? AND version = ? AND deleted_at IS NULL`,
-  )
-    .bind(
-      input.series,
-      input.format,
-      input.title,
-      slug,
-      input.summary,
-      input.bodyMarkdown,
-      nullable(input.sourceUrl),
-      nullable(input.sourceTitle),
-      nullable(input.sourceDescription),
-      nullable(input.quoteText),
-      nullable(input.quoteAttribution),
-      input.isListed ? 1 : 0,
-      now,
-      id,
-      input.version,
-    )
-    .run();
-  if ((result.meta.changes ?? 0) === 0) {
+  const changes = await env.DB.run(
+    `UPDATE aamirazad_posts SET series = $1, format = $2, title = $3, slug = $4,
+    summary = $5, body_markdown = $6, source_url = $7, source_title = $8, source_description = $9,
+    quote_text = $10, quote_attribution = $11, is_listed = $12, version = version + 1,
+    updated_at = $13
+    WHERE id = $14 AND version = $15 AND deleted_at IS NULL`,
+    input.series,
+    input.format,
+    input.title,
+    slug,
+    input.summary,
+    input.bodyMarkdown,
+    nullable(input.sourceUrl),
+    nullable(input.sourceTitle),
+    nullable(input.sourceDescription),
+    nullable(input.quoteText),
+    nullable(input.quoteAttribution),
+    input.isListed ? 1 : 0,
+    now,
+    id,
+    input.version,
+  );
+  if (changes === 0) {
     return (await getPost(env, id)) ? "conflict" : null;
   }
   return getPost(env, id);

@@ -32,14 +32,19 @@ export async function createSession(
   const idleExpiresAt = new Date(now.getTime() + SESSION_IDLE_SECONDS * 1000).toISOString();
   const absoluteExpiresAt = new Date(now.getTime() + SESSION_ABSOLUTE_SECONDS * 1000).toISOString();
 
-  await env.DB.prepare(
-    `INSERT INTO sessions (
+  await env.DB.run(
+    `INSERT INTO aamirazad_sessions (
       token_hash, oidc_issuer, oidc_subject, created_at, last_seen_at,
       idle_expires_at, absolute_expires_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  )
-    .bind(tokenHash, issuer, subject, createdAt, createdAt, idleExpiresAt, absoluteExpiresAt)
-    .run();
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    tokenHash,
+    issuer,
+    subject,
+    createdAt,
+    createdAt,
+    idleExpiresAt,
+    absoluteExpiresAt,
+  );
 
   return {
     token,
@@ -57,13 +62,12 @@ export async function readSession(
   if (!token) return null;
 
   const tokenHash = await hmacHex(env.SESSION_SECRET, token);
-  const row = await env.DB.prepare(
+  const row = await env.DB.first<SessionRow>(
     `SELECT oidc_issuer, oidc_subject, last_seen_at, idle_expires_at,
       absolute_expires_at, revoked_at
-    FROM sessions WHERE token_hash = ? LIMIT 1`,
-  )
-    .bind(tokenHash)
-    .first<SessionRow>();
+    FROM aamirazad_sessions WHERE token_hash = $1 LIMIT 1`,
+    tokenHash,
+  );
 
   const nowIso = now.toISOString();
   if (
@@ -84,11 +88,12 @@ export async function readSession(
         new Date(row.absolute_expires_at).getTime(),
       ),
     ).toISOString();
-    await env.DB.prepare(
-      "UPDATE sessions SET last_seen_at = ?, idle_expires_at = ? WHERE token_hash = ?",
-    )
-      .bind(nowIso, nextIdleExpiry, tokenHash)
-      .run();
+    await env.DB.run(
+      "UPDATE aamirazad_sessions SET last_seen_at = $1, idle_expires_at = $2 WHERE token_hash = $3",
+      nowIso,
+      nextIdleExpiry,
+      tokenHash,
+    );
   }
 
   return {
@@ -102,9 +107,11 @@ export async function revokeSession(env: RuntimeEnv, cookies: Cookies, origin: U
   const token = cookies.get(sessionCookieName(origin));
   if (token) {
     const tokenHash = await hmacHex(env.SESSION_SECRET, token);
-    await env.DB.prepare("UPDATE sessions SET revoked_at = ? WHERE token_hash = ?")
-      .bind(new Date().toISOString(), tokenHash)
-      .run();
+    await env.DB.run(
+      "UPDATE aamirazad_sessions SET revoked_at = $1 WHERE token_hash = $2",
+      new Date().toISOString(),
+      tokenHash,
+    );
   }
   deleteSessionCookie(cookies, origin);
 }

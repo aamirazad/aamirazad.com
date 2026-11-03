@@ -1,21 +1,16 @@
+import { invalidateByTag } from "@vercel/functions";
+
 import { cacheTagsForPostPaths } from "$lib/published";
 
 /**
- * Drop cached public pages that show a post. Purging is best-effort: the change is already
- * committed to D1, and edge entries expire on their own within the public cache TTL. Local
- * development has no Workers Cache, so this is a no-op there.
+ * Mark cached public pages that show a post as stale on Vercel's CDN. Purging is best-effort: the
+ * change is already committed to the database, and CDN entries expire on their own within the
+ * public cache TTL. Outside a Vercel deployment there is no CDN cache, so this is a no-op.
  */
-export async function purgePostPaths(
-  platform: App.Platform | undefined,
-  paths: string[],
-): Promise<void> {
-  const cache = platform?.ctx?.cache;
-  if (!cache) return;
+export async function purgePostPaths(paths: string[]): Promise<void> {
+  if (!process.env.VERCEL) return;
   try {
-    const result = await cache.purge({ tags: cacheTagsForPostPaths(paths) });
-    if (!result.success) {
-      console.error("Public cache purge failed", result.errors);
-    }
+    await invalidateByTag(cacheTagsForPostPaths(paths));
   } catch (caught) {
     console.error("Public cache purge failed", caught);
   }

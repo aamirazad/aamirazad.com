@@ -2,7 +2,7 @@ import { gzipSync } from "node:zlib";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
-const BUILD_ROOT = ".svelte-kit/cloudflare";
+const BUILD_ROOT = ".svelte-kit/output/client";
 const CSS_BUDGET = 35 * 1024;
 const PUBLIC_JS_BUDGET = 20 * 1024;
 

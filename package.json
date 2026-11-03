@@ -4,28 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "node scripts/select-cloudflare-environment.mjs",
-    "build": "vite build",
+    "build": "node scripts/migrate.mjs --if-production && vite build",
     "check:assets": "node scripts/check-public-assets.mjs",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "predev": "pnpm db:migrate:local",
+    "db:migrate": "node scripts/migrate.mjs",
     "dev": "vite dev --host 127.0.0.1 --port 3000",
-    "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "preview": "pnpm build && pnpm db:migrate:local && pnpm exec wrangler dev --port 3000",
-    "rebuild:export": "node scripts/rebuild-portable-export.mjs",
+    "preview": "vite build && vite preview --host 127.0.0.1 --port 3000",
     "test": "vitest run",
-    "test:worker": "pnpm build && vitest run --config vitest.worker.config.ts",
-    "test:watch": "vitest",
-    "types": "pnpm exec wrangler types worker-configuration.d.ts --env-file .env.example && node scripts/normalize-worker-types.mjs",
-    "deploy:preview": "pnpm build && pnpm exec wrangler versions upload --env preview",
-    "deploy:production": "pnpm build && pnpm exec wrangler deploy --env production"
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "1.4.4",
-    "@cloudflare/workers-types": "5.20261018.1",
-    "@sveltejs/adapter-cloudflare": "7.2.9",
+    "@electric-sql/pglite": "0.5.14",
+    "@sveltejs/adapter-vercel": "6.3.4",
     "@sveltejs/kit": "2.70.3",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@tailwindcss/vite": "^4.3.3",
@@ -38,13 +30,15 @@
     "tailwindcss": "^4.3.3",
     "typescript": "6.0.3",
     "vite": "8.3.4",
-    "vitest": "5.0.5",
-    "wrangler": "4.151.1"
+    "vitest": "5.0.5"
   },
   "packageManager": "pnpm@11.17.0",
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/noto-serif": "^5.3.0",
+    "@neondatabase/serverless": "1.2.0",
+    "@vercel/blob": "2.8.2",
+    "@vercel/functions": "3.10.5",
     "image-size": "2.0.4",
     "oauth4webapi": "3.8.8",
     "rehype-sanitize": "6.0.0",
@@ -52,6 +46,7 @@
     "remark-gfm": "4.0.1",
     "remark-parse": "11.0.0",
     "remark-rehype": "11.1.2",
+    "sharp": "0.35.5",
     "unified": "11.0.5"
   }
 }
