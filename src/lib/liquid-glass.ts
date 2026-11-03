@@ -16,8 +16,11 @@ export type LiquidGlassOptions = {
   refraction?: number;
   /** Frost applied before refracting, in px. */
   blur?: number;
-  /** Colour fringe at the rim; 0 disables it. */
-  dispersion?: number;
+  /**
+   * Refract on touch devices too. Large panes are costly to re-filter on every scrolled frame on
+   * phones, so they can opt out and keep the CSS frost there.
+   */
+  touch?: boolean;
 };
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -55,10 +58,13 @@ function displacementMap(width: number, height: number, radius: number, bezel: n
   const context = canvas.getContext("2d");
   if (!context) return "";
   const image = context.createImageData(w, h);
-  // Curve the rim at least as much as it is wide so the bend turns smoothly around tight corners.
-  const r = Math.min(Math.max(radius, bezel), width / 2, height / 2);
   const halfW = width / 2;
   const halfH = height / 2;
+  // The lens follows the element's own corner so the refracted shape lines up with its clip...
+  const r = Math.min(radius, halfW, halfH);
+  // ...but bends along a wider curve, at least as round as the rim is wide, so the pull turns
+  // smoothly around tight corners instead of creasing on the diagonal.
+  const bend = Math.min(Math.max(radius, bezel), halfW, halfH);
 
   for (let row = 0; row < h; row++) {
     for (let col = 0; col < w; col++) {
@@ -71,22 +77,26 @@ function displacementMap(width: number, height: number, radius: number, bezel: n
         r - Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - Math.min(Math.max(qx, qy), 0);
       let dx = 0;
       let dy = 0;
-      if (depth > 0 && depth < bezel) {
+      if (depth < bezel) {
+        const bx = Math.abs(px) - (halfW - bend);
+        const by = Math.abs(py) - (halfH - bend);
         let nx: number;
         let ny: number;
-        if (qx > 0 && qy > 0) {
-          const length = Math.hypot(qx, qy) || 1;
-          nx = qx / length;
-          ny = qy / length;
-        } else if (qx > qy) {
+        if (bx > 0 && by > 0) {
+          const length = Math.hypot(bx, by) || 1;
+          nx = bx / length;
+          ny = by / length;
+        } else if (bx > by) {
           nx = 1;
           ny = 0;
         } else {
           nx = 0;
           ny = 1;
         }
-        // Smooth convex lens profile: strongest at the edge, easing flat where the rim meets the face.
-        const t = 1 - depth / bezel;
+        // Smooth convex lens profile: strongest at the edge, easing flat where the rim meets the
+        // face. Pixels past the edge keep the full pull, so the anti-aliased clip never reveals an
+        // unrefracted sliver.
+        const t = Math.min(1 - depth / bezel, 1);
         const strength = t * t * (3 - 2 * t);
         dx = -Math.sign(px) * nx * strength;
         dy = -Math.sign(py) * ny * strength;
@@ -113,7 +123,7 @@ function buildFilter(
   height: number,
   options: Required<LiquidGlassOptions>,
 ): void {
-  const { radius, bezel, refraction, blur, dispersion } = options;
+  const { radius, bezel, refraction, blur } = options;
   setAttributes(filter, {
     x: 0,
     y: 0,
@@ -130,6 +140,9 @@ function buildFilter(
     primitives.push(element);
   };
 
+  // Kept to a single displacement pass: the backdrop is re-filtered on every frame the scene
+  // behind it moves, so each extra full-size pass (like a per-channel colour fringe) costs scroll
+  // smoothness.
   add("feGaussianBlur", { in: "SourceGraphic", stdDeviation: blur, result: "frost" });
   add("feImage", {
     href: displacementMap(width, height, radius, bezel),
@@ -140,25 +153,14 @@ function buildFilter(
     preserveAspectRatio: "none",
     result: "map",
   });
-
-  const channels = [
-    ["red", 1 + dispersion, "1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"],
-    ["green", 1, "0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0"],
-    ["blue", 1 - dispersion, "0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0"],
-  ] as const;
-  for (const [name, factor, matrix] of channels) {
-    add("feDisplacementMap", {
-      in: "frost",
-      in2: "map",
-      scale: refraction * factor,
-      xChannelSelector: "R",
-      yChannelSelector: "G",
-      result: `${name}-shift`,
-    });
-    add("feColorMatrix", { in: `${name}-shift`, type: "matrix", values: matrix, result: name });
-  }
-  add("feBlend", { in: "red", in2: "green", mode: "screen", result: "red-green" });
-  add("feBlend", { in: "red-green", in2: "blue", mode: "screen", result: "glass" });
+  add("feDisplacementMap", {
+    in: "frost",
+    in2: "map",
+    scale: refraction,
+    xChannelSelector: "R",
+    yChannelSelector: "G",
+    result: "glass",
+  });
   add("feColorMatrix", { in: "glass", type: "saturate", values: 1.35 });
 
   filter.replaceChildren(...primitives);
@@ -166,12 +168,13 @@ function buildFilter(
 
 export function liquidGlass(node: HTMLElement, initial: LiquidGlassOptions) {
   if (!supportsBackdropSvgFilters()) return {};
+  if (initial.touch === false && matchMedia("(pointer: coarse)").matches) return {};
 
   let options: Required<LiquidGlassOptions> = {
     bezel: 34,
     refraction: 100,
     blur: 3,
-    dispersion: 0.08,
+    touch: true,
     ...initial,
   };
   const filter = document.createElementNS(SVG_NS, "filter");
