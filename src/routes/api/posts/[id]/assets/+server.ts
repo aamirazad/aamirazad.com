@@ -1,18 +1,18 @@
 import { error } from "@sveltejs/kit";
 
 import { uploadPostImage } from "$lib/server/content/assets";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 
 import type { RequestHandler } from "./$types";
 
-export const POST: RequestHandler = async ({ request, params, platform, locals }) => {
+export const POST: RequestHandler = async ({ request, params, locals }) => {
   if (!locals.owner) error(401, "Unauthorized");
   const data = await request.formData();
   const image = data.get("image");
   if (!(image instanceof File)) error(400, "Choose an image.");
   try {
     const result = await uploadPostImage(
-      requireRuntimeEnv(platform),
+      await runtimeEnv(),
       params.id,
       image,
       locals.owner.subject,

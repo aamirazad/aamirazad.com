@@ -38,7 +38,7 @@ export function oidcRedirectOrigin(configuredOrigin: string, requestUrl?: URL): 
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
     hostname === "[::1]" ||
-    hostname.endsWith(".workers.dev");
+    hostname.endsWith(".vercel.app");
   return usesRequestOrigin ? requestUrl.origin : new URL(configuredOrigin).origin;
 }
 

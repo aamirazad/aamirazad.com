@@ -1,5 +1,8 @@
 # Production Cutover Record
 
+> Historical record of the July 2026 move from Vercel to Cloudflare Workers. The site moved back to
+> Vercel in November 2026; see `operations.md` for the current setup.
+
 Cutover date: 2026-07-18 (America/New_York).
 
 ## Pre-cutover baseline and backup

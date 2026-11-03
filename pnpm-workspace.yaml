@@ -7,14 +7,9 @@ overrides:
   "@sveltejs/kit>cookie": 0.7.2
   "external-editor>tmp": 0.2.7
 
-minimumReleaseAgeExclude:
-  - miniflare@4.20260722.0
-  - wrangler@4.114.0
-
 storeDir: .pnpm-store
 confirmModulesPurge: false
 
 allowBuilds:
   esbuild: true
   sharp: true
-  workerd: true

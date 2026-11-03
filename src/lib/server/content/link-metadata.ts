@@ -78,7 +78,7 @@ async function resolve(
     redirect: "error",
   });
   if (!response.ok) throw new Error("The destination hostname could not be verified.");
-  const data = await response.json<DnsResponse>();
+  const data = (await response.json()) as DnsResponse;
   return (data.Answer ?? [])
     .filter((answer) => answer.type === (type === "A" ? 1 : 28) && answer.data)
     .map((answer) => String(answer.data));

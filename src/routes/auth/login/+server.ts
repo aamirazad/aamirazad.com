@@ -4,11 +4,11 @@ import { redirect, type RequestHandler } from "@sveltejs/kit";
 import { oidcCookieName, OIDC_TRANSACTION_SECONDS, safeReturnTo } from "$lib/server/auth/constants";
 import { loadOidcContext } from "$lib/server/auth/oidc";
 import { storeOidcTransaction } from "$lib/server/auth/transactions";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 import { enforceRateLimit } from "$lib/server/rate-limit";
 
-export const GET: RequestHandler = async ({ cookies, getClientAddress, platform, url }) => {
-  const env = requireRuntimeEnv(platform);
+export const GET: RequestHandler = async ({ cookies, getClientAddress, url }) => {
+  const env = await runtimeEnv();
   await enforceRateLimit(env, getClientAddress(), "oidc_login", 10, 10 * 60);
 
   const context = await loadOidcContext(env, url);

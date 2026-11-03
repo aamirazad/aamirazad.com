@@ -1,5 +1,6 @@
-import { applyD1Migrations, env } from "cloudflare:test";
+import type { RuntimeEnv } from "../../src/lib/server/env";
 import { beforeEach, describe, expect, it } from "vitest";
+import { createTestEnv } from "./test-env";
 
 import type { DraftInput, PostFormat, Series } from "../../src/lib/content";
 import { uploadPostImage } from "../../src/lib/server/content/assets";
@@ -34,8 +35,10 @@ function draft(series: Series, format: PostFormat, overrides: Partial<DraftInput
 const createPost = (series: Series, format: PostFormat) =>
   createMeaningfulDraft(env, draft(series, format), "owner");
 
+let env: RuntimeEnv;
+
 beforeEach(async () => {
-  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+  env = await createTestEnv();
 });
 
 describe("draft editor storage", () => {
@@ -57,7 +60,7 @@ describe("draft editor storage", () => {
     };
     await expect(createMeaningfulDraft(env, empty, "owner")).rejects.toThrow("Add something");
     await expect(
-      env.DB.prepare("SELECT COUNT(*) AS count FROM posts").first<{ count: number }>(),
+      env.DB.first<{ count: number }>("SELECT COUNT(*)::int AS count FROM aamirazad_posts"),
     ).resolves.toMatchObject({ count: 0 });
 
     const created = await createMeaningfulDraft(
@@ -176,12 +179,16 @@ describe("draft editor storage", () => {
     expect(result.markdown).toMatch(
       new RegExp(`^!\\[tiny-pixel\\]\\(/media/${result.asset.id}/[a-f0-9]{64}/1w-webp\\)$`, "u"),
     );
-    const variant = await env.DB.prepare(
-      "SELECT r2_key FROM asset_variants WHERE asset_id = ? AND mime_type = 'image/webp'",
-    )
-      .bind(result.asset.id)
-      .first<{ r2_key: string }>();
+    const variant = await env.DB.first<{ storage_key: string }>(
+      `SELECT storage_key FROM aamirazad_asset_variants
+      WHERE asset_id = $1 AND mime_type = 'image/webp'`,
+      result.asset.id,
+    );
     expect(variant).not.toBeNull();
-    await expect(env.MEDIA.get(variant!.r2_key)).resolves.not.toBeNull();
+    const stored = await env.MEDIA.get(variant!.storage_key);
+    expect(stored).toMatchObject({ contentType: "image/webp" });
+    const bytes = new Uint8Array(await new Response(stored!.body).arrayBuffer());
+    // A RIFF/WEBP header proves sharp produced a real WebP file.
+    expect(new TextDecoder().decode(bytes.slice(8, 12))).toBe("WEBP");
   });
 });

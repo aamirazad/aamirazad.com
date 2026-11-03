@@ -1,4 +1,5 @@
 import { hmacHex } from "$lib/server/crypto";
+import { statement } from "$lib/server/db";
 import type { RuntimeEnv } from "$lib/server/env";
 
 import { OIDC_TRANSACTION_SECONDS } from "./constants";
@@ -30,12 +31,11 @@ export async function storeOidcTransaction(
 ): Promise<void> {
   const stateHash = await hmacHex(env.SESSION_SECRET, state);
   await env.DB.batch([
-    env.DB.prepare("DELETE FROM oidc_transactions WHERE expires_at <= ?").bind(now.toISOString()),
-    env.DB.prepare(
-      `INSERT INTO oidc_transactions (
+    statement("DELETE FROM aamirazad_oidc_transactions WHERE expires_at <= $1", now.toISOString()),
+    statement(
+      `INSERT INTO aamirazad_oidc_transactions (
         state_hash, code_verifier, nonce, return_to, created_at, expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).bind(
+      ) VALUES ($1, $2, $3, $4, $5, $6)`,
       stateHash,
       codeVerifier,
       nonce,
@@ -52,21 +52,21 @@ export async function consumeOidcTransaction(
   now = new Date(),
 ): Promise<OidcTransaction | null> {
   const stateHash = await hmacHex(env.SESSION_SECRET, state);
-  const row = await env.DB.prepare(
+  const row = await env.DB.first<TransactionRow>(
     `SELECT state_hash, code_verifier, nonce, return_to, expires_at, consumed_at
-    FROM oidc_transactions WHERE state_hash = ? LIMIT 1`,
-  )
-    .bind(stateHash)
-    .first<TransactionRow>();
+    FROM aamirazad_oidc_transactions WHERE state_hash = $1 LIMIT 1`,
+    stateHash,
+  );
 
   if (!row || row.consumed_at !== null || row.expires_at <= now.toISOString()) return null;
 
-  const update = await env.DB.prepare(
-    "UPDATE oidc_transactions SET consumed_at = ? WHERE state_hash = ? AND consumed_at IS NULL",
-  )
-    .bind(now.toISOString(), stateHash)
-    .run();
-  if (update.meta.changes !== 1) return null;
+  const changes = await env.DB.run(
+    `UPDATE aamirazad_oidc_transactions SET consumed_at = $1
+    WHERE state_hash = $2 AND consumed_at IS NULL`,
+    now.toISOString(),
+    stateHash,
+  );
+  if (changes !== 1) return null;
 
   return {
     stateHash: row.state_hash,

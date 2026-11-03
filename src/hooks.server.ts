@@ -1,9 +1,11 @@
 import type { Handle } from "@sveltejs/kit";
 
+import { cacheTagsForPath } from "$lib/published";
 import { devBypassOwner } from "$lib/server/auth/dev-bypass";
+import { publicCachePolicy } from "$lib/server/cache-policy";
 import { readSession } from "$lib/server/auth/sessions";
 import { resolveRedirectLink } from "$lib/server/content/redirect-links";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 
 const STATE_CHANGING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const PRIVATE_PREFIXES = ["/admin", "/api", "/preview"];
@@ -17,13 +19,30 @@ function isPrivatePath(pathname: string): boolean {
 export const handle: Handle = async ({ event, resolve }) => {
   event.locals.owner = null;
   const privatePath = isPrivatePath(event.url.pathname);
+  const env = await runtimeEnv();
+
+  // Sessions and OIDC state are bound to the apex, so private pages must not be used on www.
+  if (
+    event.url.hostname === "www.aamirazad.com" &&
+    new URL(env.APP_ORIGIN).hostname === "aamirazad.com" &&
+    (privatePath || event.url.pathname.startsWith("/auth/"))
+  ) {
+    return new Response(null, {
+      status: 307,
+      headers: {
+        "cache-control": "private, no-store",
+        location: new URL(`${event.url.pathname}${event.url.search}`, env.APP_ORIGIN).href,
+      },
+    });
+  }
+
   if (
     !privatePath &&
     !event.url.pathname.startsWith("/auth/") &&
     (event.request.method === "GET" || event.request.method === "HEAD")
   ) {
     const target = await resolveRedirectLink(
-      requireRuntimeEnv(event.platform),
+      env,
       event.url.pathname,
       event.request.method === "GET",
     );
@@ -36,7 +55,6 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
   const sessionRequired = privatePath || event.url.pathname === "/auth/logout";
   if (sessionRequired) {
-    const env = requireRuntimeEnv(event.platform);
     event.locals.owner =
       devBypassOwner(env, event.url) ?? (await readSession(env, event.cookies, event.url));
     if (!event.locals.owner) {
@@ -88,15 +106,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   if (privatePath || event.url.pathname.startsWith("/auth/")) {
     response.headers.set("cache-control", "private, no-store");
-  } else if (response.status >= 300 && response.status < 400) {
+  } else if (response.status >= 300 && response.status < 400 && response.status !== 304) {
     // Redirect destinations are editable and every GET is a tracked click.
-    response.headers.delete("x-public-cache");
     response.headers.set("cache-control", "no-store");
-  } else if (event.request.method === "GET" || event.request.method === "HEAD") {
-    // The adapter's legacy Cache API layer must not retain dynamic HTML. The outer Worker
-    // replaces this with the public policy used by Workers Cache after SvelteKit returns.
-    response.headers.set("cache-control", "no-cache");
-    response.headers.set("x-public-cache", "1");
+  } else if (
+    (event.request.method === "GET" || event.request.method === "HEAD") &&
+    (response.status < 300 || response.status === 304)
+  ) {
+    // Vercel's CDN follows `Vercel-CDN-Cache-Control`; browsers only see `Cache-Control`.
+    // Publishing invalidates the cache tags, so edge copies can live longer than browser ones.
+    const policy = publicCachePolicy(event.url.pathname);
+    response.headers.set("cache-control", policy.browser);
+    response.headers.set("vercel-cdn-cache-control", policy.edge);
+    response.headers.set("vercel-cache-tag", cacheTagsForPath(event.url.pathname).join(","));
+  } else {
+    response.headers.set("cache-control", "no-store");
   }
 
   return response;

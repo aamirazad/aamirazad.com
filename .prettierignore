@@ -1,7 +1,7 @@
+.pglite
 .svelte-kit
-.wrangler
+.vercel
 build
 node_modules
 old-site
 pnpm-lock.yaml
-worker-configuration.d.ts

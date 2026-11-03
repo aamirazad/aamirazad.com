@@ -1,4 +1,4 @@
-import adapter from "@sveltejs/adapter-cloudflare";
+import adapter from "@sveltejs/adapter-vercel";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 const analyticsOrigin = "https://analytics.aamirazad.com";
@@ -8,12 +8,9 @@ const config = {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
-      // Keep the adapter's generated entrypoint separate from the checked-in Worker wrapper.
-      config: "wrangler.svelte.jsonc",
-      platformProxy: {
-        configPath: "wrangler.jsonc",
-        persist: ".wrangler/state/v3",
-      },
+      runtime: "nodejs24.x",
+      // Run next to the Neon database (us-east-1) so each query is a short round trip.
+      regions: ["iad1"],
     }),
     csp: {
       mode: "auto",

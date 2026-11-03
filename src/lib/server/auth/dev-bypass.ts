@@ -4,8 +4,8 @@ const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 /**
  * Local development cannot complete the OIDC flow, so `DEV_AUTH_BYPASS=true` signs every
- * loopback request in as the owner. It is ignored unless Wrangler is running the local
- * environment; preview and production set ENVIRONMENT explicitly.
+ * loopback request in as the owner. It is ignored outside local development (any Vercel
+ * deployment reports ENVIRONMENT as preview or production).
  */
 export function devBypassOwner(
   env: { ENVIRONMENT: string; DEV_AUTH_BYPASS?: string },

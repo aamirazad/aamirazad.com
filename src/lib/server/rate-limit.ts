@@ -16,19 +16,20 @@ export async function enforceRateLimit(
     Math.floor(now.getTime() / (windowSeconds * 1000)) * windowSeconds * 1000,
   ).toISOString();
 
-  const row = await env.DB.prepare(
-    `INSERT INTO rate_limits (key_hash, action, window_started_at, count)
-      VALUES (?, ?, ?, 1)
+  const row = await env.DB.first<{ count: number }>(
+    `INSERT INTO aamirazad_rate_limits AS limits (key_hash, action, window_started_at, count)
+      VALUES ($1, $2, $3, 1)
       ON CONFLICT (key_hash, action) DO UPDATE SET
         count = CASE
-          WHEN window_started_at = excluded.window_started_at THEN count + 1
+          WHEN limits.window_started_at = excluded.window_started_at THEN limits.count + 1
           ELSE 1
         END,
         window_started_at = excluded.window_started_at
       RETURNING count`,
-  )
-    .bind(keyHash, action, windowStart)
-    .first<{ count: number }>();
+    keyHash,
+    action,
+    windowStart,
+  );
 
   if (!row || row.count > limit) {
     error(429, "Too many requests");

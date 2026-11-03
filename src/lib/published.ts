@@ -33,7 +33,7 @@ export type PublishedIndex = {
 };
 
 export function cacheTagForPath(path: string): string {
-  return `path-${encodeURIComponent(path).slice(0, 900)}`;
+  return `path-${encodeURIComponent(path).slice(0, 240)}`;
 }
 
 export function cacheTagsForPath(path: string): string[] {

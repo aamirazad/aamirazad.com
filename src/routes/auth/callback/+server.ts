@@ -6,11 +6,11 @@ import { loadOidcContext, ownerClaimsAreAllowed } from "$lib/server/auth/oidc";
 import { createSession, setSessionCookie } from "$lib/server/auth/sessions";
 import { consumeOidcTransaction } from "$lib/server/auth/transactions";
 import { timingSafeStringEqual, uuidV7 } from "$lib/server/crypto";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 import { enforceRateLimit } from "$lib/server/rate-limit";
 
-export const GET: RequestHandler = async ({ cookies, getClientAddress, platform, url }) => {
-  const env = requireRuntimeEnv(platform);
+export const GET: RequestHandler = async ({ cookies, getClientAddress, url }) => {
+  const env = await runtimeEnv();
   await enforceRateLimit(env, getClientAddress(), "oidc_callback", 20, 10 * 60);
 
   const returnedState = url.searchParams.get("state");
@@ -55,13 +55,15 @@ export const GET: RequestHandler = async ({ cookies, getClientAddress, platform,
     const issuer = String(claims.iss);
     const subject = claims.sub;
     const discoveredIssuer = String(context.server.issuer);
-    await env.DB.prepare(
-      `INSERT INTO audit_events (
+    await env.DB.run(
+      `INSERT INTO aamirazad_audit_events (
         id, actor_subject, event_type, metadata_json, created_at
-      ) VALUES (?, ?, 'auth.identity_received', ?, ?)`,
-    )
-      .bind(uuidV7(), subject, JSON.stringify({ issuer }), new Date().toISOString())
-      .run();
+      ) VALUES ($1, $2, 'auth.identity_received', $3, $4)`,
+      uuidV7(),
+      subject,
+      JSON.stringify({ issuer }),
+      new Date().toISOString(),
+    );
 
     if (!env.OIDC_OWNER_SUB) {
       console.error(

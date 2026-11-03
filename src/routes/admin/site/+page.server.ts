@@ -1,8 +1,8 @@
 import { listSiteItems } from "$lib/server/content/site-items";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ platform }) => ({
-  siteItems: await listSiteItems(requireRuntimeEnv(platform)),
+export const load: PageServerLoad = async () => ({
+  siteItems: await listSiteItems(await runtimeEnv()),
 });

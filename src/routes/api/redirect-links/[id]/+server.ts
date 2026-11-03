@@ -2,17 +2,17 @@ import { error } from "@sveltejs/kit";
 
 import { parseRedirectLinkInput, validateRedirectLinkInput } from "$lib/redirect-links";
 import { deleteRedirectLink, updateRedirectLink } from "$lib/server/content/redirect-links";
-import { requireRuntimeEnv } from "$lib/server/env";
+import { runtimeEnv } from "$lib/server/env";
 
 import type { RequestHandler } from "./$types";
 
-export const PATCH: RequestHandler = async ({ request, params, platform, locals }) => {
+export const PATCH: RequestHandler = async ({ request, params, locals }) => {
   const input = parseRedirectLinkInput(await request.json());
   if (!input || input.version === undefined || !locals.owner) error(400, "Invalid redirect data");
   const issue = validateRedirectLinkInput(input);
   if (issue) error(400, issue);
   const result = await updateRedirectLink(
-    requireRuntimeEnv(platform),
+    await runtimeEnv(),
     params.id,
     { ...input, version: input.version },
     locals.owner.subject,
@@ -27,13 +27,9 @@ export const PATCH: RequestHandler = async ({ request, params, platform, locals 
   return Response.json({ link: result });
 };
 
-export const DELETE: RequestHandler = async ({ params, platform, locals }) => {
+export const DELETE: RequestHandler = async ({ params, locals }) => {
   if (!locals.owner) error(401, "Unauthorized");
-  const deleted = await deleteRedirectLink(
-    requireRuntimeEnv(platform),
-    params.id,
-    locals.owner.subject,
-  );
+  const deleted = await deleteRedirectLink(await runtimeEnv(), params.id, locals.owner.subject);
   if (!deleted) error(404, "Redirect link not found");
   return new Response(null, { status: 204 });
 };

@@ -1,5 +1,7 @@
 import type { SiteItem, SiteItemInput, SiteItemKind } from "$lib/site-content";
+import { auditEvent } from "$lib/server/audit";
 import { uuidV7 } from "$lib/server/crypto";
+import { statement } from "$lib/server/db";
 import type { RuntimeEnv } from "$lib/server/env";
 
 type SiteItemRow = {
@@ -19,15 +21,15 @@ type SiteItemRow = {
 };
 
 const SITE_ITEM_SELECT = `SELECT id, kind, name, description, href, github, code_url, badge,
-  is_wip, position, version, created_at, updated_at FROM site_items`;
+  is_wip, position, version, created_at, updated_at FROM aamirazad_site_items`;
 
 export async function listSiteItems(env: RuntimeEnv): Promise<SiteItem[]> {
-  const result = await env.DB.prepare(
+  const rows = await env.DB.all<SiteItemRow>(
     `${SITE_ITEM_SELECT} WHERE deleted_at IS NULL
     ORDER BY CASE kind WHEN 'project' THEN 0 WHEN 'link' THEN 1 ELSE 2 END,
     position, created_at, id`,
-  ).all<SiteItemRow>();
-  return result.results.map(mapSiteItem);
+  );
+  return rows.map(mapSiteItem);
 }
 
 export async function createSiteItem(
@@ -39,17 +41,17 @@ export async function createSiteItem(
   const now = new Date().toISOString();
   const position =
     (
-      await env.DB.prepare(
-        "SELECT COALESCE(MAX(position), -1) + 1 AS position FROM site_items WHERE kind = ? AND deleted_at IS NULL",
+      await env.DB.first<{ position: number }>(
+        `SELECT COALESCE(MAX(position), -1) + 1 AS position FROM aamirazad_site_items
+        WHERE kind = $1 AND deleted_at IS NULL`,
+        input.kind,
       )
-        .bind(input.kind)
-        .first<{ position: number }>()
     )?.position ?? 0;
   await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO site_items (id, kind, name, description, href, github, code_url, badge,
-      is_wip, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(
+    statement(
+      `INSERT INTO aamirazad_site_items (id, kind, name, description, href, github, code_url,
+      badge, is_wip, position, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)`,
       id,
       input.kind,
       input.name,
@@ -61,12 +63,8 @@ export async function createSiteItem(
       input.isWip ? 1 : 0,
       position,
       now,
-      now,
     ),
-    env.DB.prepare(
-      `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-      VALUES (?, ?, 'site_item.created', ?, ?)`,
-    ).bind(uuidV7(), actor, id, now),
+    auditEvent(actor, "site_item.created", id, now),
   ]);
   const item = await getSiteItem(env, id);
   if (!item) throw new Error("Content creation did not return an item");
@@ -80,61 +78,47 @@ export async function updateSiteItem(
   actor: string,
 ): Promise<SiteItem | "conflict" | null> {
   const now = new Date().toISOString();
-  const result = await env.DB.prepare(
-    `UPDATE site_items SET kind = ?, name = ?, description = ?, href = ?, github = ?,
-    code_url = ?, badge = ?, is_wip = ?, version = version + 1, updated_at = ?
-    WHERE id = ? AND version = ? AND deleted_at IS NULL`,
-  )
-    .bind(
-      input.kind,
-      input.name,
-      input.description,
-      nullable(input.href),
-      nullable(input.github),
-      nullable(input.codeUrl),
-      nullable(input.badge),
-      input.isWip ? 1 : 0,
-      now,
-      id,
-      input.version,
-    )
-    .run();
-  if ((result.meta.changes ?? 0) === 0) {
+  const changes = await env.DB.run(
+    `UPDATE aamirazad_site_items SET kind = $1, name = $2, description = $3, href = $4,
+    github = $5, code_url = $6, badge = $7, is_wip = $8, version = version + 1, updated_at = $9
+    WHERE id = $10 AND version = $11 AND deleted_at IS NULL`,
+    input.kind,
+    input.name,
+    input.description,
+    nullable(input.href),
+    nullable(input.github),
+    nullable(input.codeUrl),
+    nullable(input.badge),
+    input.isWip ? 1 : 0,
+    now,
+    id,
+    input.version,
+  );
+  if (changes === 0) {
     return (await getSiteItem(env, id)) ? "conflict" : null;
   }
-  await env.DB.prepare(
-    `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-    VALUES (?, ?, 'site_item.updated', ?, ?)`,
-  )
-    .bind(uuidV7(), actor, id, now)
-    .run();
+  await env.DB.batch([auditEvent(actor, "site_item.updated", id, now)]);
   return getSiteItem(env, id);
 }
 
 export async function deleteSiteItem(env: RuntimeEnv, id: string, actor: string): Promise<boolean> {
   const now = new Date().toISOString();
-  const result = await env.DB.prepare(
-    `UPDATE site_items SET deleted_at = ?, updated_at = ?, version = version + 1
-    WHERE id = ? AND deleted_at IS NULL`,
-  )
-    .bind(now, now, id)
-    .run();
-  if ((result.meta.changes ?? 0) === 0) return false;
-  await env.DB.prepare(
-    `INSERT INTO audit_events (id, actor_subject, event_type, target_id, created_at)
-    VALUES (?, ?, 'site_item.deleted', ?, ?)`,
-  )
-    .bind(uuidV7(), actor, id, now)
-    .run();
+  const changes = await env.DB.run(
+    `UPDATE aamirazad_site_items SET deleted_at = $1, updated_at = $1, version = version + 1
+    WHERE id = $2 AND deleted_at IS NULL`,
+    now,
+    id,
+  );
+  if (changes === 0) return false;
+  await env.DB.batch([auditEvent(actor, "site_item.deleted", id, now)]);
   return true;
 }
 
 async function getSiteItem(env: RuntimeEnv, id: string): Promise<SiteItem | null> {
-  const row = await env.DB.prepare(
-    `${SITE_ITEM_SELECT} WHERE id = ? AND deleted_at IS NULL LIMIT 1`,
-  )
-    .bind(id)
-    .first<SiteItemRow>();
+  const row = await env.DB.first<SiteItemRow>(
+    `${SITE_ITEM_SELECT} WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+    id,
+  );
   return row ? mapSiteItem(row) : null;
 }
 

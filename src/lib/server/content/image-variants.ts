@@ -1,9 +1,11 @@
+import sharp from "sharp";
+
 import { sha256Hex } from "$lib/server/crypto";
 import type { RuntimeEnv } from "$lib/server/env";
 
 export type StoredImageVariant = {
   name: string;
-  r2Key: string;
+  storageKey: string;
   contentHash: string;
   width: number;
   height: number;
@@ -13,7 +15,7 @@ export type StoredImageVariant = {
 
 type VariantRow = {
   variant: string;
-  r2_key: string;
+  storage_key: string;
   content_hash: string;
   width: number;
   height: number;
@@ -29,7 +31,10 @@ type SourceAsset = {
   height: number | null;
 };
 
+type OutputFormat = "image/webp" | "image/jpeg" | "image/png" | "image/gif";
+
 const RESPONSIVE_WIDTHS = [480, 960, 1_600] as const;
+const IMMUTABLE_SECONDS = 31_536_000;
 
 export async function ensureImageVariants(
   env: RuntimeEnv,
@@ -40,8 +45,12 @@ export async function ensureImageVariants(
   const targetWidths = [
     ...new Set(RESPONSIVE_WIDTHS.map((width) => Math.min(width, asset.width!))),
   ];
-  const required = [
-    ...targetWidths.map((width) => ({ name: `${width}w-webp`, width, mimeType: "image/webp" })),
+  const required: { name: string; width: number; mimeType: OutputFormat }[] = [
+    ...targetWidths.map((width) => ({
+      name: `${width}w-webp`,
+      width,
+      mimeType: "image/webp" as const,
+    })),
     {
       name: "fallback",
       width: targetWidths.at(-1) ?? asset.width,
@@ -53,62 +62,69 @@ export async function ensureImageVariants(
 
   const original = await env.MEDIA.get(asset.originalKey);
   if (!original) throw new Error(`Original image is missing: ${asset.id}`);
-  const source = await original.arrayBuffer();
+  const source = new Uint8Array(await new Response(original.body).arrayBuffer());
+  const animated = asset.mimeType === "image/gif" || asset.mimeType === "image/webp";
 
   for (const target of missing) {
-    const transformed = await env.IMAGES.input(new Blob([source]).stream())
-      .transform({ width: target.width, fit: "scale-down" })
-      .output({
-        format: target.mimeType as ImageOutputOptions["format"],
-        quality:
-          target.mimeType === "image/png" || target.mimeType === "image/gif" ? undefined : 82,
-        anim: asset.mimeType === "image/gif",
-      });
-    const bytes = new Uint8Array(await new Response(transformed.image()).arrayBuffer());
+    const bytes = new Uint8Array(await transform(source, target.width, target.mimeType, animated));
     const contentHash = await sha256Hex(bytes);
     const extension = extensionFor(target.mimeType);
-    const r2Key = `media/variants/${asset.id}/${contentHash}/${target.name}.${extension}`;
+    const storageKey = `media/variants/${asset.id}/${contentHash}/${target.name}.${extension}`;
     const width = target.width;
     const height = Math.max(1, Math.round((asset.height * width) / asset.width));
-    await env.MEDIA.put(r2Key, bytes, {
-      httpMetadata: {
-        contentType: target.mimeType,
-        cacheControl: "public, max-age=31536000, immutable",
-      },
-      customMetadata: { sourceAssetId: asset.id, contentHash },
+    await env.MEDIA.put(storageKey, bytes, {
+      contentType: target.mimeType,
+      cacheControlMaxAge: IMMUTABLE_SECONDS,
     });
-    await env.DB.prepare(
-      `INSERT OR IGNORE INTO asset_variants
-      (asset_id, variant, r2_key, width, height, mime_type, byte_size, content_hash, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-      .bind(
-        asset.id,
-        target.name,
-        r2Key,
-        width,
-        height,
-        target.mimeType,
-        bytes.byteLength,
-        contentHash,
-        new Date().toISOString(),
-      )
-      .run();
+    await env.DB.run(
+      `INSERT INTO aamirazad_asset_variants
+      (asset_id, variant, storage_key, width, height, mime_type, byte_size, content_hash, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT DO NOTHING`,
+      asset.id,
+      target.name,
+      storageKey,
+      width,
+      height,
+      target.mimeType,
+      bytes.byteLength,
+      contentHash,
+      new Date().toISOString(),
+    );
   }
 
   return sortVariants(await listVariants(env, asset.id));
 }
 
+async function transform(
+  source: Uint8Array,
+  width: number,
+  format: OutputFormat,
+  animated: boolean,
+): Promise<Buffer> {
+  // `rotate()` applies the EXIF orientation; metadata (including location) is stripped by default.
+  const image = sharp(source, { animated }).rotate().resize({ width, withoutEnlargement: true });
+  switch (format) {
+    case "image/webp":
+      return image.webp({ quality: 82 }).toBuffer();
+    case "image/jpeg":
+      return image.jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+    case "image/png":
+      return image.png().toBuffer();
+    case "image/gif":
+      return image.gif().toBuffer();
+  }
+}
+
 async function listVariants(env: RuntimeEnv, assetId: string): Promise<StoredImageVariant[]> {
-  const result = await env.DB.prepare(
-    `SELECT variant, r2_key, content_hash, width, height, mime_type, byte_size
-    FROM asset_variants WHERE asset_id = ? ORDER BY width, variant`,
-  )
-    .bind(assetId)
-    .all<VariantRow>();
-  return result.results.map((row) => ({
+  const rows = await env.DB.all<VariantRow>(
+    `SELECT variant, storage_key, content_hash, width, height, mime_type, byte_size
+    FROM aamirazad_asset_variants WHERE asset_id = $1 ORDER BY width, variant`,
+    assetId,
+  );
+  return rows.map((row) => ({
     name: row.variant,
-    r2Key: row.r2_key,
+    storageKey: row.storage_key,
     contentHash: row.content_hash,
     width: row.width,
     height: row.height,
@@ -123,7 +139,7 @@ function sortVariants(variants: StoredImageVariant[]): StoredImageVariant[] {
   );
 }
 
-function fallbackMimeType(mimeType: string): ImageOutputOptions["format"] {
+function fallbackMimeType(mimeType: string): OutputFormat {
   if (
     mimeType === "image/jpeg" ||
     mimeType === "image/png" ||
